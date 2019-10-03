@@ -1,6 +1,9 @@
+#pragma once
 #include <cmath>
 #include <ostream>
 #include <vector>
+
+
 
 struct Vec4 {
     union {
@@ -35,11 +38,11 @@ struct Vec4 {
 };
 
 // dot product
-float dot(const Vec4& u, const Vec4 &v) const {
+float dot(const Vec4& u, const Vec4 &v)  {
     return u.x * v.x + u.y * v.y + u.z * v.z;
 }
 // cross product
-Vec4 cross(const Vec4& u, const Vec4 &v) const {
+Vec4 cross(const Vec4& u, const Vec4 &v)  {
     return Vec4(u.y * v.z - u.z * v.y,   // uyvz-uzvy
                 u.z * v.x - u.x * v.z,   // uzvx-uxvz
                 u.x * v.y - u.y * v.x,   // uxvy-uyvx
@@ -104,6 +107,6 @@ struct Mat4{
     //matriz cambio de base
     Mat4 changeOfBasis(Vec4 u, Vec4 v, Vec4 w, Vec4 o);
 
-    Mat4
+
 
 };

@@ -13,4 +13,4 @@ class Station {
     // normal (k)
     Vec4 i, j, k;
     Station(Vec4 center, Vec4 axis, Vec4 reference, float inclination, float azimuth);
-}
+};

@@ -9,11 +9,11 @@ Station loadStation(std::ifstream& is) {
     char kk;
     Vec4 center(1), axis(0), reference(1);
     float inclination, azimuth;
-    is << kk << center.x << center.y << center.z;
-    is << kk << axis.x << axis.y << axis.z;
-    is << kk << reference.x << reference.y << reference.z;
-    is << kk << inclination;
-    is << kk << azimuth;
+    is >> kk >> center.x >> center.y >> center.z;
+    is >> kk >> axis.x >> axis.y >> axis.z;
+    is >> kk >> reference.x >> reference.y >> reference.z;
+    is >> kk >> inclination;
+    is >> kk >> azimuth;
     Station station(center, axis, reference, inclination, azimuth);
 }
 
