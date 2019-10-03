@@ -26,10 +26,8 @@ struct Vec4 {
         return Vec4(x * f, y * f, z * f, w * f);
     }
     float module() const { return std::sqrt(x * x + y * y + z * z); }
-    Vec4 &normalize() {
-        Vec4 copy(*this);
-        copy = copy * (1 / module());
-        return copy;
+    Vec4 normalize() {
+        return Vec4(*this) * (1 / module());
     }
     inline float operator[](const int i) const{
         return raw[i];
@@ -37,22 +35,8 @@ struct Vec4 {
     friend std::ostream &operator<<(std::ostream &s, Vec4 &vector);
 };
 
-// dot product
-float dot(const Vec4& u, const Vec4 &v)  {
-    return u.x * v.x + u.y * v.y + u.z * v.z;
-}
-// cross product
-Vec4 cross(const Vec4& u, const Vec4 &v)  {
-    return Vec4(u.y * v.z - u.z * v.y,   // uyvz-uzvy
-                u.z * v.x - u.x * v.z,   // uzvx-uxvz
-                u.x * v.y - u.y * v.x,   // uxvy-uyvx
-                0.0f); // es dirección
-}
-
-std::ostream &operator<<(std::ostream &s, Vec4 &vector) {
-    s << "(" << vector.x << ", " << vector.y << ", " << vector.z << ", " << vector.w << ")";
-    return s;
-}
+float dot(const Vec4& u, const Vec4 &v);
+Vec4 cross(const Vec4& u, const Vec4 &v);
 
 struct Mat4{
    union {
@@ -92,20 +76,20 @@ struct Mat4{
         return res;
     }
     // matriz rotacion (eje, angulo)
-    Mat4 rotationX(float _incl);
-    Mat4 rotationY(float _incl);
-    Mat4 rotationZ(float _incl);
+    static Mat4 rotationX(float _incl);
+    static Mat4 rotationY(float _incl);
+    static Mat4 rotationZ(float _incl);
 
     //matriz traslacion (x, y, z)
-    Mat4 translation(float xT, float yT, float zT);
+    static Mat4 translation(float xT, float yT, float zT);
 
     //matriz escalado (x,y,z)
-    Mat4 scale(float xS, float yS, float zS);
+    static Mat4 scale(float xS, float yS, float zS);
     //TODO: matriz inversa
 
 
     //matriz cambio de base
-    Mat4 changeOfBasis(Vec4 u, Vec4 v, Vec4 w, Vec4 o);
+    static Mat4 changeOfBasis(Vec4 u, Vec4 v, Vec4 w, Vec4 o);
 
 
 

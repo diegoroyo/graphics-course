@@ -27,9 +27,9 @@ Station::Station(Vec4 _center, Vec4 _axis, Vec4 _reference, float _inclination, 
      */
 
 
-    s = Mat4.rotationX(_azimuth) * s;
+    s = Mat4::rotationX(_inclination) * s;
     // rotar s alrededor de jPlanet en (long) radianes
-    s = Mat4.rotatoinY(_inclination) * s;
+    s = Mat4::rotationY(_azimuth) * s;
 
     /* matriz transformacion:
     * cos _azi      0    sin _azi     0
@@ -39,7 +39,7 @@ Station::Station(Vec4 _center, Vec4 _axis, Vec4 _reference, float _inclination, 
     */
 
     // hacer la matriz de cambio de base (expresar coord. planeta en coords ucs, ya lo tenemos)
-    Mat4 cob = Mat4.changeOfBasis(iPlanet, jPlanet, kPlanet, center);
+    Mat4 cob = Mat4::changeOfBasis(iPlanet, jPlanet, kPlanet, center);
 
     /* matriz cambio base:
       * iPlanet jplanet kplanet _center  x
