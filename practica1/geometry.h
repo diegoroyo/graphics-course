@@ -28,6 +28,9 @@ struct Vec4 {
         copy = copy * (1 / module());
         return copy;
     }
+    inline float operator[](const int i) const{
+        return raw[i];
+    }
     friend std::ostream &operator<<(std::ostream &s, Vec4 &vector);
 };
 
@@ -51,7 +54,7 @@ std::ostream &operator<<(std::ostream &s, Vec4 &vector) {
 struct Mat4{
    union {
        struct {
-           float mat[4][4];
+           float m[4][4];
        };
        float raw[16];
    };
@@ -59,4 +62,48 @@ struct Mat4{
     Mat4();
 
     Mat4(Vec4 u, Vec4 v, Vec4 w, Vec4 o);
+    inline float* operator[](const int i) {
+        return m[i];
+    }
+    //Multiplicacion de matrices
+
+    inline Mat4 operator*(const Mat4& a) const {
+        Mat4 res;
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                for (int k = 0; k < 4; k++) {
+                    res[i][j] += m[i][k] * a.m[k][j];
+                }
+            }
+        }
+        return res;
+    }
+
+    inline Vec4 operator* (const Vec4& v) const {
+        Vec4 res;
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                res.raw[i]= m[i][j]*v[j];
+            }
+        }
+        return res;
+    }
+    // matriz rotacion (eje, angulo)
+    Mat4 rotationX(float _incl);
+    Mat4 rotationY(float _incl);
+    Mat4 rotationZ(float _incl);
+
+    //matriz traslacion (x, y, z)
+    Mat4 translation(float xT, float yT, float zT);
+
+    //matriz escalado (x,y,z)
+    Mat4 scale(float xS, float yS, float zS);
+    //TODO: matriz inversa
+
+
+    //matriz cambio de base
+    Mat4 changeOfBasis(Vec4 u, Vec4 v, Vec4 w, Vec4 o);
+
+    Mat4
+
 };
