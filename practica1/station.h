@@ -1,6 +1,7 @@
 #include "geometry.h"
 
 class Station {
+   public:
     // información del planeta
     // center, axis, refcity
     Vec4 center, axis, reference;
