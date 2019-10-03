@@ -25,16 +25,16 @@ Mat4::Mat4() {
 
 Mat4::Mat4(Vec4 u, Vec4 v, Vec4 w, Vec4 o) {
     for (int i = 0; i < 4; ++i) {
-       m[0][i]= u.raw[i];
+       m[i][0]= u.raw[i];
     }
     for (int i = 0; i < 4; ++i) {
-        m[1][i]= v.raw[i];
+        m[i][1]= v.raw[i];
     }
     for (int i = 0; i < 4; ++i) {
-        m[2][i]= w.raw[i];
+        m[i][2]= w.raw[i];
     }
     for (int i = 0; i < 4; ++i) {
-        m[3][i]= o.raw[i];
+        m[i][3]= o.raw[i];
     }
 }
 

@@ -18,36 +18,12 @@ Station::Station(Vec4 _center, Vec4 _axis, Vec4 _reference, float _inclination, 
 
 
     // rotar s alrededor de iPlanet en (latitud) radianes
-
-    /* matriz transformacion:
-     * 1        0           0       0
-     * 0    cos _incl  -sin _incl   0
-     * 0    sin _incl  cos _incl    0
-     * 0        0           0       1
-     */
-
-
-    s = Mat4::rotationX(_inclination) * s;
+    s = Mat4::rotationZ(_inclination) * s;
     // rotar s alrededor de jPlanet en (long) radianes
     s = Mat4::rotationY(_azimuth) * s;
 
-    /* matriz transformacion:
-    * cos _azi      0    sin _azi     0
-    * 0             1       0         0
-    * -sin_azith    0   cos _azith    0
-    * 0             0       0         1
-    */
-
     // hacer la matriz de cambio de base (expresar coord. planeta en coords ucs, ya lo tenemos)
     Mat4 cob = Mat4::changeOfBasis(iPlanet, jPlanet, kPlanet, center);
-
-    /* matriz cambio base:
-      * iPlanet jplanet kplanet _center  x
-      *                                  y
-      *                                  z
-      *                                  0|1
-      */
-
 
     // center + Matriz * s es la posicion de la estación en UCS
     positionUCS = center + cob * s;
@@ -56,7 +32,7 @@ Station::Station(Vec4 _center, Vec4 _axis, Vec4 _reference, float _inclination, 
     // k es la normal (s - center).normalize();
     k = (positionUCS - center).normalize();
     // i es (k * axis)
-    i = cross(k, axis);
+    i = cross(k, axis).normalize();
     // j es (k * i ó i * k) una de las dos
-    j = cross(k, i);
+    j = cross(k, i).normalize();
 }

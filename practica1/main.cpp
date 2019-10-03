@@ -14,11 +14,11 @@ Station loadStation(std::ifstream& is) {
     is >> kk >> reference.x >> reference.y >> reference.z;
     is >> kk >> inclination;
     is >> kk >> azimuth;
-    Station station(center, axis, reference, inclination, azimuth);
+    return Station(center, axis, reference, inclination, azimuth);
 }
 
 int main() {
-    std::ifstream is("stations.txt");
+    std::ifstream is("stations3.txt");
     if (!is.is_open()) {
         std::cerr << "Can't open file stations.txt" << std::endl;
         is.close();
@@ -40,6 +40,7 @@ int main() {
     std::cout << "Incoming direction: " << incDir << std::endl;
     
     // se choca con el planeta si prod. escalar k * dir(salida|entrada) es < 0
-    if (dot(station1.k, outDir) < 0) std::cout << "Collision in outgoing direction" << std::endl;
-    if (dot(station2.k, incDir) < 0) std::cout << "Collision in incoming direction" << std::endl;
+    // importante que los dos estén en el mismo sistema de coordenadas
+    if (dot(station1.k, v) < 0) std::cout << "Collision in outgoing direction" << std::endl;
+    if (dot(station2.k, v) > 0) std::cout << "Collision in incoming direction" << std::endl;
 }

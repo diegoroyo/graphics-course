@@ -5,11 +5,9 @@ PROJOBJ = $(patsubst ./%.cpp, ${BINDIR}/%.o, $(wildcard ./*.cpp))
 
 NOMBREEXE = main
 
-CPPFLAGS = -O3 -std=c++11
+#CPPFLAGS = -O3 -std=c++11
+CPPFLAGS = -ggdb -O0 -std=c++11
 CC = g++
-
-#CPPFLAGS = -ggdb -O0 -std=c++11
-#CC = x86_64-w64-mingw32-g++
 
 .PHONY: all
 all: ${BINDIR}/${NOMBREEXE}

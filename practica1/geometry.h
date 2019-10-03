@@ -70,7 +70,7 @@ struct Mat4{
         Vec4 res;
         for (int i = 0; i < 4; ++i) {
             for (int j = 0; j < 4; ++j) {
-                res.raw[i]= m[i][j]*v[j];
+                res.raw[i] += m[i][j]*v[j];
             }
         }
         return res;
