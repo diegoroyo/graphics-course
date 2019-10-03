@@ -1,5 +1,6 @@
 #include <cmath>
 #include <ostream>
+#include <vector>
 
 struct Vec4 {
     union {
@@ -46,3 +47,16 @@ std::ostream &operator<<(std::ostream &s, Vec4 &vector) {
     s << "(" << vector.x << ", " << vector.y << ", " << vector.z << ", " << vector.w << ")";
     return s;
 }
+
+struct Mat4{
+   union {
+       struct {
+           float mat[4][4];
+       };
+       float raw[16];
+   };
+
+    Mat4();
+
+    Mat4(Vec4 u, Vec4 v, Vec4 w, Vec4 o);
+};
