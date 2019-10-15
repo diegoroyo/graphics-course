@@ -43,4 +43,18 @@ int main() {
     // importante que los dos estén en el mismo sistema de coordenadas
     if (dot(station1.k, v) < 0) std::cout << "Collision in outgoing direction" << std::endl;
     if (dot(station2.k, v) > 0) std::cout << "Collision in incoming direction" << std::endl;
+
+    // test para matrices inversas
+    Mat4 mat;
+    mat[0][3] = 2;
+    mat[1][2] = 3;
+    mat[2][1] = 4;
+    mat[3][0] = 5;
+    std::cout << mat << std::endl;
+    Mat4 mattr = mat.transpose();
+    std::cout << mattr << std::endl;
+    Mat4 matinv = mat.inverse();
+    std::cout << matinv << std::endl;
+    Mat4 iden = matinv * mat;
+    std::cout << iden << std::endl;
 }

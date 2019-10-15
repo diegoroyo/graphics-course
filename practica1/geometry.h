@@ -92,14 +92,20 @@ struct Mat4 {
         }
         return res;
     }
-    // TODO
-    Mat4 inverse() const {
-        return *this;
+    // matrix * scalar
+    inline Mat4 operator*(const float f) const {
+        Mat4 res;
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                res[i][j] = m[i][j] * f;
+            }
+        }
+        return res;
     }
-    // TODO
-    Mat4 transpose() const {
-        return *this;
-    }
+
+    float cofactor(int row, int col) const;
+    Mat4 transpose() const;
+    Mat4 inverse() const;
 
     friend std::ostream &operator<<(std::ostream &s, Mat4 &matrix);
 };
