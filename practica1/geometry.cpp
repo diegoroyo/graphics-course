@@ -160,6 +160,8 @@ Mat4 Mat4::transpose() const {
 float Mat4::cofactor(int row, int col) const {
     // a, b and c are indices for accessing the 3x3 minor
     // using the 4x4 original matrix
+    // for example, if row = 1 (second row) then the 3x3
+    // matrix is made from rows ax = 0, bx = 2 and cx = 3
     int ax = row > 0 ? 0 : 1;
     int bx = row > 1 ? 1 : 2;
     int cx = row > 2 ? 2 : 3;
@@ -173,7 +175,7 @@ float Mat4::cofactor(int row, int col) const {
               - m[ax][cy] * m[bx][by] * m[cx][ay]
               - m[ax][ay] * m[bx][cy] * m[cx][by]
               - m[ax][by] * m[bx][ay] * m[cx][cy];
-    // cofactor calculation
+    // cofactor calculation (see wikipedia link above)
     float sign = ((row + col) % 2 == 0 ? 1.0f : -1.0f);
     return sign * det;
 }

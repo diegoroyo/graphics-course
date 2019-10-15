@@ -50,11 +50,13 @@ int main() {
     mat[1][2] = 3;
     mat[2][1] = 4;
     mat[3][0] = 5;
+    // mostrar original, transpuesta, inversa y inversa*original
     std::cout << mat << std::endl;
     Mat4 mattr = mat.transpose();
     std::cout << mattr << std::endl;
     Mat4 matinv = mat.inverse();
     std::cout << matinv << std::endl;
     Mat4 iden = matinv * mat;
+    // A^-1 * A deberia ser la matriz identidad
     std::cout << iden << std::endl;
 }
