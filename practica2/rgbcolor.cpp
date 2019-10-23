@@ -9,7 +9,7 @@ const RGBColor RGBColor::Yellow(1.0f, 1.0f, 0.0f);
 const RGBColor RGBColor::Magenta(1.0f, 0.0f, 1.0f);
 const RGBColor RGBColor::Cyan(0.0f, 1.0f, 1.0f);
 
-void RGBColor::setValues(const RGBColor& other) {
+void RGBColor::setValues(const RGBColor &other) {
     this->r = other.r;
     this->g = other.g;
     this->b = other.b;
@@ -19,4 +19,9 @@ void RGBColor::setValues(const float r, const float g, const float b) {
     this->r = r;
     this->g = g;
     this->b = b;
+}
+
+std::ostream &operator<<(std::ostream &s, RGBColor &c) {
+    s << "(" << c.r << ", " << c.g << ", " << c.b << ")";
+    return s;
 }
