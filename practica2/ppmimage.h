@@ -21,11 +21,16 @@
  * if you need a maximum that is different from 1
  */
 class PPMImage {
+   private:
+    // Resize data vectors
+    void clearData(int width, int height);
+    
    public:
     int width, height;
     int colorResolution;
     float max;
-    // data[x][y] = pixel(column y, row x)
+    // data[x][y] = pixel(column x, row y)
+    // opposite of common matrix structure for efficient access
     std::vector<std::vector<RGBColor>> data;
 
     // Empty constructor
@@ -33,19 +38,17 @@ class PPMImage {
     // Copy w/o data (data will be added later e.g. generated LDR images)
     PPMImage(int _w, int _h, int _c = 255, float _max = 1.0f)
         : width(_w), height(_h), colorResolution(_c), max(_max) {
-        data.resize(width);
-        for (int i = 0; i < width; i++) {
-            data[i].resize(height);
-        }
+        clearData(width, height);
     }
 
+    void initialize(const int _w, const int _h, const int _c, const float _max);
     bool readFile(const char* filename);
-    bool writeFile(const char* filename);
+    bool writeFile(const char* filename) const;
 
     // TODO especificar el tone mapping operator (pasar función por parámetro?)
     // https://stackoverflow.com/questions/9410/how-do-you-pass-a-function-as-a-parameter-in-c
     // Igual es fliparse mucho
-    bool applyToneMap(PPMImage& result);
+    void applyToneMap(PPMImage& result);
     static inline float OP_CLAMPING(float in, float max) {
         return in > max ? max : in;
     }
