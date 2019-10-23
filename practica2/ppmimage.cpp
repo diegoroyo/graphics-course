@@ -108,6 +108,8 @@ bool PPMImage::writeFile(const char* filename) const {
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             // Rounded to nearest integer
+
+            // TODO revisar los valores (operar con MAX, colorResolution para que los valores escritos esten entre 0-255)
             os << int(data[y][x].r * colorResolution / max + 0.5f) << " "
                << int(data[y][x].g * colorResolution / max + 0.5f) << " "
                << int(data[y][x].b * colorResolution / max + 0.5f) << "     ";
@@ -118,12 +120,16 @@ bool PPMImage::writeFile(const char* filename) const {
     return true;
 }
 
-void PPMImage::applyToneMap(PPMImage& result) {
+void PPMImage::applyToneMap(PPMImage& result, ToneMapper &tm) {
     result.initialize(width, height, colorResolution, max);
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            // TODO
-            result.data[y][x] = data[y][x];
+            // TODO convertir RGB a CIELAB
+            // mapear el L de CIELAB en lugar de RGB por separado
+            // convertir de vuelta a RGB y almacenarlo
+            result.data[y][x].r = tm.map(data[y][x].r);
+            result.data[y][x].g = tm.map(data[y][x].g);
+            result.data[y][x].b = tm.map(data[y][x].b);
         }
     }
 }

@@ -1,4 +1,5 @@
 #include "ppmimage.h"
+#include "tonemapper.h"
 
 int main(int argc, char** argv) {
     if (argc < 2 || argc > 3) {
@@ -22,7 +23,8 @@ int main(int argc, char** argv) {
     // Convertir HDR a LDR
     PPMImage hdr, ldr;
     hdr.readFile(filenameIn.c_str());
-    hdr.applyToneMap(ldr);
+    ToneMapper toneMapper = ToneMapper::EQUALIZE(hdr.max);
+    hdr.applyToneMap(ldr, toneMapper);
     ldr.writeFile(filenameOut.c_str());
 
     return 0;

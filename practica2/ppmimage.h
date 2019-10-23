@@ -1,7 +1,9 @@
 #pragma once
 
 #include <vector>
+#include <functional>
 #include "rgbcolor.h"
+#include "tonemapper.h"
 
 /*
  * PPM Image loader/saver (P3 format)
@@ -45,11 +47,5 @@ class PPMImage {
     bool readFile(const char* filename);
     bool writeFile(const char* filename) const;
 
-    // TODO especificar el tone mapping operator (pasar función por parámetro?)
-    // https://stackoverflow.com/questions/9410/how-do-you-pass-a-function-as-a-parameter-in-c
-    // Igual es fliparse mucho
-    void applyToneMap(PPMImage& result);
-    static inline float OP_CLAMPING(float in, float max) {
-        return in > max ? max : in;
-    }
+    void applyToneMap(PPMImage& result, ToneMapper &tm);
 };
