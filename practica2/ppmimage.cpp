@@ -1,5 +1,6 @@
 #include "ppmimage.h"
 #include <fstream>
+#include <math.h>
 
 void PPMImage::clearData(int width, int height) {
     // Reserve space for pixels
@@ -120,13 +121,59 @@ bool PPMImage::writeFile(const char* filename) const {
     return true;
 }
 
+void PPMImage::RGB2Lab(int x, int y){
+    float varR,varG,varB,varX, varY, varZ, varL, vara, varb;
+
+    varR=data[y][x].r;
+    varG=data[y][x].g;
+    varB=data[y][x].b;
+
+    /*From RGB to XYZ*/
+    varR > 0.04045 ? varR = pow(((varR+0.055)/1.055),2.4) : varR/=12.92;
+    varG> 0.04045 ? varG = pow(((varG+0.055)/1.055),2.4) : varG/=12.92;
+    varB > 0.04045 ? varB = pow(((varB+0.055)/1.055),2.4) : varB/=12.92;
+
+    varR*=100;
+    varG*=100;
+    varB*=100;
+
+    /*R->X G->Y B->Z*/
+    varX = varR * 0.4124 + varG * 0.3576 + varB * 0.1805;
+    varY = varR * 0.2126 + varG * 0.7152 + varB * 0.0722;
+    varZ = varR * 0.0193 + varG * 0.1192 + varB * 0.9505;
+
+    /*From XYZ to CIE-L*ab */
+    varX > 0.008856 ? varX = pow(varX , 1/3) : varX= 7.787*varX+16/116;
+    varY > 0.008856 ? varY = pow(varY , 1/3) : varY= 7.787*varY+16/116;
+    varZ > 0.008856 ? varZ = pow(varZ , 1/3) : varZ= 7.787*varZ+16/116;
+
+    /*X->L Y->a Z->b*/
+    varL=(116 - varY)-16;
+    vara=500*(varX-varY);
+    varb= 200*(varY-varZ);
+
+    data[y][x].r=varL;
+    data[y][x].g=vara;
+    data[y][x].b=varb;
+
+}
+
+void PPMImage::Lab2RGB(int x, int y){
+    float varR,varG,varB,varX, varY, varZ, varL, vara, varb;
+
+
+
+}
+
 void PPMImage::applyToneMap(PPMImage& result, ToneMapper &tm) {
     result.initialize(width, height, colorResolution, max);
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             // TODO convertir RGB a CIELAB
+            RGB2Lab(x,y);
             // mapear el L de CIELAB en lugar de RGB por separado
             // convertir de vuelta a RGB y almacenarlo
+            Lab2RGB(x,y);
             result.data[y][x].r = tm.map(data[y][x].r);
             result.data[y][x].g = tm.map(data[y][x].g);
             result.data[y][x].b = tm.map(data[y][x].b);

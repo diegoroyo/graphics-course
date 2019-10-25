@@ -47,5 +47,10 @@ class PPMImage {
     bool readFile(const char* filename);
     bool writeFile(const char* filename) const;
 
+    //Transforms pixel [x,y] from RGB to CIE-L*ab formmat
+    void RGB2Lab(int x, int y);
+    //Transforms pixel [x,y] from CIE-L*ab to RGB formmat
+    void Lab2RGB(int x, int y);
+
     void applyToneMap(PPMImage& result, ToneMapper &tm);
 };
