@@ -24,6 +24,8 @@
  */
 class PPMImage {
    private:
+    static const constexpr float LDR_RESOLUTION = 255.0f;
+
     // Resize data vectors
     void clearData(int width, int height);
     
@@ -43,9 +45,13 @@ class PPMImage {
         clearData(width, height);
     }
 
+    // Initialize image metadata with empty data vector
     void initialize(const int _w, const int _h, const int _c, const float _max);
+    // Read PPM file, store in same object
     bool readFile(const char* filename);
-    bool writeFile(const char* filename) const;
+    // Write PPM contents to file (ldr = normalize color resolution to 255)
+    // ldr assumes that image data is on 0..1 range
+    bool writeFile(const char* filename, bool ldr = false) const;
 
     void applyToneMap(PPMImage& result, ToneMapper &tm);
 };

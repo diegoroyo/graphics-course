@@ -9,7 +9,8 @@ void PPMImage::clearData(int width, int height) {
     }
 }
 
-void PPMImage::initialize(const int _w, const int _h, const int _c, const float _max) {
+void PPMImage::initialize(const int _w, const int _h, const int _c,
+                          const float _max) {
     width = _w;
     height = _h;
     colorResolution = _c;
@@ -87,7 +88,7 @@ bool PPMImage::readFile(const char* filename) {
     return true;
 }
 
-bool PPMImage::writeFile(const char* filename) const {
+bool PPMImage::writeFile(const char* filename, bool ldr) const {
     std::ofstream os(filename);
     if (!os.is_open()) {
         std::cerr << "Can't open file " << filename << std::endl;
@@ -97,22 +98,33 @@ bool PPMImage::writeFile(const char* filename) const {
     // P3 file format
     os << "P3" << std::endl;
     // Optional "MAX" comment
-    if (max != 1.0f) {
+    if (max != 1.0f && !ldr) {
         os << "#MAX=" << max << std::endl;
     }
     // File name
     os << "# " << filename << std::endl;
     // Width, height and color resolution
-    os << width << ' ' << height << std::endl << colorResolution << std::endl;
+    os << width << ' ' << height << std::endl;
+    if (ldr) {
+        os << LDR_RESOLUTION << std::endl;
+    } else {
+        os << colorResolution << std::endl;
+    }
     // Pixel color data
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            // Rounded to nearest integer
-
-            // TODO revisar los valores (operar con MAX, colorResolution para que los valores escritos esten entre 0-255)
-            os << int(data[y][x].r * colorResolution / max + 0.5f) << " "
-               << int(data[y][x].g * colorResolution / max + 0.5f) << " "
-               << int(data[y][x].b * colorResolution / max + 0.5f) << "     ";
+            if (ldr) {
+                // Assumes color data is on 0..1 range
+                os << int(data[y][x].r * LDR_RESOLUTION) << " "
+                   << int(data[y][x].g * LDR_RESOLUTION) << " "
+                   << int(data[y][x].b * LDR_RESOLUTION) << "     ";
+            } else {
+                // Write data in same HDR range
+                os << int(data[y][x].r * colorResolution / max + 0.5f) << " "
+                   << int(data[y][x].g * colorResolution / max + 0.5f) << " "
+                   << int(data[y][x].b * colorResolution / max + 0.5f)
+                   << "     ";
+            }
         }
         os << std::endl;
     }
@@ -120,13 +132,15 @@ bool PPMImage::writeFile(const char* filename) const {
     return true;
 }
 
-void PPMImage::applyToneMap(PPMImage& result, ToneMapper &tm) {
+void PPMImage::applyToneMap(PPMImage& result, ToneMapper& tm) {
     result.initialize(width, height, colorResolution, max);
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             // TODO convertir RGB a CIELAB
             // mapear el L de CIELAB en lugar de RGB por separado
             // convertir de vuelta a RGB y almacenarlo
+
+            // Map [0, max] to [0, 1] using tm.map function
             result.data[y][x].r = tm.map(data[y][x].r);
             result.data[y][x].g = tm.map(data[y][x].g);
             result.data[y][x].b = tm.map(data[y][x].b);

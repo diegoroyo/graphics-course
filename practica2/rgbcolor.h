@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <iostream>
+#include <cassert>
 
 class RGBColor {
    public:
@@ -14,7 +15,7 @@ class RGBColor {
     inline RGBColor operator*(const float i) const {
         return RGBColor(r * i, g * i, b * i);
     }
-    friend std::ostream &operator<<(std::ostream &s, RGBColor &c);
+    friend std::ostream &operator<<(std::ostream &s, const RGBColor &c);
 
     // Colores predefinidos
     static const RGBColor Black;

@@ -21,7 +21,7 @@ void RGBColor::setValues(const float r, const float g, const float b) {
     this->b = b;
 }
 
-std::ostream &operator<<(std::ostream &s, RGBColor &c) {
+std::ostream &operator<<(std::ostream &s, const RGBColor &c) {
     s << "(" << c.r << ", " << c.g << ", " << c.b << ")";
     return s;
 }

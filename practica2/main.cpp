@@ -23,9 +23,10 @@ int main(int argc, char** argv) {
     // Convertir HDR a LDR
     PPMImage hdr, ldr;
     hdr.readFile(filenameIn.c_str());
+    //ToneMapper toneMapper = ToneMapper::CLAMP_1();
     ToneMapper toneMapper = ToneMapper::EQUALIZE(hdr.max);
     hdr.applyToneMap(ldr, toneMapper);
-    ldr.writeFile(filenameOut.c_str());
+    ldr.writeFile(filenameOut.c_str(), true);
 
     return 0;
 }
