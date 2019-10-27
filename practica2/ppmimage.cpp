@@ -164,6 +164,7 @@ void PPMImage::RGB2Lab(int x, int y){
     vara=500*(varX-varY);
     varb= 200*(varY-varZ);
 
+    /*L->r a->g b->b*/
     data[y][x].r=varL;
     data[y][x].g=vara;
     data[y][x].b=varb;
@@ -172,6 +173,34 @@ void PPMImage::RGB2Lab(int x, int y){
 
 void PPMImage::Lab2RGB(int x, int y){
     float varR,varG,varB,varX, varY, varZ, varL, vara, varb;
+
+    varY = ( data[y][x].r + 16 ) / 116;
+    varX= data[y][x].g/ 500 + varY;
+    varZ = varY - data[y][x].b / 200;
+
+    if ( pow(varY,3)  > 0.008856 ) varY = pow(varY,3);
+    else                       varY = ( varY - 16 / 116 ) / 7.787;
+    if ( pow(varX,3)  > 0.008856 ) varX = pow(varX,3);
+    else                       varX = ( varX - 16 / 116 ) / 7.787;
+    if ( pow(varZ,3)  > 0.008856 ) varZ = pow(varZ,3);
+    else                       varZ = ( varZ - 16 / 116 ) / 7.787;
+
+    varR = varX *  3.2406 + varY * -1.5372 + varZ * -0.4986;
+    varG = varX * -0.9689 + varY *  1.8758 + varZ *  0.0415;
+    varB = varX *  0.0557 + varY * -0.2040 + varZ *  1.0570;
+
+    if ( varR > 0.0031308 ) varR = 1.055 * ( pow(varR , ( 1 / 2.4 )) ) - 0.055;
+    else                     varR = 12.92 * varR;
+    if ( varG > 0.0031308 ) varG = 1.055 * ( pow(varG, ( 1 / 2.4 )) ) - 0.055;
+    else                     varG = 12.92 * varG;
+    if ( varB > 0.0031308 ) varB = 1.055 * ( pow(varB,( 1 / 2.4 )) ) - 0.055;
+    else                     varB = 12.92 * varB;
+
+    data[y][x].r = varR;
+    data[y][x].g = varG;
+    data[y][x].b = varB;
+
+
 
 
 
