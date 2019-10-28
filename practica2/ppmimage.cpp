@@ -1,6 +1,5 @@
 #include "ppmimage.h"
 #include <fstream>
-#include <math.h>
 
 void PPMImage::clearData(int width, int height) {
     // Reserve space for pixels
@@ -133,91 +132,16 @@ bool PPMImage::writeFile(const char* filename, bool ldr) const {
     return true;
 }
 
-void PPMImage::RGB2Lab(int x, int y){
-    float varR,varG,varB,varX, varY, varZ, varL, vara, varb;
-
-    varR=data[y][x].r;
-    varG=data[y][x].g;
-    varB=data[y][x].b;
-
-    /*From RGB to XYZ*/
-    varR > 0.04045 ? varR = pow(((varR+0.055)/1.055),2.4) : varR/=12.92;
-    varG> 0.04045 ? varG = pow(((varG+0.055)/1.055),2.4) : varG/=12.92;
-    varB > 0.04045 ? varB = pow(((varB+0.055)/1.055),2.4) : varB/=12.92;
-
-    varR*=100;
-    varG*=100;
-    varB*=100;
-
-    /*R->X G->Y B->Z*/
-    varX = varR * 0.4124 + varG * 0.3576 + varB * 0.1805;
-    varY = varR * 0.2126 + varG * 0.7152 + varB * 0.0722;
-    varZ = varR * 0.0193 + varG * 0.1192 + varB * 0.9505;
-
-    /*From XYZ to CIE-L*ab */
-    varX > 0.008856 ? varX = pow(varX , 1/3) : varX= 7.787*varX+16/116;
-    varY > 0.008856 ? varY = pow(varY , 1/3) : varY= 7.787*varY+16/116;
-    varZ > 0.008856 ? varZ = pow(varZ , 1/3) : varZ= 7.787*varZ+16/116;
-
-    /*X->L Y->a Z->b*/
-    varL=(116 - varY)-16;
-    vara=500*(varX-varY);
-    varb= 200*(varY-varZ);
-
-    /*L->r a->g b->b*/
-    data[y][x].r=varL;
-    data[y][x].g=vara;
-    data[y][x].b=varb;
-
-}
-
-void PPMImage::Lab2RGB(int x, int y){
-    float varR,varG,varB,varX, varY, varZ, varL, vara, varb;
-
-    varY = ( data[y][x].r + 16 ) / 116;
-    varX= data[y][x].g/ 500 + varY;
-    varZ = varY - data[y][x].b / 200;
-
-    if ( pow(varY,3)  > 0.008856 ) varY = pow(varY,3);
-    else                       varY = ( varY - 16 / 116 ) / 7.787;
-    if ( pow(varX,3)  > 0.008856 ) varX = pow(varX,3);
-    else                       varX = ( varX - 16 / 116 ) / 7.787;
-    if ( pow(varZ,3)  > 0.008856 ) varZ = pow(varZ,3);
-    else                       varZ = ( varZ - 16 / 116 ) / 7.787;
-
-    varR = varX *  3.2406 + varY * -1.5372 + varZ * -0.4986;
-    varG = varX * -0.9689 + varY *  1.8758 + varZ *  0.0415;
-    varB = varX *  0.0557 + varY * -0.2040 + varZ *  1.0570;
-
-    if ( varR > 0.0031308 ) varR = 1.055 * ( pow(varR , ( 1 / 2.4 )) ) - 0.055;
-    else                     varR = 12.92 * varR;
-    if ( varG > 0.0031308 ) varG = 1.055 * ( pow(varG, ( 1 / 2.4 )) ) - 0.055;
-    else                     varG = 12.92 * varG;
-    if ( varB > 0.0031308 ) varB = 1.055 * ( pow(varB,( 1 / 2.4 )) ) - 0.055;
-    else                     varB = 12.92 * varB;
-
-    data[y][x].r = varR;
-    data[y][x].g = varG;
-    data[y][x].b = varB;
-
-
-
-
-
-}
-
 void PPMImage::applyToneMap(PPMImage& result, ToneMapper& tm) {
     result.initialize(width, height, colorResolution, max);
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            RGB2Lab(x,y);
-
-            // Map [0, max] to [0, 1] using tm.map function
-            result.data[y][x].r = tm.map(data[y][x].r);
-            result.data[y][x].g = tm.map(data[y][x].g);
-            result.data[y][x].b = tm.map(data[y][x].b);
-
-            Lab2RGB(x,y);
+            // Convert RGB data to Lab data
+            RGBColor labColor = data[y][x].rgb2lab(max);
+            // Map [0, max] luminance to [0, 1] using tm.map function
+            labColor.lab.l = tm.map(labColor.lab.l);
+            // Convert back to RGB
+            result.data[y][x] = labColor.lab2rgb(max);
         }
     }
 }

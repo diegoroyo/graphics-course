@@ -1,12 +1,21 @@
 #pragma once
 
-#include <stdint.h>
 #include <iostream>
 #include <cassert>
 
 class RGBColor {
    public:
-    float r, g, b;
+    union {
+        struct {
+            float r, g, b;
+        };
+        struct {
+            float x, y, z;
+        } xyz;
+        struct {
+            float l, a, b;
+        } lab;
+    };
     RGBColor() : r(0.0f), g(0.0f), b(0.0f) {}
     RGBColor(const RGBColor &color) = default;
     RGBColor(float _r, float _g, float _b) : r(_r), g(_g), b(_b) {}
@@ -15,6 +24,10 @@ class RGBColor {
     inline RGBColor operator*(const float i) const {
         return RGBColor(r * i, g * i, b * i);
     }
+    // Transformation from RGB to CIE-L*ab format
+    RGBColor rgb2lab(float max);
+    // Transformation from CIE-L*ab to RGB format
+    RGBColor lab2rgb(float max);
     friend std::ostream &operator<<(std::ostream &s, const RGBColor &c);
 
     // Colores predefinidos
