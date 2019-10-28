@@ -1,5 +1,6 @@
 #include "ppmimage.h"
 #include <fstream>
+#include "pngimage/pngimage.h"
 
 void PPMImage::clearData(int width, int height) {
     // Reserve space for pixels
@@ -144,4 +145,14 @@ void PPMImage::applyToneMap(PPMImage& result, ToneMapper& tm) {
             result.data[y][x] = labColor.lab2rgb(max);
         }
     }
+}
+
+PNGImage PPMImage::convertToPNG() {
+    PNGImage png(width, height);
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            png.set_pixel(x, y, data[y][x] * 255.0f);
+        }
+    }
+    return png;
 }

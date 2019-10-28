@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <vector>
+#include "pngimage/pngimage.h"
 #include "rgbcolor.h"
 #include "tonemapper.h"
 
@@ -52,6 +53,9 @@ class PPMImage {
     // Write PPM contents to file (ldr = normalize color resolution to 255)
     // ldr assumes that image data is on 0..1 range
     bool writeFile(const char* filename, bool ldr = false) const;
+
+    // Convert PPM file with [0..1] RGB data to 24bpp RGB PNG
+    PNGImage convertToPNG();
 
     void applyToneMap(PPMImage& result, ToneMapper& tm);
 };

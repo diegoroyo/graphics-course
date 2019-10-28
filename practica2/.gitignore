@@ -3,3 +3,4 @@ bin/*
 cmake-build-debug
 .clang-format
 *.ppm
+*.png

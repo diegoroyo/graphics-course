@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     } else {
         // Sacar nombre del fichero de filenameIn
         // example.ppm -> example_ldr.ppm
-        filenameOut = filenameIn.substr(0, filenameIn.size() - 4) + "_ldr.ppm";
+        filenameOut = filenameIn.substr(0, filenameIn.size() - 4) + "_ldr.png";
     }
 
     // Convertir HDR a LDR
@@ -26,7 +26,10 @@ int main(int argc, char** argv) {
     //ToneMapper toneMapper = ToneMapper::CLAMP_1();
     ToneMapper toneMapper = ToneMapper::CLAMP_GAMMA(hdr.max * 0.95f, 2.2f);
     hdr.applyToneMap(ldr, toneMapper);
-    ldr.writeFile(filenameOut.c_str(), true);
+    //ldr.writeFile(filenameOut.c_str(), true);
+
+    PNGImage pngImage = ldr.convertToPNG();
+    pngImage.write_png_file(filenameOut.c_str());
 
     return 0;
 }
