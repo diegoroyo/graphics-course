@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <memory>
 
 // Implementation of different tone-mapping functions
@@ -13,17 +14,23 @@ class ToneMapper {
        public:
         virtual float map(float in) { return in; }
     };
-    // Clamp all incoming values to [0, 1] range
-    class FClamp1 : public Function {
-       public:
-        float map(float in) override { return in > 1.0f ? 1.0f : in; }
-    };
-    // Equalize [0, max] range to [0, 1]
-    class FEqualize : public Function {
+    // Clamps values higher than max
+    // values lower than max are put in a gamma curve
+    class FClampGamma : public Function {
         float max;
+        float gamma;
+
        public:
-        FEqualize(float _max) : max(_max) {}
-        float map(float in) override { return in / max; }
+        FClampGamma(float _max, float _gamma = 1.0f) : max(_max), gamma(_gamma) {}
+        float map(float in) override {
+            if (in > max) {
+                // clamp
+                return max;
+            } else {
+                // equalize and put in gamma curve (x^gamma)
+                return std::pow(in / max, gamma);
+            }
+        }
     };
 
     ToneMapper();
@@ -33,11 +40,15 @@ class ToneMapper {
 
    public:
     static ToneMapper CLAMP_1() {
-        ToneMapper tm(new ToneMapper::FClamp1());
+        ToneMapper tm(new ToneMapper::FClampGamma(1.0f));
         return tm;
     }
-    static ToneMapper EQUALIZE(float max) {
-        ToneMapper tm(new ToneMapper::FEqualize(max));
+    static ToneMapper EQUALIZE_CLAMP(float max) {
+        ToneMapper tm(new ToneMapper::FClampGamma(max));
+        return tm;
+    }
+    static ToneMapper CLAMP_GAMMA(float max, float gamma = 2.2f) {
+        ToneMapper tm(new ToneMapper::FClampGamma(max, gamma));
         return tm;
     }
     float map(float in) { return f->map(in); }

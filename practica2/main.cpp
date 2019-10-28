@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
     PPMImage hdr, ldr;
     hdr.readFile(filenameIn.c_str());
     //ToneMapper toneMapper = ToneMapper::CLAMP_1();
-    ToneMapper toneMapper = ToneMapper::EQUALIZE(hdr.max);
+    ToneMapper toneMapper = ToneMapper::CLAMP_GAMMA(hdr.max * 0.95f, 2.2f);
     hdr.applyToneMap(ldr, toneMapper);
     ldr.writeFile(filenameOut.c_str(), true);
 
