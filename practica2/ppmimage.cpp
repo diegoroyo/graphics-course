@@ -151,7 +151,7 @@ PNGImage PPMImage::convertToPNG() {
     PNGImage png(width, height);
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            png.set_pixel(x, y, data[y][x] * 255.0f);
+            png.set_pixel(x, y, data[y][x] * LDR_RESOLUTION);
         }
     }
     return png;
