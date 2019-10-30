@@ -2,9 +2,9 @@
 
 #include <functional>
 #include <vector>
-#include "pngimage/pngimage.h"
 #include "rgbcolor.h"
-#include "tonemapper.h"
+#include "../practica2/tonemapper.h"
+#include "../practica2/pngimage/pngimage.h"
 
 /*
  * PPM Image loader/saver (P3 format)

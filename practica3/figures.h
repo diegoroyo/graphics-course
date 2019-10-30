@@ -11,21 +11,25 @@
 
 class Figures {
     RGBColor emission;
-private:
+public:
     class Sphere{
         Vec4 center;
         float radius;
     public:
         Sphere(const Vec4 &center, float radius);
         //funcion interseccion con vector --> utilizar funcion implicita
+        Vec4 Intersection(Vec4 v, Vec4 oc);
     };
-
+public:
     class Plane{
         Vec4 normal;
         float distToOrigin;
     public:
         Plane(const Vec4 &normal, float distToOrigin);
-        //funcion interseccion --> ver si el vector y la normal no son perpendiculares?? origen y distancias?
+        //Si existe devuelve el punto de interseccion entre el plano y v
+        // Si no existe devuelve el punto (0,0,0)
+        Vec4 Intersection(Vec4 v, Vec4 oc);
+
     };
 };
 

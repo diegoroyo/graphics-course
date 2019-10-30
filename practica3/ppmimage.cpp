@@ -1,6 +1,6 @@
 #include "ppmimage.h"
 #include <fstream>
-#include "pngimage/pngimage.h"
+#include "../practica2/pngimage/pngimage.h"
 
 void PPMImage::clearData(int width, int height) {
     // Reserve space for pixels
