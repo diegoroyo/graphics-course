@@ -25,9 +25,9 @@ class RGBColor {
         return RGBColor(r * i, g * i, b * i);
     }
     // Transformation from RGB to CIE-L*ab format
-    RGBColor rgb2lab(float max);
+    RGBColor rgb2lab(float max) const;
     // Transformation from CIE-L*ab to RGB format
-    RGBColor lab2rgb(float max);
+    RGBColor lab2rgb(float max) const;
     friend std::ostream &operator<<(std::ostream &s, const RGBColor &c);
 
     // Colores predefinidos

@@ -22,7 +22,7 @@ void RGBColor::setValues(const float r, const float g, const float b) {
     this->b = b;
 }
 
-RGBColor RGBColor::rgb2lab(float max) {
+RGBColor RGBColor::rgb2lab(float max) const {
     RGBColor rgb, lab;
     float x, y, z;
 
@@ -84,19 +84,20 @@ RGBColor RGBColor::rgb2lab(float max) {
     return lab;
 }
 
-RGBColor RGBColor::lab2rgb(float max) {
-    RGBColor rgb;
+RGBColor RGBColor::lab2rgb(float max) const {
+    RGBColor rgb, lab;
     float x, y, z, x3, y3, z3;
 
     // Re-scale luminance attribute from [0..1] to [0..100]
-    this->lab.l = this->lab.l * 100.0f;
+    lab = *this;
+    lab.lab.l = lab.lab.l * 100.0f;
 
     // Convert Lab to XYZ data
-    y = (this->lab.l + 16.0f) / 116.0f;
+    y = (lab.lab.l + 16.0f) / 116.0f;
     y3 = std::pow(y, 3);
-    x = (this->lab.a / 500.0f) + y;
+    x = (lab.lab.a / 500.0f) + y;
     x3 = std::pow(x, 3);
-    z = y - (this->lab.b / 200.0f);
+    z = y - (lab.lab.b / 200.0f);
     z3 = std::pow(z, 3);
 
     if (y3 > 0.008856f) {

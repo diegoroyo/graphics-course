@@ -2,6 +2,8 @@
 
 #include <cmath>
 #include <memory>
+#include "ppmimage.h"
+#include "rgbcolor.h"
 
 // Implementation of different tone-mapping functions
 // first set-up the function you want, then you can use it
@@ -21,7 +23,8 @@ class ToneMapper {
         float gamma;
 
        public:
-        FClampGamma(float _max, float _gamma = 1.0f) : max(_max), gamma(_gamma) {}
+        FClampGamma(float _max, float _gamma = 1.0f)
+            : max(_max), gamma(_gamma) {}
         float map(float in) override {
             if (in > max) {
                 // clamp
@@ -30,6 +33,19 @@ class ToneMapper {
                 // equalize and put in gamma curve (x^gamma)
                 return std::pow(in / max, gamma);
             }
+        }
+    };
+    // TODO
+    class FReinhard02 : public Function {
+        float max;
+        float minWhiteSq;
+
+       public:
+        FReinhard02(float _max, float _minWhite)
+            : max(_max), minWhiteSq(_minWhite * _minWhite) {}
+        float map(float in) override {
+            float l = in / max;
+            return (l * (1.0f + l / minWhiteSq)) / (1.0f + l);
         }
     };
 
@@ -49,6 +65,10 @@ class ToneMapper {
     }
     static ToneMapper CLAMP_GAMMA(float max, float gamma = 2.2f) {
         ToneMapper tm(new ToneMapper::FClampGamma(max, gamma));
+        return tm;
+    }
+    static ToneMapper REINHARD_02(float max, float minWhite) {
+        ToneMapper tm(new ToneMapper::FReinhard02(max, minWhite));
         return tm;
     }
     float map(float in) { return f->map(in); }
