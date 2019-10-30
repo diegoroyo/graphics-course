@@ -1,5 +1,5 @@
-#include "ppmimage.h"
-#include "tonemapper.h"
+#include "../lib/ppmimage.h"
+#include "../lib/tonemapper.h"
 
 int main(int argc, char** argv) {
     if (argc < 2 || argc > 3) {
@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     // ToneMapper toneMapper = ToneMapper::CLAMP_1();
     // ToneMapper toneMapper = ToneMapper::EQUALIZE_CLAMP(hdr.max * 0.98f);
     // ToneMapper toneMapper = ToneMapper::CLAMP_GAMMA(hdr.max * 0.98f, 2.2f);
-    ToneMapper toneMapper = ToneMapper::REINHARD_02(hdr.max, 0.99f);
+    ToneMapper toneMapper = ToneMapper::REINHARD_02(hdr.max, 1.0f);
     hdr.applyToneMap(ldr, toneMapper);
     // ldr.writeFile(filenameOut.c_str(), true);
 

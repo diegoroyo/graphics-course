@@ -2,12 +2,11 @@
 // Created by Yasmina on 30/10/2019.
 //
 
-#ifndef PRACTICA3_CAMERA_H
-#define PRACTICA3_CAMERA_H
+#pragma once
 
 
-#include "geometry.h"
-#include "ppmimage.h"
+#include "../lib/geometry.h"
+#include "../lib/ppmimage.h"
 
 class Camera {
     Vec4 origin;
@@ -21,5 +20,3 @@ class Camera {
 
 };
 
-
-#endif //PRACTICA3_CAMERA_H

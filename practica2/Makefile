@@ -1,8 +1,8 @@
 BINDIR = bin
-PIDIR = pngimage
+LIBDIR = ../lib
 MAIN = main
 
-PIOBJ = $(patsubst ${PIDIR}/%.cpp, ${BINDIR}/%.o, $(wildcard ${PIDIR}/*.cpp))
+LIBOBJ = $(patsubst ${LIBDIR}/%.cpp, ${LIBDIR}/${BINDIR}/%.o, $(wildcard ${LIBDIR}/*.cpp))
 PROJOBJ = $(patsubst ./%.cpp, ${BINDIR}/%.o, $(wildcard ./*.cpp))
 
 NOMBREEXE = tonemapper
@@ -16,12 +16,13 @@ all: ${BINDIR}/${NOMBREEXE}
 
 .PHONY: clean
 clean:
+	rm -rf ${LIBOBJ}
 	rm -rf ${BINDIR}/*
 
-${BINDIR}/${NOMBREEXE}: $(PROJOBJ) $(PIOBJ)
+${BINDIR}/${NOMBREEXE}: $(LIBOBJ) $(PROJOBJ)
 	${CC} $^ ${CPPFLAGS} -o $@
 	
-${BINDIR}/%.o: ${PIDIR}/%.cpp
+${LIBDIR}/${BINDIR}/%.o: ${LIBDIR}/%.cpp
 	${CC} -c ${CPPFLAGS} $< -o $@
 
 ${BINDIR}/%.o: %.cpp

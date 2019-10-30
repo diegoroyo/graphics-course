@@ -1,0 +1,6 @@
+bin/*
+.vscode
+cmake-build-debug
+.clang-format
+*.ppm
+*.png

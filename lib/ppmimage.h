@@ -2,7 +2,7 @@
 
 #include <functional>
 #include <vector>
-#include "pngimage/pngimage.h"
+#include "pngimage.h"
 #include "rgbcolor.h"
 #include "tonemapper.h"
 

@@ -1,5 +1,5 @@
 #include "station.h"
-#include "geometry.h"
+#include "../lib/geometry.h"
 
 #include <fstream>
 #include <iostream>

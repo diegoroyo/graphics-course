@@ -2,12 +2,11 @@
 // Created by Yasmina on 30/10/2019.
 //
 
-#ifndef PRACTICA3_FIGURES_H
-#define PRACTICA3_FIGURES_H
+#pragma once
 
 
-#include "geometry.h"
-#include "rgbcolor.h"
+#include "../lib/geometry.h"
+#include "../lib/rgbcolor.h"
 
 class Figures {
     RGBColor emission;
@@ -33,5 +32,3 @@ public:
     };
 };
 
-
-#endif //PRACTICA3_FIGURES_H
