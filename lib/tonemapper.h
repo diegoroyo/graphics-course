@@ -35,7 +35,7 @@ class ToneMapper {
             }
         }
     };
-    // TODO
+    // Reinhard02 tone-mapper (see paper)
     class FReinhard02 : public Function {
         float max;
         float minWhiteSq;
