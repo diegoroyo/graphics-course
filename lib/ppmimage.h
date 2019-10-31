@@ -48,11 +48,18 @@ class PPMImage {
 
     // Initialize image metadata with empty data vector
     void initialize(const int _w, const int _h, const int _c, const float _max);
+
     // Read PPM file, store in same object
     bool readFile(const char* filename);
     // Write PPM contents to file (ldr = normalize color resolution to 255)
     // ldr assumes that image data is on 0..1 range
     bool writeFile(const char* filename, bool ldr = false) const;
+
+    // Set all pixels to backgroundColor
+    void fillPixels(const RGBColor &backgroundColor);
+
+    void setPixel(const int x, const int y, const RGBColor &color);
+    RGBColor getPixel(const int x, const int y);
 
     // Convert PPM file with [0..1] RGB data to 24bpp RGB PNG
     PNGImage convertToPNG();

@@ -147,6 +147,34 @@ void PPMImage::applyToneMap(PPMImage& result, ToneMapper& tm) {
     }
 }
 
+void PPMImage::fillPixels(const RGBColor &backgroundColor) {
+    for (int y = 0; y < this->height; y++) {
+        for (int x = 0; x < this->width; x++) {
+            this->data[y][x].setValues(backgroundColor);
+        }
+    }
+}
+
+void PPMImage::setPixel(const int x, const int y, const RGBColor& color) {
+    if (x >= 0 && x < this->width && y >= 0 && y < this->height) {
+        this->data[y][x].setValues(color);
+    } else {
+        std::cerr << "Warning: Pixel out of bounds in PPMImage::setPixel"
+                  << std::endl;
+    }
+}
+
+RGBColor PPMImage::getPixel(const int x, const int y) {
+    RGBColor color;
+    if (x >= 0 && x < this->width && y >= 0 && y < this->height) {
+        color.setValues(this->data[y][x]);
+    } else {
+        std::cerr << "Warning: Pixel out of bounds in PPMImage::getPixel"
+                  << std::endl;
+    }
+    return color;
+}
+
 PNGImage PPMImage::convertToPNG() {
     PNGImage png(width, height);
     for (int y = 0; y < height; y++) {
