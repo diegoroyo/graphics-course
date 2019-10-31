@@ -3,8 +3,7 @@
 #include "figures.h"
 
 int main(int argc, char** argv) {
-    // TODO if (argc < 9)
-    if (argc < 1) {
+    if (argc < 9) {
         std::cerr << "Usage: " << argv[0]
                   << " -w <width> -h <height> -r <rpp> -o <out_ppm>"
                   << std::endl;
@@ -35,17 +34,22 @@ int main(int argc, char** argv) {
         }
     }
 
-    // TODO practica 3
-    Vec4 origenC(1, 1, 1, 1);
-    Vec4 rayo(0, 1, 0, 0);
-    Figures::Plane plano(Vec4(0, 1, 0, 0), 5.0f);
-    Vec4 interseccion = plano.intersection(origenC, rayo);
+    // TODO generate a scene that makes sense and is more complex
+    Vec4 origin(0.0f, 0.0f, 0.0f, 0.0f), forward(1.0f, 0.0f, 0.0f, 0.0f),
+        up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 
-    std::cout << interseccion << std::endl;
+    Figures::Plane plane1(RGBColor::Red, Vec4(1.0f, 0.0f, 0.0f, 0.0f), 5.0f);
+    Figures::Plane plane2(RGBColor::Blue, Vec4(1.0f, 1.0f, 0.0f, 0.0f), 5.0f);
+    Figures::Sphere sph1(RGBColor::Green, Vec4(4.0f, 0.0f, 0.0f, 1.0f), 0.5f);
+    Figures::Sphere sph2(RGBColor::Yellow, Vec4(4.0f, 1.0f, 0.0f, 1.0f), 0.5f);
 
-    Figures::Sphere sphere(Vec4(1, 5, 1, 1), 2.0f);
-    interseccion = sphere.intersection(origenC, rayo);
-    std::cout << interseccion << std::endl;
+    // Set up camera & scene with previous data
+    Camera camera(origin, forward, up, right);
+    std::vector<Figures::Figure> scene = {plane1, plane2, sph1, sph2};
+
+    // Generate render using argument options and save as PPM
+    PPMImage render = camera.render(width, height, rpp, scene);
+    render.writeFile(filenameOut.c_str());
 
     return 0;
 }
