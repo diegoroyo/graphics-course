@@ -6,6 +6,7 @@
 
 namespace Figures {
 
+    // todo: create class Ray??
 Vec4 Plane::intersection(const Vec4 &rayO, const Vec4 &rayDir) {
     // Check if rayDir is perpendicular to plane normal (dot product is near 0)
     if (std::abs(dot(rayDir, this->normal)) < 1e-5f) {

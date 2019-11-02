@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
     std::vector<Figures::Figure> scene = {plane1, plane2, sph1, sph2};
 
     // Generate render using argument options and save as PPM
-    PPMImage render = camera.render(width, height, rpp, scene);
+    PPMImage render = camera.render(width, height, rpp, scene, RGBColor::White);
     render.writeFile(filenameOut.c_str());
 
     return 0;
