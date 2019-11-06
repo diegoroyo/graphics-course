@@ -20,9 +20,7 @@ class Figure {
     RGBColor color;
 
     // Has to be able to intersect with a ray
-    virtual bool intersection(const Ray &ray, RayHit &hit) {
-        return false;
-    };
+    virtual bool intersection(const Ray &ray, RayHit &hit)=0;
 };
 
 class Sphere : public Figure {

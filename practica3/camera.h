@@ -20,6 +20,6 @@ class Camera {
 
     // Generate an image render (see implementation)
     PPMImage render(int width, int height, int rpp,
-                    const std::vector<Figures::Figure> &scene,
+                    const std::vector<Figures::Figure*> &scene,
                     const RGBColor &backgroundColor);
 };
