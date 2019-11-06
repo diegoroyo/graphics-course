@@ -6,6 +6,8 @@
 
 #include "../lib/geometry.h"
 #include "../lib/rgbcolor.h"
+#include "ray.h"
+#include "rayhit.h"
 
 namespace Figures {
 
@@ -18,8 +20,8 @@ class Figure {
     RGBColor color;
 
     // Has to be able to intersect with a ray
-    virtual Vec4 intersection(const Vec4 &rayO, const Vec4 &rayDir) {
-        return Vec4(0.0f, 0.0f, 0.0f, 0.0f);
+    virtual bool intersection(const Ray &ray, RayHit &hit) {
+        return false;
     };
 };
 
@@ -30,7 +32,7 @@ class Sphere : public Figure {
    public:
     Sphere(const RGBColor _color, const Vec4 &_center, float _radius)
         : Figure(_color), center(_center), radius(_radius) {}
-    Vec4 intersection(const Vec4 &rayO, const Vec4 &rayDir) override;
+    bool intersection(const Ray &ray, RayHit &hit) override;
 };
 
 class Plane : public Figure {
@@ -40,7 +42,7 @@ class Plane : public Figure {
    public:
     Plane(const RGBColor _color, const Vec4 &_normal, float _distToOrigin)
         : Figure(_color), normal(_normal), distToOrigin(_distToOrigin) {}
-    Vec4 intersection(const Vec4 &rayO, const Vec4 &rayDir) override;
+    bool intersection(const Ray &ray, RayHit &hit) override;
 };
 
 }  // namespace Figures

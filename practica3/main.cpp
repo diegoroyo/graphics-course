@@ -35,20 +35,20 @@ int main(int argc, char** argv) {
     }
 
     // TODO generate a scene that makes sense and is more complex
-    Vec4 origin(0.0f, 0.0f, 0.0f, 0.0f), forward(1.0f, 0.0f, 0.0f, 0.0f),
-        up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
+    Vec4 origin(0.0f, 0.0f, 0.0f, 0.0f), forward(0.0f, 0.0f, 1.0f, 0.0f),
+        up(0.0f, 1.0f, 0.0f, 0.0f), right(1.0f, 0.0f, 0.0f, 0.0f);
 
-    Figures::Plane plane1(RGBColor::Red, Vec4(1.0f, 0.0f, 0.0f, 0.0f), 5.0f);
-    Figures::Plane plane2(RGBColor::Blue, Vec4(1.0f, 1.0f, 0.0f, 0.0f), 5.0f);
-    Figures::Sphere sph1(RGBColor::Green, Vec4(4.0f, 0.0f, 0.0f, 1.0f), 0.5f);
-    Figures::Sphere sph2(RGBColor::Yellow, Vec4(4.0f, 1.0f, 0.0f, 1.0f), 0.5f);
+    Figures::Plane plane1(RGBColor::Red, Vec4(0.0f, 0.0f, 1.0f, 0.0f), 5.0f);
+    Figures::Plane plane2(RGBColor::Blue, Vec4(0.0f, 1.0f, 1.0f, 0.0f), 5.0f);
+    Figures::Sphere sph1(RGBColor::Green, Vec4(0.0f, 0.0f, 4.0f, 1.0f), 0.5f);
+    Figures::Sphere sph2(RGBColor::Yellow, Vec4(0.0f, 1.0f, 4.0f, 1.0f), 0.5f);
 
     // Set up camera & scene with previous data
     Camera camera(origin, forward, up, right);
     std::vector<Figures::Figure> scene = {plane1, plane2, sph1, sph2};
 
     // Generate render using argument options and save as PPM
-    PPMImage render = camera.render(width, height, rpp, scene, RGBColor::White);
+    PPMImage render = camera.render(width, height, rpp, scene, RGBColor::Black);
     render.writeFile(filenameOut.c_str());
 
     return 0;
