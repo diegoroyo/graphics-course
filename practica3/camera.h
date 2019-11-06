@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <limits>
+#include <memory>
 #include "../lib/geometry.h"
 #include "../lib/ppmimage.h"
 #include "figures.h"
@@ -11,6 +13,7 @@
 class Camera {
     Vec4 origin, forward, up, right;
 
+    // Convert camera's local space to world space
     Vec4 cameraToWorld(const Vec4 &v);
 
    public:
@@ -20,6 +23,6 @@ class Camera {
 
     // Generate an image render (see implementation)
     PPMImage render(int width, int height, int rpp,
-                    const std::vector<Figures::Figure*> &scene,
+                    const std::vector<std::shared_ptr<Figures::Figure>> &scene,
                     const RGBColor &backgroundColor);
 };

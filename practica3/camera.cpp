@@ -5,60 +5,49 @@
 #include "camera.h"
 
 Vec4 Camera::cameraToWorld(const Vec4 &v) {
+    // static to it doesn't construct the matrix more than once
     static Mat4 cob(right, up, forward, origin);
     return cob * v;
 }
 
-PPMImage Camera::render(int width, int height, int rpp,
-                        const std::vector<Figures::Figure*> &scene,
-                        const RGBColor &backgroundColor) {
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
+PPMImage Camera::render(
+    int width, int height, int rpp,
+    const std::vector<std::shared_ptr<Figures::Figure>> &scene,
+    const RGBColor &backgroundColor) {
+    // Initialize image with width/height and bg color
     PPMImage result(width, height);
     result.fillPixels(backgroundColor);
 
-    // In order: pixel X NCD,pixel Y NCD,pixel X Screen, pixel Y Screen
-    float xNCD, yNCD, xS, yS;
-    const int yScreenRange = (this->up.module());
-    const int xScreenRange = (this->right.module());
-    const int distanceToScreen = (this->forward.module());
-    Vec4 rayO = this->origin;
-
-    // TODO
-    // calculate all ray directions using
-    // origin, forward, up, right, width, height & rpp
-    // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
-    // calculate first & interpolate others
-
-    Vec4 last (-1 + 1/width, 1 + 1/height , 1, 0);
-    const Vec4 deltaX(2/width, 0,0,0);
-    const Vec4 deltaY(0, 2/height,0,0);
-    for (int y = 0; y < height; ++y) {  // y
-       for (int x = 0; x < width; ++x) {  // x
-            Vec4 dir = Vec4(last).normalize();
-            dir=this->cameraToWorld(dir);
-            float minDistance = 999999.9f;
-            for (Figures::Figure* f : scene) {
+    // Iterate through [-1, 1] * [-1, 1] (camera's local space)
+    // First point is at (-1 + 1/w, 1 - 1/h, 1) in local space
+    Vec4 local(-1.0f + 1.0f / width, 1.0f - 1.0f / height, 1.0f, 0.0f);
+    // Distance to next horizontal/vertical pixel
+    const Vec4 deltaX(2.0f / width, 0, 0.0f, 0.0f);
+    const Vec4 deltaY(0, -2.0f / height, 0.0f, 0.0f);
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            // Ray from camera's origin to pixel's center
+            Ray cameraRay(this->origin, cameraToWorld(local).normalize());
+            float minDistance = std::numeric_limits<float>::max();
+            // Intersect with all figures in scene
+            for (auto const &figure : scene) {
                 RayHit hit;
-                if (f->intersection(Ray(this->origin, dir), hit) &&
+                if (figure->intersection(cameraRay, hit) &&
                     hit.distance < minDistance) {
+                    // Only save intersection if hits the closest object
                     minDistance = hit.distance;
                     result.setPixel(x, y, hit.color);
                 }
             }
-            last = last + deltaX;
+            // Iterate thorugh next x pixel
+            local = local + deltaX;
         }
-       last.x=-1+1/width;
-       last=last+deltaY;
+        // Reset X value, iterate through next y pixel
+        local.x = -1.0f + 1.0f / width;
+        local = local + deltaY;
     }
 
-    // for each (rayOrigin, rayDirection)
-    //   for each figure in scene
-    //     intersect ray with figure
-
-    // the color of a pixel is the mean of the color of the rays
-    // passing through that pixel
-    // result.setPixel(x, y, figure.color);
-
+    // Result is saved in PPM image's data
     return result;
 }
-
-

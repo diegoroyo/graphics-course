@@ -1,6 +1,13 @@
 #include <iostream>
+#include <memory>
 #include "camera.h"
 #include "figures.h"
+
+// shortcuts for getting figure pointers
+#define plane(color, normal, dist) \
+    std::shared_ptr<Figures::Figure>(new Figures::Plane(color, normal, dist))
+#define sphere(color, pos, radius) \
+    std::shared_ptr<Figures::Figure>(new Figures::Sphere(color, pos, radius))
 
 int main(int argc, char** argv) {
     if (argc < 9) {
@@ -34,18 +41,15 @@ int main(int argc, char** argv) {
         }
     }
 
-    // TODO generate a scene that makes sense and is more complex
-    Vec4 origin(0.0f, 0.0f, 0.0f, 1.0f), forward(0.0f, 0.0f, 1.5f, 0.0f),
+    // Set up camera & scene
+    Vec4 origin(0.0f, 0.0f, 0.0f, 1.0f), forward(0.0f, 0.0f, 1.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(2.0f, 0.0f, 0.0f, 0.0f);
-
-    Figures::Plane* plane1= new Figures::Plane (RGBColor::Red, Vec4(0.0f, -1.0f, 1.0f, 0.0f), 5.0f);
-    Figures::Plane* plane2= new Figures::Plane (RGBColor::Blue, Vec4(0.0f, 1.0f, 1.0f, 0.0f), 5.0f);
-    Figures::Sphere*  sph1= new Figures::Sphere(RGBColor::Green, Vec4(0.0f, 0.0f, 4.0f, 1.0f), 0.5f);
-   Figures::Sphere* sph2 =new Figures::Sphere(RGBColor::Yellow, Vec4(0.0f, 1.0f, 4.0f, 1.0f), 0.5f);
-
-    // Set up camera & scene with previous data
     Camera camera(origin, forward, up, right);
-    std::vector<Figures::Figure*> scene = {plane1, plane2, sph1};//, sph2};
+    std::vector<std::shared_ptr<Figures::Figure>> scene = {
+        plane(RGBColor::Red, Vec4(0.0f, -1.0f, 1.0f, 0.0f), 5.0f),
+        plane(RGBColor::Blue, Vec4(0.0f, 1.0f, 1.0f, 0.0f), 5.0f),
+        sphere(RGBColor::Green, Vec4(0.0f, 0.0f, 4.0f, 1.0f), 0.5f),
+        sphere(RGBColor::Yellow, Vec4(0.0f, 1.0f, 4.0f, 1.0f), 0.5f)};
 
     // Generate render using argument options and save as PPM
     PPMImage render = camera.render(width, height, rpp, scene, RGBColor::Black);

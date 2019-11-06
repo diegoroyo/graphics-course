@@ -3,8 +3,8 @@
 #include "../lib/geometry.h"
 #include "../lib/rgbcolor.h"
 
-class RayHit {
-   public:
+// Used to save information about figure-ray intersections
+struct RayHit {
     Vec4 point;
     float distance;
     RGBColor color;
