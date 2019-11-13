@@ -2,12 +2,7 @@
 #include <memory>
 #include "camera.h"
 #include "figures.h"
-
-// shortcuts for getting figure pointers
-#define plane(color, normal, dist) \
-    std::shared_ptr<Figures::Figure>(new Figures::Plane(color, normal, dist))
-#define sphere(color, pos, radius) \
-    std::shared_ptr<Figures::Figure>(new Figures::Sphere(color, pos, radius))
+#include "plymodel.h"
 
 int main(int argc, char** argv) {
     if (argc < 9) {
@@ -45,11 +40,21 @@ int main(int argc, char** argv) {
     Vec4 origin(0.0f, 0.0f, 0.0f, 1.0f), forward(0.0f, 0.0f, 1.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(2.0f, 0.0f, 0.0f, 0.0f);
     Camera camera(origin, forward, up, right);
+
+    // shortcuts for getting figure pointers
+    #define plane(color, normal, dist) \
+        std::shared_ptr<Figures::Figure>(new Figures::Plane(color, normal, dist))
+    #define sphere(color, pos, radius) \
+        std::shared_ptr<Figures::Figure>(new Figures::Sphere(color, pos, radius))
+
     std::vector<std::shared_ptr<Figures::Figure>> scene = {
         plane(RGBColor::Red, Vec4(0.0f, -1.0f, 1.0f, 0.0f), 5.0f),
         plane(RGBColor::Blue, Vec4(0.0f, 1.0f, 1.0f, 0.0f), 5.0f),
         sphere(RGBColor::Green, Vec4(0.0f, 0.0f, 4.0f, 1.0f), 0.5f),
         sphere(RGBColor::Yellow, Vec4(0.0f, 1.0f, 4.0f, 1.0f), 0.5f)};
+
+    #undef plane
+    #undef sphere
 
     // Generate render using argument options and save as PPM
     PPMImage render = camera.render(width, height, rpp, scene, RGBColor::Black);
