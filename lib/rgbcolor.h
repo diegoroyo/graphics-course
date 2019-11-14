@@ -16,9 +16,9 @@ class RGBColor {
             float l, a, b;
         } lab;
     };
-    RGBColor() : r(0.0f), g(0.0f), b(0.0f) {}
-    RGBColor(const RGBColor &color) = default;
-    RGBColor(float _r, float _g, float _b) : r(_r), g(_g), b(_b) {}
+    constexpr RGBColor() : r(0.0f), g(0.0f), b(0.0f) {}
+    constexpr RGBColor(const RGBColor &color) = default;
+    constexpr RGBColor(float _r, float _g, float _b) : r(_r), g(_g), b(_b) {}
     void setValues(const RGBColor &other);
     void setValues(const float r, const float g, const float b);
     inline RGBColor operator*(const float i) const {

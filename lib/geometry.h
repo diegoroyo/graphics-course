@@ -1,8 +1,9 @@
 #pragma once
 
+#include <array>
 #include <cmath>
-#include <ostream>
 #include <iomanip>
+#include <ostream>
 #include <vector>
 
 /// Vectors ///
@@ -12,50 +13,57 @@ struct Vec4 {
         struct {
             float x, y, z, w;
         };
-        float raw[4];
+        std::array<float, 4> raw;
     };
 
-    Vec4() : x(0), y(0), z(0), w(0) {}
-    Vec4(float _w) : x(0), y(0), z(0), w(_w) {}
-    Vec4(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {}
+    constexpr Vec4() : x(0), y(0), z(0), w(0) {}
+    constexpr Vec4(float _w) : x(0), y(0), z(0), w(_w) {}
+    constexpr Vec4(float _x, float _y, float _z, float _w)
+        : x(_x), y(_y), z(_z), w(_w) {}
 
-    inline float operator[](const int i) const {
-        return raw[i];
-    }
-    inline Vec4 operator+(const Vec4 &other) const {
+    constexpr inline float operator[](const int i) const { return raw[i]; }
+    constexpr inline Vec4 operator+(const Vec4 &other) const {
         return Vec4(x + other.x, y + other.y, z + other.z, w + other.w);
     }
-    inline Vec4 operator-(const Vec4 &other) const {
+    constexpr inline Vec4 operator-(const Vec4 &other) const {
         return Vec4(x - other.x, y - other.y, z - other.z, w - other.w);
     }
-    inline Vec4 operator*(const float f) const {
+    constexpr inline Vec4 operator*(const float f) const {
         return Vec4(x * f, y * f, z * f, w * f);
     }
-    float module() const {
-        return std::sqrt(x * x + y * y + z * z);
-    }
-    Vec4 normalize(float l = 1) {
+    constexpr float module() const { return std::sqrt(x * x + y * y + z * z); }
+    constexpr Vec4 normalize(float l = 1) {
         return Vec4(*this) * (l / module());
     }
 
-    friend std::ostream &operator<<(std::ostream &s, Vec4 &vector);
+    friend std::ostream &operator<<(std::ostream &s, const Vec4 &vector);
 };
 
-float dot(const Vec4 &u, const Vec4 &v);
-Vec4 cross(const Vec4 &u, const Vec4 &v);
+// dot product (ignores 4th component)
+constexpr float dot(const Vec4 &u, const Vec4 &v) {
+    return u.x * v.x + u.y * v.y + u.z * v.z;
+}
+// cross product (ignores 4th component)
+constexpr Vec4 cross(const Vec4 &u, const Vec4 &v) {
+    return Vec4(u.y * v.z - u.z * v.y,  // uyvz-uzvy
+                u.z * v.x - u.x * v.z,  // uzvx-uxvz
+                u.x * v.y - u.y * v.x,  // uxvy-uyvx
+                0.0f);                  // make it a direction vector
+}
 
 /// Matrices ///
 
 struct Mat4 {
     union {
         struct {
-            float m[4][4];
+            std::array<std::array<float, 4>, 4> m;
         };
-        float raw[16];
+        std::array<float, 16> raw;
     };
 
-    Mat4(float elem = 0.0f); // set all elements to "elem"
-    Mat4(Vec4 &u, Vec4 &v, Vec4 &w, Vec4 &o); // columns constructor
+    constexpr Mat4() : raw() {}                // zero-constructor
+    Mat4(float elem);                          // set all elements to "elem"
+    Mat4(Vec4 &u, Vec4 &v, Vec4 &w, Vec4 &o);  // columns constructor
 
     // Transformation matrices
     static Mat4 identity();
@@ -66,7 +74,7 @@ struct Mat4 {
     static Mat4 rotationZ(float rad);
     static Mat4 changeOfBasis(Vec4 &u, Vec4 &v, Vec4 &w, Vec4 &o);
 
-    inline float *operator[](const int i) {
+    constexpr inline std::array<float, 4> operator[](const int i) const {
         return m[i];
     }
 
@@ -107,5 +115,5 @@ struct Mat4 {
     Mat4 transpose() const;
     Mat4 inverse() const;
 
-    friend std::ostream &operator<<(std::ostream &s, Mat4 &matrix);
+    friend std::ostream &operator<<(std::ostream &s, const Mat4 &matrix);
 };

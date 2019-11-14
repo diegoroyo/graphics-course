@@ -2,31 +2,17 @@
 
 /// Vectors ///
 
-std::ostream &operator<<(std::ostream &s, Vec4 &vector) {
+std::ostream &operator<<(std::ostream &s, const Vec4 &vector) {
     s << "(" << vector.x << ", " << vector.y << ", "
              << vector.z << ", " << vector.w << ")";
     return s;
-}
-
-// dot product (ignores 4th component)
-float dot(const Vec4 &u, const Vec4 &v) {
-    return u.x * v.x + u.y * v.y + u.z * v.z;
-}
-// cross product (ignores 4th component)
-Vec4 cross(const Vec4 &u, const Vec4 &v) {
-    return Vec4(u.y * v.z - u.z * v.y,  // uyvz-uzvy
-                u.z * v.x - u.x * v.z,  // uzvx-uxvz
-                u.x * v.y - u.y * v.x,  // uxvy-uyvx
-                0.0f);                  // make it a direction vector
 }
 
 /// Matrices ///
 
 // fill constructor
 Mat4::Mat4(float elem) {
-    for (int i = 0; i < 16; ++i) {
-        raw[i] = elem;
-    }
+    raw.fill(elem);
 }
 
 // column vectors constructor
@@ -197,7 +183,7 @@ Mat4 Mat4::inverse() const {
     return adjugate * (1.0f / det);
 }
 
-std::ostream &operator<<(std::ostream &s, Mat4 &matrix) {
+std::ostream &operator<<(std::ostream &s, const Mat4 &matrix) {
     s << std::endl;
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
