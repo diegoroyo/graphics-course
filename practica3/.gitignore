@@ -5,3 +5,4 @@ cmake-build-debug
 *.ppm
 *.png
 *.ply
+run.sh
