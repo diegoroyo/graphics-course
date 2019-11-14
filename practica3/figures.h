@@ -48,8 +48,8 @@ class Plane : public Figure {
 };
 
 class Triangle : public Figure {
-    const Vec4 &v0, &v1, &v2;
-    const std::array<float, 2> &uv0, &uv1, &uv2;
+    const Vec4 v0, v1, v2;
+    const std::array<float, 2> uv0, uv1, uv2;
     const Vec4 edge0, edge1, normal;
     const PLYModel *model;
 

@@ -106,35 +106,37 @@ bool Triangle::intersection(const Ray &ray, RayHit &hit) const {
     float a, f, u, v;
     h = cross(ray.direction, this->edge1);
     a = dot(this->edge0, h);
-    if (std::abs(a) < 1e-6) {
+    if (std::abs(a) < 1e-6f) {
         return false;  // This ray is parallel to this triangle.
     }
-    f = 1.0 / a;
+    f = 1.0f / a;
     s = ray.origin - this->v0;
     u = f * dot(s, h);
-    if (u < 0.0 || u > 1.0) {
+    if (u < 0.0f || u > 1.0f) {
         return false;
     }
     q = cross(s, this->edge0);
     v = f * dot(ray.direction, q);
-    if (v < 0.0 || u + v > 1.0) {
+    if (v < 0.0f || u + v > 1.0f) {
         return false;
     }
     // At this stage we can compute t to find out where the intersection point
     // is on the line.
     float t = f * dot(this->edge1, q);
-    if (t > 1e-6) {
+    if (t > 1e-6f) {
         // Ray intersection
         hit.distance = t;
         hit.point = ray.project(t);
+        // Calculate texture coordinates
         Vec4 b = getBarycentric(hit.point);
-        if (b.x > 1e-6f) {
-            float tex0 = uv0[0] * b.x + uv1[0] * b.y + uv2[0] * b.z;
-            float tex1 = uv0[1] * b.x + uv1[1] * b.y + uv2[1] * b.z;
-            hit.color = model->emission(tex0, tex1);
-        } else {
-            hit.color = RGBColor::Black;
-        }
+        float tex0 = uv0[0] * b.x + uv1[0] * b.y + uv2[0] * b.z;
+        float tex1 = uv0[1] * b.x + uv1[1] * b.y + uv2[1] * b.z;
+        // Clamp between 0-1
+        tex0 = tex0 < 1e-6f ? 0.0f : tex0;
+        tex0 = tex0 > 1.0f - 1e-6f ? 1.0f - 1e-6f : tex0;
+        tex1 = tex1 < 1e-6f ? 0.0f : tex1;
+        tex1 = tex1 > 1.0f - 1e-6f ? 1.0f - 1e-6f : tex1;
+        hit.color = model->emission(tex0, tex1);
         return true;
     } else {
         // Intersection is behind the camera

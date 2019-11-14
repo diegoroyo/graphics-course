@@ -29,9 +29,8 @@ class PLYModel {
     inline std::array<float, 2> uv(int i) const { return uvs[i]; }
     // Diffuse texture RGB color given UV coordinates
     inline RGBColor emission(float uvx, float uvy) const {
-        // Round UV to nearest pixel (+0.5f)
-        int pixelX = emissionTexture.width * uvx + 0.5f;
-        int pixelY = emissionTexture.height * uvy + 0.5f;
+        int pixelX = emissionTexture.width * uvx;
+        int pixelY = emissionTexture.height * uvy;
         return emissionTexture.getPixel(pixelX, pixelY);
     }
 
