@@ -1,9 +1,6 @@
-//
-// Created by Yasmina on 30/10/2019.
-//
-
 #include "camera.h"
 
+// TODO doesn't need COB to work (F + [-1..1] * U + [-1..1] * R)
 Vec4 Camera::cameraToWorld(const Vec4 &v) {
     // static to it doesn't construct the matrix more than once
     static Mat4 cob(right, up, forward, origin);
@@ -11,10 +8,9 @@ Vec4 Camera::cameraToWorld(const Vec4 &v) {
 }
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
-PPMImage Camera::render(
-    int width, int height, int rpp,
-    const std::vector<std::shared_ptr<Figures::Figure>> &scene,
-    const RGBColor &backgroundColor) {
+PPMImage Camera::render(int width, int height, int rpp,
+                        const FigurePtrVector &scene,
+                        const RGBColor &backgroundColor) {
     // Initialize image with width/height and bg color
     PPMImage result(width, height);
     result.fillPixels(backgroundColor);

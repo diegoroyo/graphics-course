@@ -37,24 +37,29 @@ int main(int argc, char** argv) {
     }
 
     // Set up camera & scene
-    Vec4 origin(0.0f, 0.0f, 0.0f, 1.0f), forward(0.0f, 0.0f, 1.0f, 0.0f),
-        up(0.0f, 1.0f, 0.0f, 0.0f), right(2.0f, 0.0f, 0.0f, 0.0f);
+    Vec4 origin(0.0f, 0.0f, -2.0f, 1.0f), forward(0.0f, 0.0f, 1.0f, 0.0f),
+        up(0.0f, 1.0f, 0.0f, 0.0f), right(1.0f, 0.0f, 0.0f, 0.0f);
+    // Vec4 origin(1.2f, -1.2f, 0.0f, 1.0f), forward(-1.0f, 1.0f, 0.0f, 0.0f),
+    //     up(0.0f, 0.0f, 1.0f, 0.0f), right(0.707f, 0.707f, 0.0f, 0.0f);
     Camera camera(origin, forward, up, right);
 
-    // shortcuts for getting figure pointers
-    #define plane(color, normal, dist) \
-        std::shared_ptr<Figures::Figure>(new Figures::Plane(color, normal, dist))
-    #define sphere(color, pos, radius) \
-        std::shared_ptr<Figures::Figure>(new Figures::Sphere(color, pos, radius))
+// shortcuts for getting figure pointers
+#define plane(color, normal, dist) \
+    std::shared_ptr<Figures::Figure>(new Figures::Plane(color, normal, dist))
+#define sphere(color, pos, radius) \
+    std::shared_ptr<Figures::Figure>(new Figures::Sphere(color, pos, radius))
 
-    std::vector<std::shared_ptr<Figures::Figure>> scene = {
+    FigurePtrVector scene = {
         plane(RGBColor::Red, Vec4(0.0f, -1.0f, 1.0f, 0.0f), 5.0f),
         plane(RGBColor::Blue, Vec4(0.0f, 1.0f, 1.0f, 0.0f), 5.0f),
         sphere(RGBColor::Green, Vec4(0.0f, 0.0f, 4.0f, 1.0f), 0.5f),
         sphere(RGBColor::Yellow, Vec4(0.0f, 1.0f, 4.0f, 1.0f), 0.5f)};
 
-    #undef plane
-    #undef sphere
+    PLYModel spaceship("ply/spaceship");
+    spaceship.addTriangles(scene);
+
+#undef plane
+#undef sphere
 
     // Generate render using argument options and save as PPM
     PPMImage render = camera.render(width, height, rpp, scene, RGBColor::Black);
