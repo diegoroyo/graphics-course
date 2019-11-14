@@ -57,9 +57,11 @@ class PPMImage {
 
     // Set all pixels to backgroundColor
     void fillPixels(const RGBColor &backgroundColor);
+    // Flip Y coordinates (up becomes down and vice versa)
+    void flipVertically();
 
     void setPixel(const int x, const int y, const RGBColor &color);
-    RGBColor getPixel(const int x, const int y);
+    RGBColor getPixel(const int x, const int y) const;
 
     // Convert PPM file with [0..1] RGB data to 24bpp RGB PNG
     PNGImage convertToPNG();

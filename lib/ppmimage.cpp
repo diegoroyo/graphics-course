@@ -147,7 +147,7 @@ void PPMImage::applyToneMap(PPMImage& result, ToneMapper& tm) {
     }
 }
 
-void PPMImage::fillPixels(const RGBColor &backgroundColor) {
+void PPMImage::fillPixels(const RGBColor& backgroundColor) {
     for (int y = 0; y < this->height; y++) {
         for (int x = 0; x < this->width; x++) {
             this->data[y][x].setValues(backgroundColor);
@@ -160,19 +160,30 @@ void PPMImage::setPixel(const int x, const int y, const RGBColor& color) {
         this->data[y][x].setValues(color);
     } else {
         std::cerr << "Warning: Pixel out of bounds in PPMImage::setPixel"
-                  << std::endl;
+                  << " (" << x << ", " << y << ")" << std::endl;
     }
 }
 
-RGBColor PPMImage::getPixel(const int x, const int y) {
+RGBColor PPMImage::getPixel(const int x, const int y) const {
     RGBColor color;
     if (x >= 0 && x < this->width && y >= 0 && y < this->height) {
         color.setValues(this->data[y][x]);
     } else {
         std::cerr << "Warning: Pixel out of bounds in PPMImage::getPixel"
-                  << std::endl;
+                  << " (" << x << ", " << y << ")" << std::endl;
     }
     return color;
+}
+
+void PPMImage::flipVertically() {
+    for (int x = 0; x < this->width; x++) {
+        for (int y = 0; y < this->height / 2; y++) {
+            RGBColor color1 = this->getPixel(x, y);
+            RGBColor color2 = this->getPixel(x, this->height - y - 1);
+            this->setPixel(x, this->height - y - 1, color1);
+            this->setPixel(x, y, color2);
+        }
+    }
 }
 
 PNGImage PPMImage::convertToPNG() {
