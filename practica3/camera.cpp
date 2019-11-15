@@ -1,6 +1,5 @@
 #include "camera.h"
 
-// TODO doesn't need COB to work (F + [-1..1] * U + [-1..1] * R)
 Vec4 Camera::cameraToWorld(const Vec4 &v) {
     // static to it doesn't construct the matrix more than once
     static Mat4 cob(right, up, forward, origin);
@@ -17,14 +16,16 @@ PPMImage Camera::render(int width, int height, int rpp,
 
     // Iterate through [-1, 1] * [-1, 1] (camera's local space)
     // First point is at (-1 + 1/w, 1 - 1/h, 1) in local space
-    Vec4 local(-1.0f + 1.0f / width, 1.0f - 1.0f / height, 1.0f, 0.0f);
+    Vec4 direction = cameraToWorld(
+        Vec4(-1.0f + 1.0f / width, 1.0f - 1.0f / height, 1.0f, 0.0f));
     // Distance to next horizontal/vertical pixel
-    const Vec4 deltaX(2.0f / width, 0, 0.0f, 0.0f);
-    const Vec4 deltaY(0, -2.0f / height, 0.0f, 0.0f);
+    const Vec4 deltaX = cameraToWorld(Vec4(2.0f / width, 0, 0.0f, 0.0f));
+    const Vec4 deltaY = cameraToWorld(Vec4(0, -2.0f / height, 0.0f, 0.0f));
     for (int y = 0; y < height; ++y) {
+        Vec4 originalDirection = direction;
         for (int x = 0; x < width; ++x) {
             // Ray from camera's origin to pixel's center
-            Ray cameraRay(this->origin, cameraToWorld(local).normalize());
+            Ray cameraRay(this->origin, direction.normalize());
             float minDistance = std::numeric_limits<float>::max();
             // Intersect with all figures in scene
             for (auto const &figure : scene) {
@@ -37,11 +38,10 @@ PPMImage Camera::render(int width, int height, int rpp,
                 }
             }
             // Iterate thorugh next x pixel
-            local = local + deltaX;
+            direction = direction + deltaX;
         }
         // Reset X value, iterate through next y pixel
-        local.x = -1.0f + 1.0f / width;
-        local = local + deltaY;
+        direction = originalDirection + deltaY;
     }
 
     // Result is saved in PPM image's data
