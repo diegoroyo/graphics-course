@@ -61,18 +61,62 @@ struct Mat4 {
         std::array<float, 16> raw;
     };
 
-    constexpr Mat4() : raw() {}                // zero-constructor
-    Mat4(float elem);                          // set all elements to "elem"
-    Mat4(Vec4 &u, Vec4 &v, Vec4 &w, Vec4 &o);  // columns constructor
+    constexpr Mat4() : raw() {}                 // zero-constructor
+    constexpr Mat4(std::array<float, 16> _raw)  // all elements constructor
+        : raw(_raw) {}
+    constexpr Mat4(Vec4 &u, Vec4 &v, Vec4 &w, Vec4 &o)  // columns constructor
+        : raw({u.x, v.x, w.x, o.x,
+               u.y, v.y, w.y, o.y,
+               u.z, v.z, w.z, o.z,
+               u.w, v.w, w.w, o.w}) {}
+    Mat4(float elem);                           // set all elements to "elem"
 
     // Transformation matrices
-    static Mat4 identity();
-    static Mat4 translation(float xT, float yT, float zT);
-    static Mat4 scale(float xS, float yS, float zS);
-    static Mat4 rotationX(float rad);
-    static Mat4 rotationY(float rad);
-    static Mat4 rotationZ(float rad);
-    static Mat4 changeOfBasis(Vec4 &u, Vec4 &v, Vec4 &w, Vec4 &o);
+    static constexpr Mat4 identity() {
+        return Mat4(std::array<float, 16>({1.0f, 0.0f, 0.0f, 0.0f,
+                                           0.0f, 1.0f, 0.0f, 0.0f,
+                                           0.0f, 0.0f, 1.0f, 0.0f,
+                                           0.0f, 0.0f, 0.0f, 1.0f}));
+    }
+    static constexpr Mat4 translation(float xT, float yT, float zT) {
+        return Mat4(std::array<float, 16>({1.0f, 0.0f, 0.0f,   xT,
+                                           0.0f, 1.0f, 0.0f,   yT,
+                                           0.0f, 0.0f, 1.0f,   zT,
+                                           0.0f, 0.0f, 0.0f, 1.0f}));
+    }
+    static constexpr Mat4 scale(float xS, float yS, float zS) {
+        return Mat4(std::array<float, 16>({  xS, 0.0f, 0.0f, 0.0f,
+                                           0.0f,   yS, 0.0f, 0.0f,
+                                           0.0f, 0.0f,   zS, 0.0f,
+                                           0.0f, 0.0f, 0.0f, 1.0f}));
+    }
+    static constexpr Mat4 rotationX(float rad) {
+        return Mat4(std::array<float, 16>(
+            {1.0f,           0.0f,           0.0f, 0.0f,
+             0.0f,  std::cos(rad), -std::sin(rad), 0.0f,
+             0.0f,  std::sin(rad),  std::cos(rad), 0.0f,
+             0.0f,            0.0f,          0.0f, 1.0f}));
+    }
+    static constexpr Mat4 rotationY(float rad) {
+        return Mat4(std::array<float, 16>(
+            { std::cos(rad), 0.0f,  std::sin(rad), 0.0f,
+                       0.0f, 1.0f,           0.0f, 0.0f,
+             -std::sin(rad), 0.0f,  std::cos(rad), 0.0f,
+                       0.0f, 0.0f,           0.0f, 1.0f}));
+    }
+    static constexpr Mat4 rotationZ(float rad) {
+        return Mat4(std::array<float, 16>(
+            { std::cos(rad), -std::sin(rad), 0.0f, 0.0f,
+              std::sin(rad),  std::cos(rad), 0.0f, 0.0f,
+                       0.0f,           0.0f, 1.0f, 0.0f,
+                       0.0f,           0.0f, 0.0f, 1.0f}));
+    }
+    // Change to basis uvw with origin o
+    // If directions/points are correct, then
+    //   uw = vw = ww = 0, ow = 1
+    static constexpr Mat4 changeOfBasis(Vec4 &u, Vec4 &v, Vec4 &w, Vec4 &o) {
+        return Mat4(u, v, w, o);
+    }
 
     constexpr inline std::array<float, 4> operator[](const int i) const {
         return m[i];
