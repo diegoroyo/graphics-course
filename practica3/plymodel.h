@@ -19,7 +19,7 @@ class PLYModel {
     PPMImage emissionTexture;
 
    public:
-    PLYModel(const char* filename);
+    PLYModel(const char *filename);
 
     inline int nverts() const { return verts.size(); }
     inline int nfaces() const { return faces.size(); }
@@ -34,6 +34,8 @@ class PLYModel {
         return emissionTexture.getPixel(pixelX, pixelY);
     }
 
+    // Apply model matrix to all vertices
+    void transform(const Mat4 &modelMatrix);
     // Add triangle figures to scene vector
     void addTriangles(FigurePtrVector &scene) const;
 };

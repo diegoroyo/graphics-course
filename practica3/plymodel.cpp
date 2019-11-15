@@ -123,6 +123,12 @@ PLYModel::PLYModel(const char* filename) {
     emissionTexture.flipVertically();  // correct for UV mapping
 }
 
+void PLYModel::transform(const Mat4 &modelMatrix) {
+    for (int v = 0; v < this->nverts(); v++) {
+        this->verts[v] = modelMatrix * this->verts[v];
+    }
+}
+
 void PLYModel::addTriangles(FigurePtrVector& scene) const {
     for (int f = 0; f < this->nfaces(); f++) {
         std::array<int, 3> vi = this->face(f);  // face = vertex indices

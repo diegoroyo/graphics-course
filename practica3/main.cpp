@@ -53,10 +53,11 @@ int main(int argc, char** argv) {
         // plane(RGBColor::Red, Vec4(0.0f, -1.0f, 1.0f, 0.0f), 5.0f),
         // plane(RGBColor::Blue, Vec4(0.0f, 1.0f, 1.0f, 0.0f), 5.0f),
         // sphere(RGBColor::Green, Vec4(0.0f, -0.2f, 0.0f, 1.0f), 0.5f),
-        sphere(RGBColor::Yellow, Vec4(-0.3f, 0.0f, 0.0f, 1.0f), 0.2f)
-    };
+        sphere(RGBColor::Yellow, Vec4(-0.3f, 0.0f, 0.0f, 1.0f), 0.2f)};
 
     PLYModel spaceship("ply/spaceship");
+    spaceship.transform(Mat4::rotationX(1.2f) * Mat4::rotationY(-1.0f) *
+                        Mat4::rotationZ(0.9f));
     spaceship.addTriangles(scene);
 
 #undef plane
