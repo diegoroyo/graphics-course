@@ -64,7 +64,8 @@ int main(int argc, char** argv) {
         // box(RGBColor::Cyan, Vec4(-0.2f, -0.2f, -0.2f, 1.0f), Vec4(0.2f, 0.2f,
         // 0.2f, 1.0f)),
         // sphere(RGBColor::Yellow, Vec4(0.0f, 0.0f, 0.0f, 1.0f), 0.25f),
-        spaceship};
+        spaceship
+    };
     FigurePtr rootNode = FigurePtr(new Figures::BVNode(scene));
 
 #undef plane

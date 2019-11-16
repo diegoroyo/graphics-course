@@ -21,6 +21,10 @@ struct Vec4 {
     constexpr Vec4(float _x, float _y, float _z, float _w)
         : x(_x), y(_y), z(_z), w(_w) {}
 
+    constexpr inline bool operator==(const Vec4 &other) const {
+        return this->x == other.x && this->y == other.y && this->z == other.z &&
+               this->w == other.w;
+    }
     constexpr inline float operator[](const int i) const { return raw[i]; }
     constexpr inline Vec4 operator+(const Vec4 &other) const {
         return Vec4(x + other.x, y + other.y, z + other.z, w + other.w);
