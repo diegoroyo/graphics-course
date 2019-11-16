@@ -1,6 +1,6 @@
 #include "plymodel.h"
 
-PLYModel::PLYModel(const char* filename) {
+PLYModel::PLYModel(const char *filename) {
     std::string plyFilename = std::string(filename) + ".ply";
     std::ifstream is(plyFilename);
     if (!is.is_open()) {
@@ -129,29 +129,107 @@ void PLYModel::transform(const Mat4 &modelMatrix) {
     }
 }
 
-FigurePtr PLYModel::getBoundingBox() const {
-    Vec4 bb0 = this->vert(0), bb1 = this->vert(0);
-    for (int i = 1; i < this->nverts(); i++) {
-        Vec4 v = this->vert(i);
-        // save min components in bb0
-        bb0.x = v.x < bb0.x ? v.x : bb0.x;
-        bb0.y = v.y < bb0.y ? v.y : bb0.y;
-        bb0.z = v.z < bb0.z ? v.z : bb0.z;
-        // save max components in bb1
-        bb1.x = v.x > bb1.x ? v.x : bb1.x;
-        bb1.y = v.y > bb1.y ? v.y : bb1.y;
-        bb1.z = v.z > bb1.z ? v.z : bb1.z;
+void PLYModel::getBoundingBox(const std::vector<int> &findex, Vec4 &bb0,
+                              Vec4 &bb1) const {
+    // Initialise with first vertex of first face
+    bb0 = Vec4(this->face(findex[0])[0]);
+    bb1 = Vec4(this->face(findex[0])[0]);
+    // Check against all vertices of all faces
+    for (int fi : findex) {
+        std::array<int, 3> vi = this->face(fi);
+        for (int i = 0; i < 3; i++) {
+            Vec4 v = this->vert(vi[i]);
+            // save min components in bb0
+            bb0.x = v.x < bb0.x ? v.x : bb0.x;
+            bb0.y = v.y < bb0.y ? v.y : bb0.y;
+            bb0.z = v.z < bb0.z ? v.z : bb0.z;
+            // save max components in bb1
+            bb1.x = v.x > bb1.x ? v.x : bb1.x;
+            bb1.y = v.y > bb1.y ? v.y : bb1.y;
+            bb1.z = v.z > bb1.z ? v.z : bb1.z;
+        }
     }
-    return FigurePtr(new Figures::Box(bb0, bb1));
 }
 
-FigurePtr PLYModel::getKdTreeNode() const {
+FigurePtr PLYModel::divideNode(const FigurePtrVector &triangles,
+                               const std::vector<int> &findex,
+                               std::vector<Vec4 *>::iterator &vbegin,
+                               std::vector<Vec4 *>::iterator &vend,
+                               int numIterations) {
+    // Find bounding box of all vertices
+    Vec4 bb0, bb1;
+    this->getBoundingBox(findex, bb0, bb1);
+    FigurePtr nodeBbox = FigurePtr(new Figures::Box(bb0, bb1));
+    if (numIterations == 0) {
+        // Add all triangles that correspond to the faces inside bbox
+        FigurePtrVector nodeTriangles;
+        for (int fi : findex) {
+            nodeTriangles.push_back(triangles[fi]);
+        }
+        // Generate child node (children are triangles, not kdnodes)
+        return FigurePtr(new Figures::BVNode(nodeTriangles, nodeBbox));
+    } else {
+        // Find biggest axis in bbox, store in axis
+        // dot(axis, vector) only has vector's desired axis
+        Vec4 bbox = bb1 - bb0;
+        Vec4 axis(0.0f, 0.0f, 0.0f, 0.0f);
+        if (bbox.x > bbox.y && bbox.x > bbox.z) {
+            axis.x = 1.0f;
+        } else if (bbox.y > bbox.x && bbox.y > bbox.z) {
+            axis.y = 1.0f;
+        } else {
+            axis.z = 1.0f;
+        }
+        // Find median of all vertices' coordinates in that axis
+        std::vector<Vec4 *>::iterator vmedian = vbegin + (vend - vbegin) / 2;
+        std::nth_element(vbegin, vmedian, vend,
+                         [&axis](const Vec4 *lhs, const Vec4 *rhs) {
+                             return dot(*lhs, axis) < dot(*rhs, axis);
+                         });
+        // Find all triangles that correspond to first half and second half
+        std::vector<int> findexFirst, findexLast;
+        for (int fi : findex) {
+            std::array<int, 3> vi = this->face(fi);
+            // If it has any of its vertices inside the bbox, add it to first
+            if (std::find(vbegin, vmedian, &verts[vi[0]]) != vmedian ||
+                std::find(vbegin, vmedian, &verts[vi[1]]) != vmedian ||
+                std::find(vbegin, vmedian, &verts[vi[2]]) != vmedian) {
+                findexFirst.push_back(fi);
+            }
+            // Same for last
+            if (std::find(vmedian, vend, &verts[vi[0]]) != vend ||
+                std::find(vmedian, vend, &verts[vi[1]]) != vend ||
+                std::find(vmedian, vend, &verts[vi[2]]) != vend) {
+                findexLast.push_back(fi);
+            }
+        }
+        // Further subdivide children nodes
+        FigurePtr leftChild = this->divideNode(triangles, findexFirst, vbegin,
+                                               vmedian, numIterations - 1);
+        FigurePtr rightChild = this->divideNode(triangles, findexLast, vmedian,
+                                                vend, numIterations - 1);
+        return FigurePtr(
+            new Figures::KdTreeNode(leftChild, rightChild, nodeBbox));
+    }
+}
+
+FigurePtr PLYModel::getFigure(int subdivisions) {
+    // Create vector of all triangles & faces to be used
     FigurePtrVector triangles;
+    std::vector<int> faceIndexes;
     for (int f = 0; f < this->nfaces(); f++) {
+        faceIndexes.push_back(f);
         std::array<int, 3> vi = this->face(f);  // face = vertex indices
         triangles.push_back(
             FigurePtr(new Figures::Triangle(this, vi[0], vi[1], vi[2])));
     }
-    return FigurePtr(
-        new Figures::KdTreeNode(triangles, this->getBoundingBox()));
+    // Same with pointers to vertices
+    std::vector<Vec4 *> vertexPtrs;
+    for (int v = 0; v < this->nverts(); v++) {
+        vertexPtrs.push_back(&verts[v]);
+    }
+    // Call divideNode, which optimizes the model with given subdivisions
+    std::vector<Vec4 *>::iterator vbegin = std::begin(vertexPtrs);
+    std::vector<Vec4 *>::iterator vend = std::end(vertexPtrs);
+    return this->divideNode(triangles, faceIndexes, vbegin, vend, subdivisions);
 }

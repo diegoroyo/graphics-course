@@ -48,34 +48,32 @@ int main(int argc, char** argv) {
     FigurePtr(new Figures::Plane(color, normal, dist))
 #define sphere(color, pos, radius) \
     FigurePtr(new Figures::Sphere(color, pos, radius))
-#define box(color, bb0, bb1) \
-    FigurePtr(new Figures::Box(color, bb0, bb1))
+#define box(color, bb0, bb1) FigurePtr(new Figures::Box(color, bb0, bb1))
 
     // load & transform spaceship model, get scene kdtree node
     PLYModel spaceshipModel("ply/spaceship");
     spaceshipModel.transform(Mat4::rotationX(1.2f) * Mat4::rotationY(-1.0f) *
-                        Mat4::rotationZ(0.9f));
-    FigurePtr spaceship = spaceshipModel.getKdTreeNode();
+                             Mat4::rotationZ(0.9f));
+    FigurePtr spaceship = spaceshipModel.getFigure(4);
 
     // build scene to rootNode
     FigurePtrVector scene = {
         // plane(RGBColor::Red, Vec4(0.0f, -1.0f, 1.0f, 0.0f), 5.0f),
         // plane(RGBColor::Blue, Vec4(0.0f, 1.0f, 1.0f, 0.0f), 5.0f),
         // sphere(RGBColor::Green, Vec4(0.0f, -0.2f, 0.0f, 1.0f), 0.5f),
-        // box(RGBColor::Cyan, Vec4(-0.2f, -0.2f, -0.2f, 1.0f), Vec4(0.2f, 0.2f, 0.2f, 1.0f)),
+        // box(RGBColor::Cyan, Vec4(-0.2f, -0.2f, -0.2f, 1.0f), Vec4(0.2f, 0.2f,
+        // 0.2f, 1.0f)),
         // sphere(RGBColor::Yellow, Vec4(0.0f, 0.0f, 0.0f, 1.0f), 0.25f),
-        spaceshipModel.getBoundingBox()
-        // spaceship
-        // box(RGBColor::Red, Vec4(-1.0f, 0.0f, 1.0f, 1.0f),Vec4(1.0f, 2.0f, 3.0f, 1.0f))
-    };
-    FigurePtr rootNode = FigurePtr(new Figures::KdTreeNode(scene));
+        spaceship};
+    FigurePtr rootNode = FigurePtr(new Figures::BVNode(scene));
 
 #undef plane
 #undef sphere
 #undef box
 
     // Generate render using argument options and save as PPM
-    PPMImage render = camera.render(width, height, rpp, rootNode, RGBColor::White);
+    PPMImage render =
+        camera.render(width, height, rpp, rootNode, RGBColor::Black);
     render.writeFile(filenameOut.c_str());
 
     return 0;

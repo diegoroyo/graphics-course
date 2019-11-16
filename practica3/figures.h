@@ -24,6 +24,11 @@ class Figure {
    public:
     // Has to be able to intersect with a ray
     virtual bool intersection(const Ray &ray, RayHit &hit) const = 0;
+    // Check hit distance with bounding box (if the figure doesn't have
+    // a bounding box, unlike KdTreeNode, it defaults to intersection)
+    virtual bool peek(const Ray &ray, RayHit &hit) const {
+        return this->intersection(ray, hit);
+    }
 };
 
 class Sphere : public Figure {
@@ -77,20 +82,40 @@ class Box : public Figure {
     bool intersection(const Ray &ray, RayHit &hit) const override;
 };
 
-// k-d tree node: acceleration structure
-// checks if ray collides with bounding box, and if it does
-// then it checks with all its children
-class KdTreeNode : public Figure {
-    const bool alwaysHits;  // override bbox check (scene root node)
+// Bounding volume node: has a bounding box that envolves all its children,
+// accelerates checks by first checking against the bbox. Then, only if it
+// hits, it checks against all its children
+class BVNode : public Figure {
+    const bool alwaysHits;  // override bbox check
     const FigurePtr bbox;
     const FigurePtrVector children;
 
    public:
-    KdTreeNode(const FigurePtrVector &_children)
+    BVNode(const FigurePtrVector &_children)
         : alwaysHits(true), bbox(nullptr), children(_children) {}
-    KdTreeNode(const FigurePtrVector &_children, const FigurePtr _bbox)
+    BVNode(const FigurePtrVector &_children, const FigurePtr &_bbox)
         : alwaysHits(false), bbox(_bbox), children(_children) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
+    bool peek(const Ray &ray, RayHit &hit) const override {
+        // shouldn't be called if alwaysHits = true
+        return bbox->intersection(ray, hit);
+    }
+};
+
+// k-d tree node: acceleration structure that has a bbox and two children
+// performs special checks to minimize checking intersections on branches
+class KdTreeNode : public Figure {
+    const FigurePtr bbox;
+    const FigurePtr leftChild, rightChild;
+
+   public:
+    KdTreeNode(const FigurePtr &_leftChild, const FigurePtr &_rightChild,
+               const FigurePtr &_bbox)
+        : bbox(_bbox), leftChild(_leftChild), rightChild(_rightChild) {}
+    bool intersection(const Ray &ray, RayHit &hit) const override;
+    bool peek(const Ray &ray, RayHit &hit) const override {
+        return bbox->intersection(ray, hit);
+    }
 };
 
 }  // namespace Figures

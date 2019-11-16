@@ -170,22 +170,56 @@ bool Box::intersection(const Ray &ray, RayHit &hit) const {
     }
 }
 
-bool KdTreeNode::intersection(const Ray &ray, RayHit &hit) const {
-    if (this->alwaysHits || this->bbox->intersection(ray, hit)) {
-        float minDistance = std::numeric_limits<float>::max();
-        // Intersect with all figures in scene
-        for (auto const &figure : this->children) {
-            RayHit figureHit;
-            if (figure->intersection(ray, figureHit) &&
-                figureHit.distance < minDistance) {
-                // Only save intersection if hits the closest object
-                minDistance = figureHit.distance;
-                hit = figureHit;
-            }
-        }
-        return minDistance != std::numeric_limits<float>::max();
-    } else {
+bool BVNode::intersection(const Ray &ray, RayHit &hit) const {
+    // Check if ray doesn't hit box
+    if (!this->alwaysHits && !this->bbox->intersection(ray, hit)) {
         return false;
+    }
+    float minDistance = std::numeric_limits<float>::max();
+    // Intersect with all figures in scene
+    for (auto const &figure : this->children) {
+        RayHit figureHit;
+        if (figure->intersection(ray, figureHit) &&
+            figureHit.distance < minDistance) {
+            // Only save intersection if hits the closest object
+            minDistance = figureHit.distance;
+            hit = figureHit;
+        }
+    }
+    return minDistance != std::numeric_limits<float>::max();
+}
+
+bool KdTreeNode::intersection(const Ray &ray, RayHit &hit) const {
+    // Check if it only intersects with one box
+    RayHit firstPeek, secondPeek;
+    if (!leftChild->peek(ray, firstPeek)) {
+        return rightChild->intersection(ray, hit);
+    }
+    if (!rightChild->peek(ray, secondPeek)) {
+        return leftChild->intersection(ray, hit);
+    }
+    // Determine order of intersections
+    FigurePtr first = leftChild, second = rightChild;
+    if (secondPeek.distance < firstPeek.distance) {
+        std::swap(first, second);
+        std::swap(firstPeek, secondPeek);
+    }
+    // Intersect with boxes
+    if (!first->intersection(ray, hit)) {
+        // Doesn't intersect with first box, return second
+        return second->intersection(ray, hit);
+    } else {
+        // First intersection is saved in hit
+        // If first hit was closer that second peek,
+        // we don't have to check the second child
+        RayHit secondHit;
+        if (secondPeek.distance < hit.distance &&
+            second->intersection(ray, secondHit) &&
+            secondHit.distance < hit.distance) {
+            // Second hit was closer than first, should be replaced
+            std::swap(hit, secondHit);
+        }
+        return true;
     }
 }
 
