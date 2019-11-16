@@ -36,6 +36,9 @@ class PLYModel {
 
     // Apply model matrix to all vertices
     void transform(const Mat4 &modelMatrix);
-    // Add triangle figures to scene vector
-    void addTriangles(FigurePtrVector &scene) const;
+
+    // Find bounding box of pixels
+    FigurePtr getBoundingBox() const;
+    // KdTree node consisting of bbox + triangles
+    FigurePtr getKdTreeNode() const;
 };

@@ -144,4 +144,49 @@ bool Triangle::intersection(const Ray &ray, RayHit &hit) const {
     }
 }
 
+// https://tavianator.com/fast-branchless-raybounding-box-intersections-part-2-nans/
+bool Box::intersection(const Ray &ray, RayHit &hit) const {
+    // find intersection point for each of the 6 planes that define the box
+    float t1, t2;
+    float tmin = std::numeric_limits<float>::max() * -1.0f;
+    float tmax = std::numeric_limits<float>::max();
+    for (int i = 0; i < 3; i++) {
+        t1 = (bb0.raw[i] - ray.origin.raw[i]) * ray.invDirection.raw[i];
+        t2 = (bb1.raw[i] - ray.origin.raw[i]) * ray.invDirection.raw[i];
+        tmin = std::fmax(tmin, std::fmin(t1, t2));
+        tmax = std::fmin(tmax, std::fmax(t1, t2));
+    }
+
+    // Ray can have 2 hits: tmin contains first one, tmax the second one
+    if (tmax > std::fmax(tmin, 0.0f)) {
+        // If first hit is behind the camera, take the second one
+        hit.distance = tmin < 0.0f ? tmax : tmin;
+        hit.point = ray.project(hit.distance);
+        hit.color = this->color;
+        return true;
+    } else {
+        // No hit
+        return false;
+    }
+}
+
+bool KdTreeNode::intersection(const Ray &ray, RayHit &hit) const {
+    if (this->alwaysHits || this->bbox->intersection(ray, hit)) {
+        float minDistance = std::numeric_limits<float>::max();
+        // Intersect with all figures in scene
+        for (auto const &figure : this->children) {
+            RayHit figureHit;
+            if (figure->intersection(ray, figureHit) &&
+                figureHit.distance < minDistance) {
+                // Only save intersection if hits the closest object
+                minDistance = figureHit.distance;
+                hit = figureHit;
+            }
+        }
+        return minDistance != std::numeric_limits<float>::max();
+    } else {
+        return false;
+    }
+}
+
 }  // namespace Figures

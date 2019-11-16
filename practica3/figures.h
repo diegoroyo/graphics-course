@@ -10,6 +10,7 @@ typedef std::shared_ptr<Figures::Figure> FigurePtr;
 typedef std::vector<FigurePtr> FigurePtrVector;
 class PLYModel;  // needed for function definitions
 
+#include <limits>
 #include "../lib/geometry.h"
 #include "../lib/rgbcolor.h"
 #include "plymodel.h"
@@ -59,6 +60,36 @@ class Triangle : public Figure {
 
    public:
     Triangle(const PLYModel *_model, int _v0i, int _v1i, int _v2i);
+    bool intersection(const Ray &ray, RayHit &hit) const override;
+};
+
+// Only Axis-Aligned Bounding Boxes (AABB), doesn't support Oriented ones, see:
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
+class Box : public Figure {
+    const Vec4 bb0, bb1;  // bounding box, 2 points define the cube
+    const RGBColor color;
+
+   public:
+    Box(const Vec4 &_bb0, const Vec4 &_bb1)
+        : color(RGBColor::Black), bb0(_bb0), bb1(_bb1) {}
+    Box(const RGBColor _color, const Vec4 &_bb0, const Vec4 &_bb1)
+        : color(_color), bb0(_bb0), bb1(_bb1) {}
+    bool intersection(const Ray &ray, RayHit &hit) const override;
+};
+
+// k-d tree node: acceleration structure
+// checks if ray collides with bounding box, and if it does
+// then it checks with all its children
+class KdTreeNode : public Figure {
+    const bool alwaysHits;  // override bbox check (scene root node)
+    const FigurePtr bbox;
+    const FigurePtrVector children;
+
+   public:
+    KdTreeNode(const FigurePtrVector &_children)
+        : alwaysHits(true), bbox(nullptr), children(_children) {}
+    KdTreeNode(const FigurePtrVector &_children, const FigurePtr _bbox)
+        : alwaysHits(false), bbox(_bbox), children(_children) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
 };
 

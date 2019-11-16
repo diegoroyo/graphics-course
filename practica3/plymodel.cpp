@@ -129,10 +129,29 @@ void PLYModel::transform(const Mat4 &modelMatrix) {
     }
 }
 
-void PLYModel::addTriangles(FigurePtrVector& scene) const {
+FigurePtr PLYModel::getBoundingBox() const {
+    Vec4 bb0 = this->vert(0), bb1 = this->vert(0);
+    for (int i = 1; i < this->nverts(); i++) {
+        Vec4 v = this->vert(i);
+        // save min components in bb0
+        bb0.x = v.x < bb0.x ? v.x : bb0.x;
+        bb0.y = v.y < bb0.y ? v.y : bb0.y;
+        bb0.z = v.z < bb0.z ? v.z : bb0.z;
+        // save max components in bb1
+        bb1.x = v.x > bb1.x ? v.x : bb1.x;
+        bb1.y = v.y > bb1.y ? v.y : bb1.y;
+        bb1.z = v.z > bb1.z ? v.z : bb1.z;
+    }
+    return FigurePtr(new Figures::Box(bb0, bb1));
+}
+
+FigurePtr PLYModel::getKdTreeNode() const {
+    FigurePtrVector triangles;
     for (int f = 0; f < this->nfaces(); f++) {
         std::array<int, 3> vi = this->face(f);  // face = vertex indices
-        scene.push_back(
+        triangles.push_back(
             FigurePtr(new Figures::Triangle(this, vi[0], vi[1], vi[2])));
     }
+    return FigurePtr(
+        new Figures::KdTreeNode(triangles, this->getBoundingBox()));
 }

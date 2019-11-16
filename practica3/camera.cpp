@@ -8,7 +8,7 @@ Vec4 Camera::cameraToWorld(const Vec4 &v) {
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
 PPMImage Camera::render(int width, int height, int rpp,
-                        const FigurePtrVector &scene,
+                        const FigurePtr &sceneRootNode,
                         const RGBColor &backgroundColor) {
     // Initialize image with width/height and bg color
     PPMImage result(width, height);
@@ -26,16 +26,9 @@ PPMImage Camera::render(int width, int height, int rpp,
         for (int x = 0; x < width; ++x) {
             // Ray from camera's origin to pixel's center
             Ray cameraRay(this->origin, direction.normalize());
-            float minDistance = std::numeric_limits<float>::max();
-            // Intersect with all figures in scene
-            for (auto const &figure : scene) {
-                RayHit hit;
-                if (figure->intersection(cameraRay, hit) &&
-                    hit.distance < minDistance) {
-                    // Only save intersection if hits the closest object
-                    minDistance = hit.distance;
-                    result.setPixel(x, y, hit.color);
-                }
+            RayHit hit;
+            if (sceneRootNode->intersection(cameraRay, hit)) {
+                result.setPixel(x, y, hit.color);
             }
             // Iterate thorugh next x pixel
             direction = direction + deltaX;

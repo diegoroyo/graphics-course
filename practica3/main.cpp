@@ -45,26 +45,37 @@ int main(int argc, char** argv) {
 
 // shortcuts for getting figure pointers
 #define plane(color, normal, dist) \
-    std::shared_ptr<Figures::Figure>(new Figures::Plane(color, normal, dist))
+    FigurePtr(new Figures::Plane(color, normal, dist))
 #define sphere(color, pos, radius) \
-    std::shared_ptr<Figures::Figure>(new Figures::Sphere(color, pos, radius))
+    FigurePtr(new Figures::Sphere(color, pos, radius))
+#define box(color, bb0, bb1) \
+    FigurePtr(new Figures::Box(color, bb0, bb1))
 
+    // load & transform spaceship model, get scene kdtree node
+    PLYModel spaceshipModel("ply/spaceship");
+    spaceshipModel.transform(Mat4::rotationX(1.2f) * Mat4::rotationY(-1.0f) *
+                        Mat4::rotationZ(0.9f));
+    FigurePtr spaceship = spaceshipModel.getKdTreeNode();
+
+    // build scene to rootNode
     FigurePtrVector scene = {
         // plane(RGBColor::Red, Vec4(0.0f, -1.0f, 1.0f, 0.0f), 5.0f),
         // plane(RGBColor::Blue, Vec4(0.0f, 1.0f, 1.0f, 0.0f), 5.0f),
         // sphere(RGBColor::Green, Vec4(0.0f, -0.2f, 0.0f, 1.0f), 0.5f),
-        sphere(RGBColor::Yellow, Vec4(-0.3f, 0.0f, 0.0f, 1.0f), 0.2f)};
-
-    PLYModel spaceship("ply/spaceship");
-    spaceship.transform(Mat4::rotationX(1.2f) * Mat4::rotationY(-1.0f) *
-                        Mat4::rotationZ(0.9f));
-    spaceship.addTriangles(scene);
+        // box(RGBColor::Cyan, Vec4(-0.2f, -0.2f, -0.2f, 1.0f), Vec4(0.2f, 0.2f, 0.2f, 1.0f)),
+        // sphere(RGBColor::Yellow, Vec4(0.0f, 0.0f, 0.0f, 1.0f), 0.25f),
+        spaceshipModel.getBoundingBox()
+        // spaceship
+        // box(RGBColor::Red, Vec4(-1.0f, 0.0f, 1.0f, 1.0f),Vec4(1.0f, 2.0f, 3.0f, 1.0f))
+    };
+    FigurePtr rootNode = FigurePtr(new Figures::KdTreeNode(scene));
 
 #undef plane
 #undef sphere
+#undef box
 
     // Generate render using argument options and save as PPM
-    PPMImage render = camera.render(width, height, rpp, scene, RGBColor::Black);
+    PPMImage render = camera.render(width, height, rpp, rootNode, RGBColor::White);
     render.writeFile(filenameOut.c_str());
 
     return 0;

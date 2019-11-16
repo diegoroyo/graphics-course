@@ -1,6 +1,5 @@
 #pragma once
 
-#include <limits>
 #include <memory>
 #include "../lib/geometry.h"
 #include "../lib/ppmimage.h"
@@ -18,6 +17,6 @@ class Camera {
 
     // Generate an image render (see implementation)
     PPMImage render(int width, int height, int rpp,
-                    const FigurePtrVector &scene,
+                    const FigurePtr &sceneRootNode,
                     const RGBColor &backgroundColor);
 };
