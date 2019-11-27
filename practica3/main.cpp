@@ -4,6 +4,13 @@
 #include "figures.h"
 #include "plymodel.h"
 
+// Scene descriptions:
+// Scene 0: Cornell box
+// Scene 1: PLY model with empty background
+#ifndef SCENE_NUMBER
+#define SCENE_NUMBER 0
+#endif
+
 int main(int argc, char** argv) {
     if (argc < 9) {
         std::cerr << "Usage: " << argv[0]
@@ -37,16 +44,17 @@ int main(int argc, char** argv) {
     }
 
     // Set up camera & scene
-    // Vec4 origin(2.5f, 0.0f, 2.5f, 1.0f), forward(-1.0f, 0.0f, 1.0f, 0.0f),
-    //      up(0.0f, 1.5f, 0.0f, 0.0f), right(1.0f, 0.0f, 1.0f, 0.0f);
-    Vec4 origin(2.0f, 0.0f, 4.0f, 1.0f), forward(-1.0f, 0.0f, 0.0f, 0.0f),
-        up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 
-    /* Vec4 origin(1.2f, -1.2f, 0.0f, 1.0f), forward(-1.0f, 1.0f, 0.0f, 0.0f),
-         up(0.0f, 0.0f, 1.0f, 0.0f), right(0.707f, 0.707f, 0.0f, 0.0f);*/
+#if SCENE_NUMBER == 0
+    Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
+        up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
+#elif SCENE_NUMBER == 1
+    Vec4 origin(1.2f, -1.2f, 0.0f, 1.0f), forward(-1.0f, 1.0f, 0.0f, 0.0f),
+        up(0.0f, 0.0f, 1.0f, 0.0f), right(0.707f, 0.707f, 0.0f, 0.0f);
+#endif
 
     // Camera camera(origin, forward, up, right);
-    Camera camera(origin, forward, up, width, height);
+    Camera camera(origin, forward, up, width / (float) height);
 
 // shortcuts for getting figure pointers
 #define plane(color, normal, dist) \
@@ -55,21 +63,29 @@ int main(int argc, char** argv) {
     FigurePtr(new Figures::Sphere(color, pos, radius))
 #define box(color, bb0, bb1) FigurePtr(new Figures::Box(color, bb0, bb1))
 
+#if SCENE_NUMBER == 1
     // load & transform spaceship model, get scene kdtree node
-    /*  PLYModel spaceshipModel("ply/spaceship");
-      spaceshipModel.transform(Mat4::rotationX(1.2f) * Mat4::rotationY(-1.0f) *
-                               Mat4::rotationZ(0.9f));
-      FigurePtr spaceship = spaceshipModel.getFigure(4);*/
+    PLYModel spaceshipModel("ply/spaceship");
+    spaceshipModel.transform(Mat4::rotationX(1.2f) * Mat4::rotationY(-1.0f) *
+                             Mat4::rotationZ(0.9f));
+    FigurePtr spaceship = spaceshipModel.getFigure(4);
+#endif
 
     // build scene to rootNode
     FigurePtrVector scene = {
-        plane(RGBColor::Red, Vec4(0.0f, -1.0f, 1.0f, 0.0f), 5.0f),
-        plane(RGBColor::Blue, Vec4(0.0f, 1.0f, 1.0f, 0.0f), 5.0f),
-        sphere(RGBColor::Green, Vec4(0.0f, 0.0f, 5.0f, 1.0f), 0.5f),
-        // box(RGBColor::Cyan, Vec4(-0.2f, -0.2f, -0.2f, 1.0f), Vec4(0.2f, 0.2f,
-        // 0.2f, 1.0f)),
-        // sphere(RGBColor::Yellow, Vec4(0.0f, 0.0f, 2.5f, 1.0f), 0.25f),
-        // spaceship
+#if SCENE_NUMBER == 0
+        // Cornell box walls
+        plane(RGBColor::White, Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f),
+        plane(RGBColor::White, Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f),
+        plane(RGBColor::White, Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f),
+        plane(RGBColor::Green, Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f),
+        plane(RGBColor::Red, Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f),
+        // Cornell box content
+        sphere(RGBColor::Black, Vec4(1.25f, -1.25f, -1.0f, 1.0f), 0.75f),
+        sphere(RGBColor::Black, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f),
+#elif SCENE_NUMBER == 1
+        spaceship
+#endif
     };
     FigurePtr rootNode = FigurePtr(new Figures::BVNode(scene));
 
