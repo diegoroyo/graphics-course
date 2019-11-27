@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
     Material whiteDiffuse(false, RGBColor::White * 0.8f);
     Material greenDiffuse(false, RGBColor::Green * 0.8f);
     Material redDiffuse(false, RGBColor::Red * 0.8f);
-    Material greyDiffuse(false, RGBColor::White * 0.3f);
+    Material greyDiffuse(false, RGBColor::White * 0.5f);
 
     // build scene to rootNode
     FigurePtrVector scene = {

@@ -10,6 +10,9 @@
 class Camera {
     Vec4 origin, forward, up, right;
 
+    // Generate random float between 0..1
+    float random01() const;
+
     // Convert camera's local space to world space
     Vec4 cameraToWorld(const Vec4 &v);
 
@@ -19,8 +22,8 @@ class Camera {
 
     // Trace multiple (rpp) rays to a pixel defined by box [p0, p1]
     // and return mean color luminance that enters the pixel
-    RGBColor tracePixel(const Vec4 &p0, const Vec4 &p1, int rpp,
-                        const FigurePtr &sceneRootNode,
+    RGBColor tracePixel(const Vec4 &d0, const Vec4 &deltaX, const Vec4 &deltaY,
+                        int rpp, const FigurePtr &sceneRootNode,
                         const RGBColor &backgroundColor);
 
    public:
