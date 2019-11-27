@@ -17,7 +17,6 @@ class Camera {
 
     Camera(Vec4 _origin, Vec4 _forward, Vec4 _up, int width, int height);
 
-
     // Generate an image render (see implementation)
     PPMImage render(int width, int height, int rpp,
                     const FigurePtr &sceneRootNode,
