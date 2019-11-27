@@ -7,11 +7,11 @@ void printProgress(const std::chrono::nanoseconds &beginTime, float progress) {
         std::chrono::system_clock::now().time_since_epoch();
     int secs = (endTime - beginTime).count() / 1000000000L;
     int eta = secs * (1.0f - progress) / progress;
-    int tenPcts = progress / 0.1f;  // bar like [####      ] this
+    int fivePcts = progress / 0.05f;  // bar like [####      ] this
     std::printf(
         " Progress: %.3f %% [%s] (Time %d:%02d:%02d, ETA %d:%02d:%02d)      \r",
         progress * 100.0f,
-        (std::string(tenPcts, '#') + std::string(10 - tenPcts, ' ')).c_str(),
+        (std::string(fivePcts, '#') + std::string(20 - fivePcts, ' ')).c_str(),
         secs / 3600, (secs / 60) % 60, secs % 60,  // hh:mm:dd current time
         eta / 3600, (eta / 60) % 60, eta % 60);    // hh:mm:dd estimated time
     std::cout << std::flush;
