@@ -1,17 +1,17 @@
 #pragma once
 
+#include <chrono>
 #include <cmath>
+#include <future>
 #include <memory>
 #include <random>
+#include <string>
 #include "../lib/geometry.h"
 #include "../lib/ppmimage.h"
 #include "figures.h"
 
 class Camera {
     Vec4 origin, forward, up, right;
-
-    // Generate random float between 0..1
-    float random01() const;
 
     // Convert camera's local space to world space
     Vec4 cameraToWorld(const Vec4 &v);

@@ -7,7 +7,7 @@ PROJOBJ = $(patsubst ./%.cpp, ${BINDIR}/%.o, $(wildcard ./*.cpp))
 
 NOMBREEXE = main
 
-CPPFLAGS = -O3 -std=c++11
+CPPFLAGS = -O3 -std=c++11 -pthread
 #CPPFLAGS = -ggdb -O0 -std=c++11
 CC = g++
 
