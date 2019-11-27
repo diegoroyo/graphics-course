@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cmath>
 #include <memory>
+#include <random>
 #include "../lib/geometry.h"
 #include "../lib/ppmimage.h"
 #include "figures.h"

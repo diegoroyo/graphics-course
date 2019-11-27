@@ -13,6 +13,7 @@ class PLYModel;  // needed for function definitions
 #include <limits>
 #include "../lib/geometry.h"
 #include "../lib/rgbcolor.h"
+#include "material.h"
 #include "plymodel.h"
 #include "ray.h"
 #include "rayhit.h"
@@ -34,22 +35,22 @@ class Figure {
 class Sphere : public Figure {
     const Vec4 center;
     const float radius;
-    const RGBColor color;
+    const Material material;
 
    public:
-    Sphere(const RGBColor _color, const Vec4 &_center, float _radius)
-        : color(_color), center(_center), radius(_radius) {}
+    Sphere(const Material _material, const Vec4 &_center, float _radius)
+        : material(_material), center(_center), radius(_radius) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
 };
 
 class Plane : public Figure {
     const Vec4 normal;
     const float distToOrigin;
-    const RGBColor color;
+    const Material material;
 
    public:
-    Plane(const RGBColor _color, const Vec4 &_normal, float _distToOrigin)
-        : color(_color), normal(_normal), distToOrigin(_distToOrigin) {}
+    Plane(const Material _material, const Vec4 &_normal, float _distToOrigin)
+        : material(_material), normal(_normal), distToOrigin(_distToOrigin) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
 };
 
@@ -72,13 +73,13 @@ class Triangle : public Figure {
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
 class Box : public Figure {
     const Vec4 bb0, bb1;  // bounding box, 2 points define the cube
-    const RGBColor color;
+    const Material material;
 
    public:
     Box(const Vec4 &_bb0, const Vec4 &_bb1)
-        : color(RGBColor::Black), bb0(_bb0), bb1(_bb1) {}
-    Box(const RGBColor _color, const Vec4 &_bb0, const Vec4 &_bb1)
-        : color(_color), bb0(_bb0), bb1(_bb1) {}
+        : material(Material::none()), bb0(_bb0), bb1(_bb1) {}
+    Box(const Material _material, const Vec4 &_bb0, const Vec4 &_bb1)
+        : material(_material), bb0(_bb0), bb1(_bb1) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
 };
 

@@ -54,14 +54,14 @@ int main(int argc, char** argv) {
 #endif
 
     // Camera camera(origin, forward, up, right);
-    Camera camera(origin, forward, up, width / (float) height);
+    Camera camera(origin, forward, up, width / (float)height);
 
 // shortcuts for getting figure pointers
-#define plane(color, normal, dist) \
-    FigurePtr(new Figures::Plane(color, normal, dist))
-#define sphere(color, pos, radius) \
-    FigurePtr(new Figures::Sphere(color, pos, radius))
-#define box(color, bb0, bb1) FigurePtr(new Figures::Box(color, bb0, bb1))
+#define plane(material, normal, dist) \
+    FigurePtr(new Figures::Plane(material, normal, dist))
+#define sphere(material, pos, radius) \
+    FigurePtr(new Figures::Sphere(material, pos, radius))
+#define box(material, bb0, bb1) FigurePtr(new Figures::Box(material, bb0, bb1))
 
 #if SCENE_NUMBER == 1
     // load & transform spaceship model, get scene kdtree node
@@ -71,18 +71,24 @@ int main(int argc, char** argv) {
     FigurePtr spaceship = spaceshipModel.getFigure(4);
 #endif
 
+    Material whiteLight(true, RGBColor(10000.0f, 10000.0f, 10000.0f));
+    Material whiteDiffuse(false, RGBColor::White * 0.8f);
+    Material greenDiffuse(false, RGBColor::Green * 0.8f);
+    Material redDiffuse(false, RGBColor::Red * 0.8f);
+    Material greyDiffuse(false, RGBColor::White * 0.3f);
+
     // build scene to rootNode
     FigurePtrVector scene = {
 #if SCENE_NUMBER == 0
         // Cornell box walls
-        plane(RGBColor::White, Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f),
-        plane(RGBColor::White, Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f),
-        plane(RGBColor::White, Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f),
-        plane(RGBColor::Green, Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f),
-        plane(RGBColor::Red, Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f),
+        plane(whiteDiffuse, Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f),
+        plane(whiteLight, Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f),
+        plane(whiteDiffuse, Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f),
+        plane(greenDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f),
+        plane(redDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f),
         // Cornell box content
-        sphere(RGBColor::Black, Vec4(1.25f, -1.25f, -1.0f, 1.0f), 0.75f),
-        sphere(RGBColor::Black, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f),
+        sphere(greyDiffuse, Vec4(1.25f, -1.25f, -1.0f, 1.0f), 0.75f),
+        sphere(greyDiffuse, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f),
 #elif SCENE_NUMBER == 1
         spaceship
 #endif

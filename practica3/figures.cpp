@@ -18,7 +18,10 @@ bool Plane::intersection(const Ray &ray, RayHit &hit) const {
             // Intersection in front of the camera
             hit.distance = alpha;
             hit.point = ray.project(alpha);
-            hit.color = this->color;
+            hit.material = &this->material;
+            hit.normal = dot(this->normal, ray.direction) > 0.0f
+                             ? this->normal
+                             : this->normal * -1.0f;
             return true;
         }
     }
@@ -49,14 +52,16 @@ bool Sphere::intersection(const Ray &ray, RayHit &hit) const {
             // Return second hit
             hit.distance = tca + thc;
             hit.point = ray.project(tca + thc);
-            hit.color = this->color;
+            hit.material = &this->material;
+            hit.normal = (hit.point - this->center).normalize();
             return true;
         }
     } else {
         // Return first hit
         hit.distance = tca - thc;
         hit.point = ray.project(tca - thc);
-        hit.color = this->color;
+        hit.material = &this->material;
+        hit.normal = (hit.point - this->center).normalize();
         return true;
     }
 }
@@ -136,7 +141,9 @@ bool Triangle::intersection(const Ray &ray, RayHit &hit) const {
         tex0 = tex0 > 1.0f - 1e-6f ? 1.0f - 1e-6f : tex0;
         tex1 = tex1 < 1e-6f ? 0.0f : tex1;
         tex1 = tex1 > 1.0f - 1e-6f ? 1.0f - 1e-6f : tex1;
-        hit.color = model->emission(tex0, tex1);
+        // TODO
+        hit.material = new Material(
+            false, RGBColor::Black);  // model->emission(tex0, tex1);
         return true;
     } else {
         // Intersection is behind the camera
@@ -162,7 +169,7 @@ bool Box::intersection(const Ray &ray, RayHit &hit) const {
         // If first hit is behind the camera, take the second one
         hit.distance = tmin < 0.0f ? tmax : tmin;
         hit.point = ray.project(hit.distance);
-        hit.color = this->color;
+        hit.material = &this->material;
         return true;
     } else {
         // No hit
