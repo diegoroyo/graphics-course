@@ -6,9 +6,9 @@
 #include <memory>
 #include <random>
 #include <string>
-#include "../lib/geometry.h"
-#include "../lib/ppmimage.h"
 #include "figures.h"
+#include "geometry.h"
+#include "ppmimage.h"
 
 class Camera {
     Vec4 origin, forward, up, right;

@@ -6,10 +6,10 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include "../lib/geometry.h"
-#include "../lib/ppmimage.h"
-#include "../lib/rgbcolor.h"
 #include "figures.h"
+#include "geometry.h"
+#include "ppmimage.h"
+#include "rgbcolor.h"
 
 class PLYModel {
    private:
@@ -28,10 +28,10 @@ class PLYModel {
     // - numIterations > 0: Divide model in half on its biggest axis,
     //                      return KdTreeNode with those two children
     FigurePtr divideNode(const FigurePtrVector &triangles,
-                               const std::vector<int> &findex,
-                               std::vector<Vec4 *>::iterator &vbegin,
-                               std::vector<Vec4 *>::iterator &vend,
-                               int numIterations);
+                         const std::vector<int> &findex,
+                         std::vector<Vec4 *>::iterator &vbegin,
+                         std::vector<Vec4 *>::iterator &vend,
+                         int numIterations);
 
    public:
     PLYModel(const char *filename);

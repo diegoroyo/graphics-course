@@ -5,7 +5,7 @@ MAIN = main
 LIBOBJ = $(patsubst ${LIBDIR}/%.cpp, ${LIBDIR}/${BINDIR}/%.o, $(wildcard ${LIBDIR}/*.cpp))
 PROJOBJ = $(patsubst ./%.cpp, ${BINDIR}/%.o, $(wildcard ./*.cpp))
 
-NOMBREEXE = main
+NOMBREEXE = pathtracer
 
 CPPFLAGS = -O3 -std=c++11 -pthread
 #CPPFLAGS = -ggdb -O0 -std=c++11
@@ -20,10 +20,10 @@ clean:
 	rm -rf ${BINDIR}/*
 
 ${BINDIR}/${NOMBREEXE}: $(LIBOBJ) $(PROJOBJ)
-	${CC} $^ ${CPPFLAGS} -o $@
+	${CC} $^ ${CPPFLAGS} -I ${LIBDIR} -o $@
 	
 ${LIBDIR}/${BINDIR}/%.o: ${LIBDIR}/%.cpp
-	${CC} -c ${CPPFLAGS} $< -o $@
+	${CC} -c ${CPPFLAGS} -I ${LIBDIR} $< -o $@
 
 ${BINDIR}/%.o: %.cpp
-	${CC} -c ${CPPFLAGS} $< -o $@
+	${CC} -c ${CPPFLAGS} -I ${LIBDIR} $< -o $@

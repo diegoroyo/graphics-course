@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../lib/rgbcolor.h"
+#include "rgbcolor.h"
 
 class Material {
    public:

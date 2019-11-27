@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../lib/geometry.h"
+#include "geometry.h"
 #include "material.h"
 
 // Used to save information about figure-ray intersections

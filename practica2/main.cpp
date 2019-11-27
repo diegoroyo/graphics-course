@@ -1,6 +1,6 @@
 #include <memory>
-#include "../lib/ppmimage.h"
-#include "../lib/tonemapper.h"
+#include "ppmimage.h"
+#include "tonemapper.h"
 
 int main(int argc, char** argv) {
     if (argc == 1) {

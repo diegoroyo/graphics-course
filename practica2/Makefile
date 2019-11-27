@@ -20,10 +20,10 @@ clean:
 	rm -rf ${BINDIR}/*
 
 ${BINDIR}/${NOMBREEXE}: $(LIBOBJ) $(PROJOBJ)
-	${CC} $^ ${CPPFLAGS} -o $@
+	${CC} $^ ${CPPFLAGS} -I ${LIBDIR} -o $@
 	
 ${LIBDIR}/${BINDIR}/%.o: ${LIBDIR}/%.cpp
-	${CC} -c ${CPPFLAGS} $< -o $@
+	${CC} -c ${CPPFLAGS} -I ${LIBDIR} $< -o $@
 
 ${BINDIR}/%.o: %.cpp
-	${CC} -c ${CPPFLAGS} $< -o $@
+	${CC} -c ${CPPFLAGS} -I ${LIBDIR} $< -o $@

@@ -1,5 +1,5 @@
+#include "geometry.h"
 #include "station.h"
-#include "../lib/geometry.h"
 
 #include <fstream>
 #include <iostream>
@@ -30,19 +30,23 @@ int main() {
     // calcular v (posicion estacion 2 - estacion 1)
     Vec4 v = station2.positionUCS - station1.positionUCS;
     // pasar v a base de estacion 1 (expresar UCS en base de est. 1)
-    Mat4 cob1 = Mat4::changeOfBasis(station1.i, station1.j, station1.k, station1.positionUCS);
+    Mat4 cob1 = Mat4::changeOfBasis(station1.i, station1.j, station1.k,
+                                    station1.positionUCS);
     Vec4 outDir = (cob1 * v).normalize();
     // lo mismo para estacion 2
-    Mat4 cob2 = Mat4::changeOfBasis(station2.i, station2.j, station2.k, station2.positionUCS);
+    Mat4 cob2 = Mat4::changeOfBasis(station2.i, station2.j, station2.k,
+                                    station2.positionUCS);
     Vec4 incDir = (cob2 * (v * -1.0f)).normalize();
 
     std::cout << "Outgoing direction: " << outDir << std::endl;
     std::cout << "Incoming direction: " << incDir << std::endl;
-    
+
     // se choca con el planeta si prod. escalar k * dir(salida|entrada) es < 0
     // importante que los dos estén en el mismo sistema de coordenadas
-    if (dot(station1.k, v) < 0) std::cout << "Collision in outgoing direction" << std::endl;
-    if (dot(station2.k, v) > 0) std::cout << "Collision in incoming direction" << std::endl;
+    if (dot(station1.k, v) < 0)
+        std::cout << "Collision in outgoing direction" << std::endl;
+    if (dot(station2.k, v) > 0)
+        std::cout << "Collision in incoming direction" << std::endl;
 
     // test para matrices inversas
     Mat4 mat;

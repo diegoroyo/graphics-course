@@ -11,12 +11,12 @@ typedef std::vector<FigurePtr> FigurePtrVector;
 class PLYModel;  // needed for function definitions
 
 #include <limits>
-#include "../lib/geometry.h"
-#include "../lib/rgbcolor.h"
+#include "geometry.h"
 #include "material.h"
 #include "plymodel.h"
 #include "ray.h"
 #include "rayhit.h"
+#include "rgbcolor.h"
 
 namespace Figures {
 
