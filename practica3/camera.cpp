@@ -9,16 +9,16 @@ void printProgress(const std::chrono::nanoseconds &beginTime, float progress) {
     int eta = secs * (1.0f - progress) / progress;
     int tenPcts = progress / 0.1f;  // bar like [####      ] this
     std::printf(
-        " Progress: %3f%% [%s] (Time %d:%02d:%02d, ETA %d:%02d:%02d)      \r",
-        progress * 100,
+        " Progress: %.3f %% [%s] (Time %d:%02d:%02d, ETA %d:%02d:%02d)      \r",
+        progress * 100.0f,
         (std::string(tenPcts, '#') + std::string(10 - tenPcts, ' ')).c_str(),
-        secs / 3600, (secs / 60) % 60, secs % 60, // hh:mm:dd current time
-        eta / 3600, (eta / 60) % 60, eta % 60); // hh:mm:dd estimated time
+        secs / 3600, (secs / 60) % 60, secs % 60,  // hh:mm:dd current time
+        eta / 3600, (eta / 60) % 60, eta % 60);    // hh:mm:dd estimated time
     std::cout << std::flush;
 }
 
 // Generate random real number from 0..1
-float random01() {
+inline float random01() {
     static std::random_device rd;
     static std::mt19937 mtgen(rd());
     static std::uniform_real_distribution<float> random01(0.0f, 1.0f);
@@ -27,7 +27,7 @@ float random01() {
 
 /// Camera ///
 
-Vec4 Camera::cameraToWorld(const Vec4 &v) {
+inline Vec4 Camera::cameraToWorld(const Vec4 &v) {
     // static to it doesn't construct the matrix more than once
     static Mat4 cob(right, up, forward, origin);
     return cob * v;

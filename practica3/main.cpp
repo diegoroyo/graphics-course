@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
     Material whiteDiffuse(false, RGBColor::White * 0.8f);
     Material greenDiffuse(false, RGBColor::Green * 0.8f);
     Material redDiffuse(false, RGBColor::Red * 0.8f);
-    Material greyDiffuse(false, RGBColor::White * 0.5f);
+    Material ballMaterial(false, RGBColor::White * 0.95f);
 
     // build scene to rootNode
     FigurePtrVector scene = {
@@ -87,8 +87,8 @@ int main(int argc, char** argv) {
         plane(greenDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f),
         plane(redDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f),
         // Cornell box content
-        sphere(greyDiffuse, Vec4(1.25f, -1.25f, -1.0f, 1.0f), 0.75f),
-        sphere(greyDiffuse, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f),
+        sphere(ballMaterial, Vec4(1.25f, -1.25f, -1.0f, 1.0f), 0.75f),
+        sphere(ballMaterial, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f),
 #elif SCENE_NUMBER == 1
         spaceship
 #endif
