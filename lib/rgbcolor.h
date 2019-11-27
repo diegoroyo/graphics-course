@@ -21,7 +21,10 @@ class RGBColor {
     constexpr RGBColor(float _r, float _g, float _b) : r(_r), g(_g), b(_b) {}
     void setValues(const RGBColor &other);
     void setValues(const float r, const float g, const float b);
-    inline RGBColor operator*(const float i) const {
+    constexpr RGBColor operator+(const RGBColor &other) const {
+        return RGBColor(r + other.r, g + other.g, b + other.b);
+    }
+    constexpr RGBColor operator*(const float i) const {
         return RGBColor(r * i, g * i, b * i);
     }
     // Transformation from RGB to CIE-L*ab format
