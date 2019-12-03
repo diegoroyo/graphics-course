@@ -71,11 +71,16 @@ int main(int argc, char** argv) {
     FigurePtr spaceship = spaceshipModel.getFigure(4);
 #endif
 
-    Material whiteLight(true, RGBColor(10000.0f, 10000.0f, 10000.0f));
-    Material whiteDiffuse(false, RGBColor::White * 0.8f);
-    Material greenDiffuse(false, RGBColor::Green * 0.8f);
-    Material redDiffuse(false, RGBColor::Red * 0.8f);
-    Material ballMaterial(false, RGBColor::White * 0.95f);
+    MaterialPtr whiteLight =
+        Material::light(RGBColor(10000.0f, 10000.0f, 10000.0f));
+    MaterialPtr whiteDiffuse =
+        Material::phong(RGBColor::White * 0.65f, 0.3f, 0.5f);
+    MaterialPtr greenDiffuse =
+        Material::phong(RGBColor(0.1f, 0.65f, 0.1f), 0.3f, 0.5f);
+    MaterialPtr redDiffuse =
+        Material::phong(RGBColor(0.65f, 0.1f, 0.1f), 0.3f, 0.5f);
+    MaterialPtr ballMaterial =
+        Material::phong(RGBColor::White * 0.25f, 0.7f, 10.0f);
 
     // build scene to rootNode
     FigurePtrVector scene = {
@@ -88,7 +93,7 @@ int main(int argc, char** argv) {
         plane(redDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f),
         // Cornell box content
         sphere(ballMaterial, Vec4(1.25f, -1.25f, -1.0f, 1.0f), 0.75f),
-        sphere(ballMaterial, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f),
+        sphere(ballMaterial, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f)
 #elif SCENE_NUMBER == 1
         spaceship
 #endif

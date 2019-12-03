@@ -39,28 +39,29 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
     RayHit hit;
     if (sceneRootNode->intersection(cameraRay, hit)) {
         if (hit.material->emitsLight) {
-            return hit.material->color;
+            // Return the light emission divided by squared distance
+            // Clamp the distance to [1.0f, +] small distances
+            // don't affect the light
+            float distance = hit.distance > 1.0f ? hit.distance : 1.0f;
+            return hit.material->emission;// * (1.0f / (distance * distance));
         }
 
+        // Roussian roulette probabilities
         float event = random01();
+        float pkd = hit.material->kd.max();
+        float pks = pkd + hit.material->ks;
 
-        if (event < hit.material->color.max()) {
-            // event < kd: difuso
-
-            // Random inclination & azimuth
-            float randIncl = random01();
-            float randAzim = random01();
+        // Random inclination & azimuth
+        float randIncl = random01();
+        float randAzim = random01();
+        if (event < pkd) {  // diffuse event
+            // Inclination & azimuth for uniform cosine sampling
             float incl = std::acos(std::sqrt(randIncl));
             float azim = 2 * M_PI * randAzim;
-            /*
-                PARA LA PROX. VEZ
-                incl = arccos(rand_incl^(1/alpha+1))
-                azim = 2*pi*rand_azim
-            */
 
-            // Local base to hit point
             // TODO poner valor a la normal en figures.cpp (en el resto de
             // cosas)
+            // Local base to hit point
             Vec4 z = hit.normal;
             Vec4 x = cross(z, cameraRay.direction);
             Vec4 y = cross(z, x);
@@ -69,9 +70,34 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
                                            std::sin(incl) * std::sin(azim),
                                            std::cos(incl), 0.0f);
 
-            return hit.material->color *
+            return hit.material->kd *
                    tracePath(Ray(hit.point, rayDirection.normalize()),
                              sceneRootNode, backgroundColor);
+        } else if (event < pks) {  // specular (not perfect, phong) event
+            float incl =
+                std::acos(std::pow(randIncl, 1.0f / (hit.material->alpha + 1)));
+            float azim = 2 * M_PI * randAzim;
+            // Local base to hit point
+            Vec4 z = (hit.normal * 2.0f + cameraRay.direction).normalize();
+            Vec4 x = cross(z, cameraRay.direction);
+            Vec4 y = cross(z, x);
+            Mat4 cob = Mat4::changeOfBasis(x, y, z, hit.point);
+            Vec4 rayDirection = cob * Vec4(std::sin(incl) * std::cos(azim),
+                                           std::sin(incl) * std::sin(azim),
+                                           std::cos(incl), 0.0f);
+
+            // abs(cos incl)^alpha / cos^alpha incl = 1.0f or -1.0f
+            float sign = std::pow(std::cos(incl), hit.material->alpha) > 0.0f
+                             ? 1.0f
+                             : -1.0f;
+            // TODO revisar
+            float azimIncCos = std::abs(dot(cameraRay.direction, z));
+            float azimIncSin = std::sqrt(1.0f - azimIncCos * azimIncCos);
+            return tracePath(Ray(hit.point, rayDirection.normalize()),
+                             sceneRootNode, backgroundColor) *
+                   hit.material->ks * azimIncCos * azimIncSin * 2.0f *
+                   (hit.material->alpha + 2.0f) * sign *
+                   (1.0f / ((hit.material->alpha + 1) + std::sin(incl)));
         } else {
             return RGBColor::Black;
         }
@@ -101,7 +127,7 @@ PPMImage Camera::render(int width, int height, int rpp,
                         const FigurePtr &sceneRootNode,
                         const RGBColor &backgroundColor) {
     // Initialize image with width/height and bg color
-    PPMImage result(width, height, 255, 10000.0f);
+    PPMImage result(width, height, 65535, 10000.0f);
     result.fillPixels(backgroundColor);
 
     // Iterate through [-1, 1] * [-1, 1] (camera's local space)

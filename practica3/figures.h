@@ -35,10 +35,10 @@ class Figure {
 class Sphere : public Figure {
     const Vec4 center;
     const float radius;
-    const Material material;
+    const MaterialPtr material;
 
    public:
-    Sphere(const Material _material, const Vec4 &_center, float _radius)
+    Sphere(const MaterialPtr _material, const Vec4 &_center, float _radius)
         : material(_material), center(_center), radius(_radius) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
 };
@@ -46,10 +46,10 @@ class Sphere : public Figure {
 class Plane : public Figure {
     const Vec4 normal;
     const float distToOrigin;
-    const Material material;
+    const MaterialPtr material;
 
    public:
-    Plane(const Material _material, const Vec4 &_normal, float _distToOrigin)
+    Plane(const MaterialPtr _material, const Vec4 &_normal, float _distToOrigin)
         : material(_material), normal(_normal), distToOrigin(_distToOrigin) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
 };
@@ -73,12 +73,12 @@ class Triangle : public Figure {
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
 class Box : public Figure {
     const Vec4 bb0, bb1;  // bounding box, 2 points define the cube
-    const Material material;
+    const MaterialPtr material;
 
    public:
     Box(const Vec4 &_bb0, const Vec4 &_bb1)
         : material(Material::none()), bb0(_bb0), bb1(_bb1) {}
-    Box(const Material _material, const Vec4 &_bb0, const Vec4 &_bb1)
+    Box(const MaterialPtr _material, const Vec4 &_bb0, const Vec4 &_bb1)
         : material(_material), bb0(_bb0), bb1(_bb1) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
 };

@@ -7,6 +7,6 @@
 struct RayHit {
     Vec4 point;
     float distance;
-    const Material* material;
+    MaterialPtr material;
     Vec4 normal;
 };
