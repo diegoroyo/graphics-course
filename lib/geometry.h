@@ -35,7 +35,7 @@ struct Vec4 {
     constexpr inline Vec4 operator*(const float f) const {
         return Vec4(x * f, y * f, z * f, w * f);
     }
-    constexpr float module() const { return std::sqrt(x * x + y * y + z * z); }
+    constexpr float module() const { return sqrtf(x * x + y * y + z * z); }
     constexpr Vec4 normalize(float l = 1) {
         return Vec4(*this) * (l / module());
     }
@@ -97,21 +97,21 @@ struct Mat4 {
     static constexpr Mat4 rotationX(float rad) {
         return Mat4(std::array<float, 16>(
             {1.0f,           0.0f,           0.0f, 0.0f,
-             0.0f,  std::cos(rad), -std::sin(rad), 0.0f,
-             0.0f,  std::sin(rad),  std::cos(rad), 0.0f,
+             0.0f,  cosf(rad), -sinf(rad), 0.0f,
+             0.0f,  sinf(rad),  cosf(rad), 0.0f,
              0.0f,            0.0f,          0.0f, 1.0f}));
     }
     static constexpr Mat4 rotationY(float rad) {
         return Mat4(std::array<float, 16>(
-            { std::cos(rad), 0.0f,  std::sin(rad), 0.0f,
+            { cosf(rad), 0.0f,  sinf(rad), 0.0f,
                        0.0f, 1.0f,           0.0f, 0.0f,
-             -std::sin(rad), 0.0f,  std::cos(rad), 0.0f,
+             -sinf(rad), 0.0f,  cosf(rad), 0.0f,
                        0.0f, 0.0f,           0.0f, 1.0f}));
     }
     static constexpr Mat4 rotationZ(float rad) {
         return Mat4(std::array<float, 16>(
-            { std::cos(rad), -std::sin(rad), 0.0f, 0.0f,
-              std::sin(rad),  std::cos(rad), 0.0f, 0.0f,
+            { cosf(rad), -sinf(rad), 0.0f, 0.0f,
+              sinf(rad),  cosf(rad), 0.0f, 0.0f,
                        0.0f,           0.0f, 1.0f, 0.0f,
                        0.0f,           0.0f, 0.0f, 1.0f}));
     }

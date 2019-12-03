@@ -42,7 +42,7 @@ bool Sphere::intersection(const Ray &ray, RayHit &hit) const {
         // Ray misses the sphere (d > radius)
         return false;
     }
-    float thc = std::sqrt(radius2 - d2);
+    float thc = sqrtf(radius2 - d2);
     if (tca - thc < 0.0f) {
         // First hit is behind the camera
         if (tca + thc < 0.0f) {

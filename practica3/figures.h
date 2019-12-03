@@ -11,6 +11,7 @@ typedef std::vector<FigurePtr> FigurePtrVector;
 class PLYModel;  // needed for function definitions
 
 #include <limits>
+#include <cmath>
 #include "geometry.h"
 #include "material.h"
 #include "plymodel.h"

@@ -143,12 +143,12 @@ RGBColor RGBColor::lab2rgb(float max) const {
     }
 
     // Clamp values to [0..1] range
-    rgb.r = std::max(0.0f, rgb.r);
-    rgb.r = std::min(1.0f, rgb.r);
-    rgb.g = std::max(0.0f, rgb.g);
-    rgb.g = std::min(1.0f, rgb.g);
-    rgb.b = std::max(0.0f, rgb.b);
-    rgb.b = std::min(1.0f, rgb.b);
+    rgb.r = std::fmax(0.0f, rgb.r);
+    rgb.r = std::fmin(1.0f, rgb.r);
+    rgb.g = std::fmax(0.0f, rgb.g);
+    rgb.g = std::fmin(1.0f, rgb.g);
+    rgb.b = std::fmax(0.0f, rgb.b);
+    rgb.b = std::fmin(1.0f, rgb.b);
 
     return rgb;
 }

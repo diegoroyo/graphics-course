@@ -43,7 +43,7 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
             // Clamp the distance to [1.0f, +] small distances
             // don't affect the light
             float distance = hit.distance > 1.0f ? hit.distance : 1.0f;
-            return hit.material->emission;// * (1.0f / (distance * distance));
+            return hit.material->emission;  // * (1.0f / (distance * distance));
         }
 
         // Roussian roulette probabilities
@@ -56,7 +56,7 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
         float randAzim = random01();
         if (event < pkd) {  // diffuse event
             // Inclination & azimuth for uniform cosine sampling
-            float incl = std::acos(std::sqrt(randIncl));
+            float incl = acosf(sqrtf(randIncl));
             float azim = 2 * M_PI * randAzim;
 
             // TODO poner valor a la normal en figures.cpp (en el resto de
@@ -66,38 +66,37 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
             Vec4 x = cross(z, cameraRay.direction);
             Vec4 y = cross(z, x);
             Mat4 cob = Mat4::changeOfBasis(x, y, z, hit.point);
-            Vec4 rayDirection = cob * Vec4(std::sin(incl) * std::cos(azim),
-                                           std::sin(incl) * std::sin(azim),
-                                           std::cos(incl), 0.0f);
+            Vec4 rayDirection =
+                cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
+                           cosf(incl), 0.0f);
 
             return hit.material->kd *
                    tracePath(Ray(hit.point, rayDirection.normalize()),
                              sceneRootNode, backgroundColor);
         } else if (event < pks) {  // specular (not perfect, phong) event
             float incl =
-                std::acos(std::pow(randIncl, 1.0f / (hit.material->alpha + 1)));
+                acosf(powf(randIncl, 1.0f / (hit.material->alpha + 1)));
             float azim = 2 * M_PI * randAzim;
             // Local base to hit point
             Vec4 z = (hit.normal * 2.0f + cameraRay.direction).normalize();
             Vec4 x = cross(z, cameraRay.direction);
             Vec4 y = cross(z, x);
             Mat4 cob = Mat4::changeOfBasis(x, y, z, hit.point);
-            Vec4 rayDirection = cob * Vec4(std::sin(incl) * std::cos(azim),
-                                           std::sin(incl) * std::sin(azim),
-                                           std::cos(incl), 0.0f);
+            Vec4 rayDirection =
+                cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
+                           cosf(incl), 0.0f);
 
             // abs(cos incl)^alpha / cos^alpha incl = 1.0f or -1.0f
-            float sign = std::pow(std::cos(incl), hit.material->alpha) > 0.0f
-                             ? 1.0f
-                             : -1.0f;
+            float sign =
+                std::pow(cosf(incl), hit.material->alpha) > 0.0f ? 1.0f : -1.0f;
             // TODO revisar
             float azimIncCos = std::abs(dot(cameraRay.direction, z));
-            float azimIncSin = std::sqrt(1.0f - azimIncCos * azimIncCos);
+            float azimIncSin = sqrtf(1.0f - azimIncCos * azimIncCos);
             return tracePath(Ray(hit.point, rayDirection.normalize()),
                              sceneRootNode, backgroundColor) *
                    hit.material->ks * azimIncCos * azimIncSin * 2.0f *
                    (hit.material->alpha + 2.0f) * sign *
-                   (1.0f / ((hit.material->alpha + 1) + std::sin(incl)));
+                   (1.0f / ((hit.material->alpha + 1) + sinf(incl)));
         } else {
             return RGBColor::Black;
         }

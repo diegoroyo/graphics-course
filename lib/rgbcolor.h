@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <cmath>
 #include <iostream>
 
 class RGBColor {
@@ -30,7 +31,7 @@ class RGBColor {
     constexpr RGBColor operator*(const float i) const {
         return RGBColor(r * i, g * i, b * i);
     }
-    inline float max() const { return std::max(r, std::max(g, b)); }
+    inline float max() const { return std::fmax(r, std::fmax(g, b)); }
     // Transformation from RGB to CIE-L*ab format
     RGBColor rgb2lab(float max) const;
     // Transformation from CIE-L*ab to RGB format
