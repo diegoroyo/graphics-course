@@ -20,8 +20,8 @@ bool Plane::intersection(const Ray &ray, RayHit &hit) const {
             hit.point = ray.project(alpha);
             hit.material = this->material;
             hit.normal = dot(this->normal, ray.direction) > 0.0f
-                             ? this->normal
-                             : this->normal * -1.0f;
+                             ? this->normal * -1.0f
+                             : this->normal;
             return true;
         }
     }

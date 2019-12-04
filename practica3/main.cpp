@@ -74,26 +74,29 @@ int main(int argc, char** argv) {
     MaterialPtr whiteLight =
         Material::light(RGBColor(10000.0f, 10000.0f, 10000.0f));
     MaterialPtr whiteDiffuse =
-        Material::phong(RGBColor::White * 0.65f, 0.3f, 0.5f);
+        Material::phong(RGBColor::White * 0.9f, 0.0f);
     MaterialPtr greenDiffuse =
-        Material::phong(RGBColor(0.1f, 0.65f, 0.1f), 0.3f, 0.5f);
+        Material::phong(RGBColor(0.1f, 0.9f, 0.1f), 0.0f);
     MaterialPtr redDiffuse =
-        Material::phong(RGBColor(0.65f, 0.1f, 0.1f), 0.3f, 0.5f);
+        Material::phong(RGBColor(0.9f, 0.1f, 0.1f), 0.0f);
     MaterialPtr ballMaterial =
-        Material::phong(RGBColor::White * 0.25f, 0.7f, 10.0f);
+        Material::phong(RGBColor::Black, 0.0f, 0.0f, 0.99f);
+    MaterialPtr pureBlack = Material::phong(RGBColor::Black, 0.0f, 0.0f);
 
     // build scene to rootNode
     FigurePtrVector scene = {
 #if SCENE_NUMBER == 0
         // Cornell box walls
         plane(whiteDiffuse, Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f),
-        plane(whiteLight, Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f),
-        plane(whiteDiffuse, Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f),
-        plane(greenDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f),
-        plane(redDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f),
+        plane(whiteDiffuse, Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f),
+        plane(ballMaterial, Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f),
+        // plane(pureBlack, Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f),
+        plane(redDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f),
+        plane(greenDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f),
         // Cornell box content
-        sphere(ballMaterial, Vec4(1.25f, -1.25f, -1.0f, 1.0f), 0.75f),
-        sphere(ballMaterial, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f)
+        sphere(whiteLight, Vec4(1.25f, -1.25f, -1.0f, 1.0f), 0.75f),
+        sphere(whiteDiffuse, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f),
+        // sphere(whiteLight, Vec4(0.5f, 2.0f, 0.0f, 1.0f), 1.0f)
 #elif SCENE_NUMBER == 1
         spaceship
 #endif

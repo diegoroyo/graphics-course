@@ -39,17 +39,19 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
     RayHit hit;
     if (sceneRootNode->intersection(cameraRay, hit)) {
         if (hit.material->emitsLight) {
-            // Return the light emission divided by squared distance
-            // Clamp the distance to [1.0f, +] small distances
-            // don't affect the light
-            float distance = hit.distance > 1.0f ? hit.distance : 1.0f;
-            return hit.material->emission;  // * (1.0f / (distance * distance));
+            // Return the light emission
+            #ifdef DEBUG_PATH
+            std::cout << "Light hit on point " << hit.point
+                      << " with normal " << hit.normal << std::endl;
+            #endif
+            return hit.material->emission;
         }
 
         // Roussian roulette probabilities
         float event = random01();
         float pkd = hit.material->kd.max();
-        float pks = pkd + hit.material->ks;
+        float pks = hit.material->ks;
+        float pksp = hit.material->ksp;
 
         // Random inclination & azimuth
         float randIncl = random01();
@@ -70,10 +72,14 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
                 cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
                            cosf(incl), 0.0f);
 
-            return hit.material->kd *
+            #ifdef DEBUG_PATH
+            std::cout << "Diffuse phong on point " << hit.point
+                      << " with normal " << hit.normal << std::endl;
+            #endif
+            return hit.material->kd * (1.0f / pkd) *
                    tracePath(Ray(hit.point, rayDirection.normalize()),
                              sceneRootNode, backgroundColor);
-        } else if (event < pks) {  // specular (not perfect, phong) event
+        } else if (event < pkd + pks) {  // specular (not perfect, phong) event
             float incl =
                 acosf(powf(randIncl, 1.0f / (hit.material->alpha + 1)));
             float azim = 2 * M_PI * randAzim;
@@ -86,21 +92,40 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
                 cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
                            cosf(incl), 0.0f);
 
-            // abs(cos incl)^alpha / cos^alpha incl = 1.0f or -1.0f
-            float sign =
-                std::pow(cosf(incl), hit.material->alpha) > 0.0f ? 1.0f : -1.0f;
-            // TODO revisar
-            float azimIncCos = std::abs(dot(cameraRay.direction, hit.normal));
+            float azimIncCos = dot(rayDirection, hit.normal);
+            if (azimIncCos < 1e-6f) {
+                return RGBColor::Black;
+            }
             float azimIncSin = sqrtf(1.0f - azimIncCos * azimIncCos);
+            #ifdef DEBUG_PATH
+            std::cout << "Specular phong on point " << hit.point
+                      << " with normal " << hit.normal << std::endl;
+            #endif
             return tracePath(Ray(hit.point, rayDirection.normalize()),
                              sceneRootNode, backgroundColor) *
-                   (hit.material->ks * azimIncCos * azimIncSin * 2.0f *
-                   (hit.material->alpha + 2.0f) * sign *
-                   (1.0f / ((hit.material->alpha + 1) + sinf(incl))));
+                   (hit.material->ks * azimIncCos * azimIncSin *
+                    (hit.material->alpha + 2.0f) * (1.0f / pks) *
+                    (1.0f / ((hit.material->alpha + 1) + sinf(incl))));
+        } else if (event < pkd + pks + pksp) {  // perfect specular
+            Vec4 rayDirection =
+                (hit.normal * 2.0f + cameraRay.direction).normalize();
+            #ifdef DEBUG_PATH
+            std::cout << "Perfect specular on point " << hit.point
+                      << " with normal " << hit.normal << std::endl;
+            #endif
+            return tracePath(Ray(hit.point, rayDirection.normalize()),
+                             sceneRootNode, backgroundColor) *
+                   (1.0f / pksp);
         } else {
+            #ifdef DEBUG_PATH
+            std::cout << "Path died :(" << std::endl;
+            #endif
             return RGBColor::Black;
         }
     }
+    #ifdef DEBUG_PATH
+    std::cout << "Ray didn't collide with anything" << std::endl;
+    #endif
     return backgroundColor;
 }
 
@@ -115,6 +140,9 @@ RGBColor Camera::tracePixel(const Vec4 &d0, const Vec4 &deltaX,
         Vec4 direction = d0 + deltaX * randX + deltaY * randY;
         // Trace ray and store mean in result
         Ray ray(this->origin, direction.normalize());
+        #ifdef DEBUG_PATH
+        std::cout << std::endl << "> Ray begins" << std::endl;
+        #endif
         RGBColor rayColor = tracePath(ray, sceneRootNode, backgroundColor);
         pixelColor = pixelColor + rayColor * (1.0f / rpp);
     }
@@ -139,8 +167,7 @@ PPMImage Camera::render(int width, int height, int rpp,
     // Spawn one core per thread and make them consume work as they finish
     int numPixels = width * height;
     volatile std::atomic<int> nextPixel(0);
-    int cores =
-        1;  // std::thread::hardware_concurrency();  // max no. of threads
+    int cores = std::thread::hardware_concurrency();  // max no. of threads
     std::vector<std::future<void>> threadFutures;  // waits for them to finish
     for (int core = 0; core < cores; core++) {
         threadFutures.emplace_back(std::async([&]() {
