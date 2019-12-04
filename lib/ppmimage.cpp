@@ -121,9 +121,12 @@ bool PPMImage::writeFile(const char* filename, bool ldr) const {
                    << int(data[y][x].b * LDR_RESOLUTION) << "     ";
             } else {
                 // Write data in same HDR range
-                os << int(data[y][x].r * colorResolution / max + 0.5f) << " "
-                   << int(data[y][x].g * colorResolution / max + 0.5f) << " "
-                   << int(data[y][x].b * colorResolution / max + 0.5f)
+                float rangeR = std::min(1.0f, data[y][x].r / max);
+                float rangeG = std::min(1.0f, data[y][x].g / max);
+                float rangeB = std::min(1.0f, data[y][x].b / max);
+                os << int(rangeR * colorResolution) << " "
+                   << int(rangeG * colorResolution) << " "
+                   << int(rangeB * colorResolution)
                    << "     ";
             }
         }

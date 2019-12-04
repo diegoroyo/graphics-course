@@ -48,6 +48,9 @@ class PPMImage {
 
     // Initialize image metadata with empty data vector
     void initialize(const int _w, const int _h, const int _c, const float _max);
+    void setMax(const float max) {
+        this->max = max;
+    }
 
     // Read PPM file, store in same object
     bool readFile(const char* filename);

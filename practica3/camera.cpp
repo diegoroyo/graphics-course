@@ -90,13 +90,13 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
             float sign =
                 std::pow(cosf(incl), hit.material->alpha) > 0.0f ? 1.0f : -1.0f;
             // TODO revisar
-            float azimIncCos = std::abs(dot(cameraRay.direction, z));
+            float azimIncCos = std::abs(dot(cameraRay.direction, hit.normal));
             float azimIncSin = sqrtf(1.0f - azimIncCos * azimIncCos);
             return tracePath(Ray(hit.point, rayDirection.normalize()),
                              sceneRootNode, backgroundColor) *
-                   hit.material->ks * azimIncCos * azimIncSin * 2.0f *
+                   (hit.material->ks * azimIncCos * azimIncSin * 2.0f *
                    (hit.material->alpha + 2.0f) * sign *
-                   (1.0f / ((hit.material->alpha + 1) + sinf(incl)));
+                   (1.0f / ((hit.material->alpha + 1) + sinf(incl))));
         } else {
             return RGBColor::Black;
         }
@@ -126,7 +126,7 @@ PPMImage Camera::render(int width, int height, int rpp,
                         const FigurePtr &sceneRootNode,
                         const RGBColor &backgroundColor) {
     // Initialize image with width/height and bg color
-    PPMImage result(width, height, 65535, 10000.0f);
+    PPMImage result(width, height, std::numeric_limits<int>::max());
     result.fillPixels(backgroundColor);
 
     // Iterate through [-1, 1] * [-1, 1] (camera's local space)
@@ -139,7 +139,8 @@ PPMImage Camera::render(int width, int height, int rpp,
     // Spawn one core per thread and make them consume work as they finish
     int numPixels = width * height;
     volatile std::atomic<int> nextPixel(0);
-    int cores = std::thread::hardware_concurrency();  // max no. of threads
+    int cores =
+        1;  // std::thread::hardware_concurrency();  // max no. of threads
     std::vector<std::future<void>> threadFutures;  // waits for them to finish
     for (int core = 0; core < cores; core++) {
         threadFutures.emplace_back(std::async([&]() {
@@ -176,6 +177,15 @@ PPMImage Camera::render(int width, int height, int rpp,
             }
         }
     }
+
+    // Set result's max value to the render's max value
+    float max = 0.0f;
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            max = std::max(max, result.getPixel(x, y).max());
+        }
+    }
+    result.setMax(max);
 
     // Result is saved in PPM image's data
     return result;
