@@ -5,14 +5,13 @@
 #define SCENE_NUMBER 0
 #endif
 
-#define DEBUG_PATH
-
 #include <iostream>
 #include <memory>
 #include "camera.h"
 #include "figures.h"
 #include "material.h"
 #include "plymodel.h"
+#include "scene.h"
 
 int main(int argc, char** argv) {
     if (argc < 9) {
@@ -71,6 +70,8 @@ int main(int argc, char** argv) {
 #define phongSpecular(ks, alpha) BRDFPtr(new PhongSpecular(ks, alpha))
 #define perfectSpecular(ksp) BRDFPtr(new PerfectSpecular(ksp))
 
+    // Add elements to scene
+
 #if SCENE_NUMBER == 1
     // load & transform spaceship model, get scene kdtree node
     PLYModel spaceshipModel("ply/spaceship");
@@ -94,8 +95,8 @@ int main(int argc, char** argv) {
         Material::builder().add(perfectSpecular(0.99f)).build();
     MaterialPtr pureBlack = Material::none();
 
-    // build scene to rootNode
-    FigurePtrVector scene = {
+    // build scene to BVH root node
+    FigurePtrVector sceneElements = {
 #if SCENE_NUMBER == 0
         // Cornell box walls
         plane(whiteDiffuse, Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f),
@@ -107,12 +108,21 @@ int main(int argc, char** argv) {
         // Cornell box content
         sphere(whiteLight, Vec4(1.25f, -1.25f, -1.0f, 1.0f), 0.75f),
         sphere(whiteDiffuse, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f),
-    // sphere(whiteLight, Vec4(0.5f, 2.0f, 0.0f, 1.0f), 1.0f)
 #elif SCENE_NUMBER == 1
         spaceship
 #endif
     };
-    FigurePtr rootNode = FigurePtr(new Figures::BVNode(scene));
+
+    Scene scene(FigurePtr(new Figures::BVNode(sceneElements)));
+
+    // Add points lights to the scene
+
+#if SCENE_NUMBER == 0
+    scene.light(Vec4(1.0f, 1.5f, 0.0f, 1.0f),
+                RGBColor(10000.0f, 10000.0f, 10000.0f));
+#elif SCENE_NUMBER == 1
+    // No lights for now
+#endif
 
 #undef plane
 #undef sphere
@@ -123,8 +133,8 @@ int main(int argc, char** argv) {
 #undef perfectSpecular
 
     // Generate render using argument options and save as PPM
-    PPMImage render =
-        camera.render(width, height, rpp, rootNode, RGBColor::Black);
+
+    PPMImage render = camera.render(width, height, rpp, scene, RGBColor::Black);
     render.writeFile(filenameOut.c_str());
 
     return 0;

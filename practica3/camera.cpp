@@ -25,11 +25,12 @@ inline Vec4 Camera::cameraToWorld(const Vec4 &v) {
     return cob * v;
 }
 
-RGBColor Camera::tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
+RGBColor Camera::tracePath(const Ray &cameraRay, const Scene &scene,
                            const RGBColor &backgroundColor) {
     // Ray from camera's origin to pixel's center
     RayHit hit;
-    if (sceneRootNode->intersection(cameraRay, hit)) {
+    if (scene.root->intersection(cameraRay, hit)) {
+        // Special case: hit a light
         if (hit.material->emitsLight) {
 // Return the light emission
 #ifdef DEBUG_PATH
@@ -39,22 +40,25 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
             return hit.material->emission;
         }
 
-        // Roussian roulette probabilities
+        // Calculate russian roulette event
         BRDFPtr event = hit.material->selectEvent();
-        if (event == nullptr) {
-#ifdef DEBUG_PATH
-            std::cout << "Path died :(" << std::endl;
-#endif
-            return RGBColor::Black;
-        } else {
+        RGBColor eventLight = RGBColor::Black;
+        if (event != nullptr) {
 #ifdef DEBUG_PATH
             std::cout << "Event on point " << hit.point << " with normal "
                       << hit.normal << std::endl;
 #endif
             Vec4 nextDirection = event->nextRay(cameraRay.direction, hit);
             return event->applyBRDF(tracePath(Ray(hit.point, nextDirection),
-                                              sceneRootNode, backgroundColor));
+                                              scene, backgroundColor));
+#ifdef DEBUG_PATH
+        } else {
+            std::cout << "Path died :(" << std::endl;
+#endif
         }
+
+        // Calculate direct light from point light sources
+        return eventLight + scene.directLight(hit.point);
     }
 #ifdef DEBUG_PATH
     std::cout << "Ray didn't collide with anything" << std::endl;
@@ -63,8 +67,7 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
 }
 
 RGBColor Camera::tracePixel(const Vec4 &d0, const Vec4 &deltaX,
-                            const Vec4 &deltaY, int rpp,
-                            const FigurePtr &sceneRootNode,
+                            const Vec4 &deltaY, int rpp, const Scene &scene,
                             const RGBColor &backgroundColor) {
     RGBColor pixelColor(backgroundColor);
     for (int r = 0; r < rpp; ++r) {
@@ -76,15 +79,14 @@ RGBColor Camera::tracePixel(const Vec4 &d0, const Vec4 &deltaX,
 #ifdef DEBUG_PATH
         std::cout << std::endl << "> Ray begins" << std::endl;
 #endif
-        RGBColor rayColor = tracePath(ray, sceneRootNode, backgroundColor);
+        RGBColor rayColor = tracePath(ray, scene, backgroundColor);
         pixelColor = pixelColor + rayColor * (1.0f / rpp);
     }
     return pixelColor;
 }
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
-PPMImage Camera::render(int width, int height, int rpp,
-                        const FigurePtr &sceneRootNode,
+PPMImage Camera::render(int width, int height, int rpp, const Scene &scene,
                         const RGBColor &backgroundColor) {
     // Initialize image with width/height and bg color
     PPMImage result(width, height, std::numeric_limits<int>::max());
@@ -117,7 +119,7 @@ PPMImage Camera::render(int width, int height, int rpp,
                 // Generate rpp rays and store mean in result image
                 result.setPixel(x, y,
                                 tracePixel(direction, deltaX, deltaY, rpp,
-                                           sceneRootNode, backgroundColor));
+                                           scene, backgroundColor));
             }
         }));
     }

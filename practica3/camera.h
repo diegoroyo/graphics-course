@@ -9,6 +9,7 @@
 #include "geometry.h"
 #include "ppmimage.h"
 #include "random.h"
+#include "scene.h"
 
 class Camera {
     Vec4 origin, forward, up, right;
@@ -17,13 +18,13 @@ class Camera {
     Vec4 cameraToWorld(const Vec4 &v);
 
     // Trace the path followed by the cameraRay (multiple hits etc)
-    RGBColor tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
+    RGBColor tracePath(const Ray &cameraRay, const Scene &scene,
                        const RGBColor &backgroundColor);
 
     // Trace multiple (rpp) rays to a pixel defined by box [p0, p1]
     // and return mean color luminance that enters the pixel
     RGBColor tracePixel(const Vec4 &d0, const Vec4 &deltaX, const Vec4 &deltaY,
-                        int rpp, const FigurePtr &sceneRootNode,
+                        int rpp, const Scene &scene,
                         const RGBColor &backgroundColor);
 
    public:
@@ -37,7 +38,6 @@ class Camera {
           right(cross(forward, up).normalize() * up.module() * _aspectRatio) {}
 
     // Generate an image render (see implementation)
-    PPMImage render(int width, int height, int rpp,
-                    const FigurePtr &sceneRootNode,
+    PPMImage render(int width, int height, int rpp, const Scene &scene,
                     const RGBColor &backgroundColor);
 };
