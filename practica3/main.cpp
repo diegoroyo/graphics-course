@@ -16,18 +16,18 @@
 int main(int argc, char** argv) {
     if (argc < 9) {
         std::cerr << "Usage: " << argv[0]
-                  << " -w <width> -h <height> -r <rpp> -o <out_ppm>"
+                  << " -w <width> -h <height> -p <ppp> -o <out_ppm>"
                   << std::endl;
         std::cerr << std::endl;
         std::cerr << "-w Output image width" << std::endl;
         std::cerr << "-h Output image height" << std::endl;
-        std::cerr << "-r Rays per pixel" << std::endl;
+        std::cerr << "-p Paths per pixel" << std::endl;
         std::cerr << "-o Output file (PPM format)" << std::endl;
         return 1;
     }
 
     // Read options
-    int width, height, rpp;
+    int width, height, ppp;
     std::string filenameOut;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-w") == 0) {
@@ -36,8 +36,8 @@ int main(int argc, char** argv) {
         } else if (strcmp(argv[i], "-h") == 0) {
             height = std::stoi(argv[i + 1]);
             i++;
-        } else if (strcmp(argv[i], "-r") == 0) {
-            rpp = std::stoi(argv[i + 1]);
+        } else if (strcmp(argv[i], "-p") == 0) {
+            ppp = std::stoi(argv[i + 1]);
             i++;
         } else if (strcmp(argv[i], "-o") == 0) {
             filenameOut = argv[i + 1];
@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
 
     // Generate render using argument options and save as PPM
 
-    PPMImage render = camera.render(width, height, rpp, scene, RGBColor::Black);
+    PPMImage render = camera.render(width, height, ppp, scene, RGBColor::Black);
     render.writeFile(filenameOut.c_str());
 
     return 0;

@@ -21,10 +21,10 @@ class Camera {
     RGBColor tracePath(const Ray &cameraRay, const Scene &scene,
                        const RGBColor &backgroundColor);
 
-    // Trace multiple (rpp) rays to a pixel defined by box [p0, p1]
+    // Trace multiple (ppp) rays to a pixel defined by box [p0, p1]
     // and return mean color luminance that enters the pixel
     RGBColor tracePixel(const Vec4 &d0, const Vec4 &deltaX, const Vec4 &deltaY,
-                        int rpp, const Scene &scene,
+                        int ppp, const Scene &scene,
                         const RGBColor &backgroundColor);
 
    public:
@@ -38,6 +38,6 @@ class Camera {
           right(cross(forward, up).normalize() * up.module() * _aspectRatio) {}
 
     // Generate an image render (see implementation)
-    PPMImage render(int width, int height, int rpp, const Scene &scene,
+    PPMImage render(int width, int height, int ppp, const Scene &scene,
                     const RGBColor &backgroundColor);
 };

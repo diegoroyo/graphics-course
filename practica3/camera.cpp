@@ -67,10 +67,10 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const Scene &scene,
 }
 
 RGBColor Camera::tracePixel(const Vec4 &d0, const Vec4 &deltaX,
-                            const Vec4 &deltaY, int rpp, const Scene &scene,
+                            const Vec4 &deltaY, int ppp, const Scene &scene,
                             const RGBColor &backgroundColor) {
     RGBColor pixelColor(backgroundColor);
-    for (int r = 0; r < rpp; ++r) {
+    for (int p = 0; p < ppp; ++p) {
         float randX = random01();
         float randY = random01();
         Vec4 direction = d0 + deltaX * randX + deltaY * randY;
@@ -80,13 +80,13 @@ RGBColor Camera::tracePixel(const Vec4 &d0, const Vec4 &deltaX,
         std::cout << std::endl << "> Ray begins" << std::endl;
 #endif
         RGBColor rayColor = tracePath(ray, scene, backgroundColor);
-        pixelColor = pixelColor + rayColor * (1.0f / rpp);
+        pixelColor = pixelColor + rayColor * (1.0f / ppp);
     }
     return pixelColor;
 }
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
-PPMImage Camera::render(int width, int height, int rpp, const Scene &scene,
+PPMImage Camera::render(int width, int height, int ppp, const Scene &scene,
                         const RGBColor &backgroundColor) {
     // Initialize image with width/height and bg color
     PPMImage result(width, height, std::numeric_limits<int>::max());
@@ -116,9 +116,9 @@ PPMImage Camera::render(int width, int height, int rpp, const Scene &scene,
                 int x = pixelIndex % width;
                 int y = pixelIndex / width;
                 Vec4 direction = firstDirection + deltaX * x + deltaY * y;
-                // Generate rpp rays and store mean in result image
+                // Generate ppp rays and store mean in result image
                 result.setPixel(x, y,
-                                tracePixel(direction, deltaX, deltaY, rpp,
+                                tracePixel(direction, deltaX, deltaY, ppp,
                                            scene, backgroundColor));
             }
         }));
