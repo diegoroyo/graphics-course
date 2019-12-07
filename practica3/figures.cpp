@@ -19,9 +19,8 @@ bool Plane::intersection(const Ray &ray, RayHit &hit) const {
             hit.distance = alpha;
             hit.point = ray.project(alpha);
             hit.material = this->material;
-            hit.normal = dot(this->normal, ray.direction) > 0.0f
-                             ? this->normal * -1.0f
-                             : this->normal;
+            hit.enters = dot(this->normal, ray.direction) < 0.0f;
+            hit.normal = hit.enters ? this->normal : this->normal * -1.0f;
             return true;
         }
     }
@@ -49,19 +48,21 @@ bool Sphere::intersection(const Ray &ray, RayHit &hit) const {
             // Second hit is behind the camera, doesn't intersect
             return false;
         } else {
-            // Return second hit
+            // Return second hit (from inside the sphere)
             hit.distance = tca + thc;
             hit.point = ray.project(tca + thc);
             hit.material = this->material;
-            hit.normal = (hit.point - this->center).normalize();
+            hit.normal = (this->center - hit.point).normalize();
+            hit.enters = false;
             return true;
         }
     } else {
-        // Return first hit
+        // Return first hit (from outside the sphere)
         hit.distance = tca - thc;
         hit.point = ray.project(tca - thc);
         hit.material = this->material;
         hit.normal = (hit.point - this->center).normalize();
+        hit.enters = true;
         return true;
     }
 }

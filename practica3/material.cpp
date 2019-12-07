@@ -57,13 +57,25 @@ RGBColor PhongSpecular::applyBRDF(const RGBColor &lightIn) const {
                       (1.0f / ((this->alpha + 1) + sinf(incl))));
 }
 
-/// Perfect Specular ///
+/// Perfect Specular (delta BRDF) ///
 
 Vec4 PerfectSpecular::nextRay(const Vec4 &inDirection, RayHit &hit) {
     return (hit.normal * 2.0f + inDirection).normalize();
 }
 
 RGBColor PerfectSpecular::applyBRDF(const RGBColor &lightIn) const {
+    return lightIn * (1.0f / this->prob);
+}
+
+/// Perfect Refraction (delta BTDF) ///
+
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel
+Vec4 PerfectRefraction::nextRay(const Vec4 &inDirection, RayHit &hit) {
+    // TODO
+    return Vec4();
+}
+
+RGBColor PerfectRefraction::applyBRDF(const RGBColor &lightIn) const {
     return lightIn * (1.0f / this->prob);
 }
 

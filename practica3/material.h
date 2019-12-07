@@ -55,6 +55,16 @@ class PerfectSpecular : public BRDF {
     RGBColor applyBRDF(const RGBColor &lightIn) const override;
 };
 
+class PerfectRefraction : public BRDF {
+    const float mediumRefractiveIndex;
+
+   public:
+    PerfectRefraction(float _krp, float _mediumRefractiveIndex)
+        : BRDF(_krp), mediumRefractiveIndex(_mediumRefractiveIndex) {}
+    Vec4 nextRay(const Vec4 &inDirection, RayHit &hit) override;
+    RGBColor applyBRDF(const RGBColor &lightIn) const override;
+};
+
 /// Material (BRDF join) ///
 
 class Material {

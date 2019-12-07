@@ -9,4 +9,5 @@ struct RayHit {
     float distance;
     MaterialPtr material;
     Vec4 normal;
+    bool enters;
 };
