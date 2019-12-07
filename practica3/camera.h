@@ -4,11 +4,11 @@
 #include <cmath>
 #include <future>
 #include <memory>
-#include <random>
 #include <string>
 #include "figures.h"
 #include "geometry.h"
 #include "ppmimage.h"
+#include "random.h"
 
 class Camera {
     Vec4 origin, forward, up, right;

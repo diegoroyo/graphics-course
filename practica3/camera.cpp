@@ -17,14 +17,6 @@ void printProgress(const std::chrono::nanoseconds &beginTime, float progress) {
     std::cout << std::flush;
 }
 
-// Generate random real number from 0..1
-inline float random01() {
-    static std::random_device rd;
-    static std::mt19937 mtgen(rd());
-    static std::uniform_real_distribution<float> random01(0.0f, 1.0f);
-    return random01(mtgen);
-}
-
 /// Camera ///
 
 inline Vec4 Camera::cameraToWorld(const Vec4 &v) {
@@ -39,93 +31,34 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const FigurePtr &sceneRootNode,
     RayHit hit;
     if (sceneRootNode->intersection(cameraRay, hit)) {
         if (hit.material->emitsLight) {
-            // Return the light emission
-            #ifdef DEBUG_PATH
-            std::cout << "Light hit on point " << hit.point
-                      << " with normal " << hit.normal << std::endl;
-            #endif
+// Return the light emission
+#ifdef DEBUG_PATH
+            std::cout << "Light hit on point " << hit.point << " with normal "
+                      << hit.normal << std::endl;
+#endif
             return hit.material->emission;
         }
 
         // Roussian roulette probabilities
-        float event = random01();
-        float pkd = hit.material->kd.max();
-        float pks = hit.material->ks;
-        float pksp = hit.material->ksp;
-
-        // Random inclination & azimuth
-        float randIncl = random01();
-        float randAzim = random01();
-        if (event < pkd) {  // diffuse event
-            // Inclination & azimuth for uniform cosine sampling
-            float incl = acosf(sqrtf(randIncl));
-            float azim = 2 * M_PI * randAzim;
-
-            // TODO poner valor a la normal en figures.cpp (en el resto de
-            // cosas)
-            // Local base to hit point
-            Vec4 z = hit.normal;
-            Vec4 x = cross(z, cameraRay.direction);
-            Vec4 y = cross(z, x);
-            Mat4 cob = Mat4::changeOfBasis(x, y, z, hit.point);
-            Vec4 rayDirection =
-                cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
-                           cosf(incl), 0.0f);
-
-            #ifdef DEBUG_PATH
-            std::cout << "Diffuse phong on point " << hit.point
-                      << " with normal " << hit.normal << std::endl;
-            #endif
-            return hit.material->kd * (1.0f / pkd) *
-                   tracePath(Ray(hit.point, rayDirection.normalize()),
-                             sceneRootNode, backgroundColor);
-        } else if (event < pkd + pks) {  // specular (not perfect, phong) event
-            float incl =
-                acosf(powf(randIncl, 1.0f / (hit.material->alpha + 1)));
-            float azim = 2 * M_PI * randAzim;
-            // Local base to hit point
-            Vec4 z = (hit.normal * 2.0f + cameraRay.direction).normalize();
-            Vec4 x = cross(z, cameraRay.direction);
-            Vec4 y = cross(z, x);
-            Mat4 cob = Mat4::changeOfBasis(x, y, z, hit.point);
-            Vec4 rayDirection =
-                cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
-                           cosf(incl), 0.0f);
-
-            float azimIncCos = dot(rayDirection, hit.normal);
-            if (azimIncCos < 1e-6f) {
-                return RGBColor::Black;
-            }
-            float azimIncSin = sqrtf(1.0f - azimIncCos * azimIncCos);
-            #ifdef DEBUG_PATH
-            std::cout << "Specular phong on point " << hit.point
-                      << " with normal " << hit.normal << std::endl;
-            #endif
-            return tracePath(Ray(hit.point, rayDirection.normalize()),
-                             sceneRootNode, backgroundColor) *
-                   (hit.material->ks * azimIncCos * azimIncSin *
-                    (hit.material->alpha + 2.0f) * (1.0f / pks) *
-                    (1.0f / ((hit.material->alpha + 1) + sinf(incl))));
-        } else if (event < pkd + pks + pksp) {  // perfect specular
-            Vec4 rayDirection =
-                (hit.normal * 2.0f + cameraRay.direction).normalize();
-            #ifdef DEBUG_PATH
-            std::cout << "Perfect specular on point " << hit.point
-                      << " with normal " << hit.normal << std::endl;
-            #endif
-            return tracePath(Ray(hit.point, rayDirection.normalize()),
-                             sceneRootNode, backgroundColor) *
-                   (1.0f / pksp);
-        } else {
-            #ifdef DEBUG_PATH
+        BRDFPtr event = hit.material->selectEvent();
+        if (event == nullptr) {
+#ifdef DEBUG_PATH
             std::cout << "Path died :(" << std::endl;
-            #endif
+#endif
             return RGBColor::Black;
+        } else {
+#ifdef DEBUG_PATH
+            std::cout << "Event on point " << hit.point << " with normal "
+                      << hit.normal << std::endl;
+#endif
+            Vec4 nextDirection = event->nextRay(cameraRay.direction, hit);
+            return event->applyBRDF(tracePath(Ray(hit.point, nextDirection),
+                                              sceneRootNode, backgroundColor));
         }
     }
-    #ifdef DEBUG_PATH
+#ifdef DEBUG_PATH
     std::cout << "Ray didn't collide with anything" << std::endl;
-    #endif
+#endif
     return backgroundColor;
 }
 
@@ -140,9 +73,9 @@ RGBColor Camera::tracePixel(const Vec4 &d0, const Vec4 &deltaX,
         Vec4 direction = d0 + deltaX * randX + deltaY * randY;
         // Trace ray and store mean in result
         Ray ray(this->origin, direction.normalize());
-        #ifdef DEBUG_PATH
+#ifdef DEBUG_PATH
         std::cout << std::endl << "> Ray begins" << std::endl;
-        #endif
+#endif
         RGBColor rayColor = tracePath(ray, sceneRootNode, backgroundColor);
         pixelColor = pixelColor + rayColor * (1.0f / rpp);
     }

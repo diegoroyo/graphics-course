@@ -1,15 +1,18 @@
-#include <iostream>
-#include <memory>
-#include "camera.h"
-#include "figures.h"
-#include "plymodel.h"
-
 // Scene descriptions:
 // Scene 0: Cornell box
 // Scene 1: PLY model with empty background
 #ifndef SCENE_NUMBER
 #define SCENE_NUMBER 0
 #endif
+
+#define DEBUG_PATH
+
+#include <iostream>
+#include <memory>
+#include "camera.h"
+#include "figures.h"
+#include "material.h"
+#include "plymodel.h"
 
 int main(int argc, char** argv) {
     if (argc < 9) {
@@ -63,6 +66,11 @@ int main(int argc, char** argv) {
     FigurePtr(new Figures::Sphere(material, pos, radius))
 #define box(material, bb0, bb1) FigurePtr(new Figures::Box(material, bb0, bb1))
 
+// shortcuts for materials
+#define phongDiffuse(kd) BRDFPtr(new PhongDiffuse(kd))
+#define phongSpecular(ks, alpha) BRDFPtr(new PhongSpecular(ks, alpha))
+#define perfectSpecular(ksp) BRDFPtr(new PerfectSpecular(ksp))
+
 #if SCENE_NUMBER == 1
     // load & transform spaceship model, get scene kdtree node
     PLYModel spaceshipModel("ply/spaceship");
@@ -74,14 +82,17 @@ int main(int argc, char** argv) {
     MaterialPtr whiteLight =
         Material::light(RGBColor(10000.0f, 10000.0f, 10000.0f));
     MaterialPtr whiteDiffuse =
-        Material::phong(RGBColor::White * 0.9f, 0.0f);
+        Material::builder().add(phongDiffuse(RGBColor::White * 0.9f)).build();
     MaterialPtr greenDiffuse =
-        Material::phong(RGBColor(0.1f, 0.9f, 0.1f), 0.0f);
-    MaterialPtr redDiffuse =
-        Material::phong(RGBColor(0.9f, 0.1f, 0.1f), 0.0f);
+        Material::builder()
+            .add(phongDiffuse(RGBColor(0.1f, 0.9f, 0.1f)))
+            .build();
+    MaterialPtr redDiffuse = Material::builder()
+                                 .add(phongDiffuse(RGBColor(0.9f, 0.1f, 0.1f)))
+                                 .build();
     MaterialPtr ballMaterial =
-        Material::phong(RGBColor::Black, 0.0f, 0.0f, 0.99f);
-    MaterialPtr pureBlack = Material::phong(RGBColor::Black, 0.0f, 0.0f);
+        Material::builder().add(perfectSpecular(0.99f)).build();
+    MaterialPtr pureBlack = Material::none();
 
     // build scene to rootNode
     FigurePtrVector scene = {
@@ -96,7 +107,7 @@ int main(int argc, char** argv) {
         // Cornell box content
         sphere(whiteLight, Vec4(1.25f, -1.25f, -1.0f, 1.0f), 0.75f),
         sphere(whiteDiffuse, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f),
-        // sphere(whiteLight, Vec4(0.5f, 2.0f, 0.0f, 1.0f), 1.0f)
+    // sphere(whiteLight, Vec4(0.5f, 2.0f, 0.0f, 1.0f), 1.0f)
 #elif SCENE_NUMBER == 1
         spaceship
 #endif
@@ -106,6 +117,10 @@ int main(int argc, char** argv) {
 #undef plane
 #undef sphere
 #undef box
+
+#undef phongDiffuse
+#undef phongSpecular
+#undef perfectSpecular
 
     // Generate render using argument options and save as PPM
     PPMImage render =
