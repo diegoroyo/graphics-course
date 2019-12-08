@@ -101,7 +101,8 @@ int main(int argc, char** argv) {
     MaterialPtr ballMaterial = Material::builder()
                                 //    .add(phongDiffuse(RGBColor::White * 0.95f))
                                 //    .add(phongSpecular(0.99f, 10.0f))
-                                .add(perfectSpecular(0.99f))
+                                //    .add(perfectSpecular(0.99f))
+                                   .add(perfectRefraction(0.99f, 1.5))
                                    .build();
     MaterialPtr pureBlack = Material::none();
 

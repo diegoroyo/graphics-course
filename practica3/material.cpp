@@ -81,7 +81,22 @@ RGBColor PerfectSpecular::applyBRDF(const RGBColor &lightIn) const {
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel
 bool PerfectRefraction::nextRay(const Vec4 &inDirection, const RayHit &hit,
                                 Vec4 &outDirection) {
-    // TODO
+    // Incoming ray's cosine and sine with respect to hit.normal
+    float incCos = dot(inDirection, hit.normal) * -1.0f;
+    float incSin = sqrtf(1.0f - incCos * incCos);
+    // Index of Refraction ratio (depends if ray enters medium or leaves)
+    float factor = hit.enters ? 1.0f / this->mediumRefractiveIndex
+                              : this->mediumRefractiveIndex;
+    // Angle of outgoing ray
+    float outSin = incSin * factor;
+    if (outSin > 1.0f) {
+        // Out angle is greater than critical angle (see reference)
+        return false;
+    }
+    float theta2 = asinf(outSin);
+    // m is perpendicular to normal (see reference for details)
+    Vec4 m = (inDirection + hit.normal * incCos) * (1.0f / incSin);
+    outDirection = hit.normal * -1.0f * cosf(theta2) + m * sinf(theta2);
     return true;
 }
 

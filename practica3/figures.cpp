@@ -42,9 +42,9 @@ bool Sphere::intersection(const Ray &ray, RayHit &hit) const {
         return false;
     }
     float thc = sqrtf(radius2 - d2);
-    if (tca - thc < 0.0f) {
+    if (tca - thc < 1e-4f) {
         // First hit is behind the camera
-        if (tca + thc < 0.0f) {
+        if (tca + thc < 1e-4f) {
             // Second hit is behind the camera, doesn't intersect
             return false;
         } else {
