@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
                                 //    .add(phongDiffuse(RGBColor::White * 0.95f))
                                 //    .add(phongSpecular(0.99f, 10.0f))
                                 //    .add(perfectSpecular(0.99f))
-                                   .add(perfectRefraction(0.99f, 1.5))
+                                   .add(perfectRefraction(0.99f, 1.5f))
                                    .build();
     MaterialPtr pureBlack = Material::none();
 
@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
     // Add points lights to the scene
 
 #if SCENE_NUMBER == 0
-    // scene.light(Vec4(1.0f, 1.0f, 0.0f, 1.0f),
+    // scene.light(Vec4(-1.0f, 1.8f, 0.0f, 1.0f),
     //             RGBColor(10000.0f, 10000.0f, 10000.0f));
 #elif SCENE_NUMBER == 1
     // No lights for now
