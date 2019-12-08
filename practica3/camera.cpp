@@ -84,7 +84,7 @@ RGBColor Camera::tracePixel(const Vec4 &d0, const Vec4 &deltaX,
         std::cout << std::endl << "> Ray begins" << std::endl;
 #endif
         RGBColor rayColor = tracePath(ray, scene, backgroundColor);
-        if (!scene.lights.empty() && rayColor.max() > scene.maxLightEmission) {
+        if (rayColor.max() > scene.maxLightEmission) {
             rayColor = rayColor * (scene.maxLightEmission / rayColor.max());
         }
         pixelColor = pixelColor + rayColor * (1.0f / ppp);

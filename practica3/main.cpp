@@ -81,8 +81,10 @@ int main(int argc, char** argv) {
     FigurePtr spaceship = spaceshipModel.getFigure(4);
 #endif
 
+    float maxLight = 10000.0f;
+
     MaterialPtr whiteLight =
-        Material::light(RGBColor(10000.0f, 10000.0f, 10000.0f));
+        Material::light(RGBColor(maxLight, maxLight, maxLight));
     MaterialPtr whiteDiffuse =
         Material::builder().add(phongDiffuse(RGBColor::White * 0.5f)).build();
     MaterialPtr whiteMirror = Material::builder()
@@ -99,10 +101,10 @@ int main(int argc, char** argv) {
             .add(phongDiffuse(RGBColor(0.5f, 0.1f, 0.1f)))
             .build();
     MaterialPtr ballMaterial = Material::builder()
-                                //    .add(phongDiffuse(RGBColor::White * 0.95f))
-                                //    .add(phongSpecular(0.99f, 10.0f))
-                                //    .add(perfectSpecular(0.99f))
-                                   .add(perfectRefraction(0.99f, 1.5f))
+                                   .add(phongDiffuse(RGBColor(0.05f, 0.05f, 0.5f)))
+                                   .add(phongSpecular(0.29f, 5.0f))
+                                   .add(perfectSpecular(0.2f))
+                                //    .add(perfectRefraction(0.79f, 1.5f))
                                    .build();
     MaterialPtr pureBlack = Material::none();
 
@@ -117,21 +119,21 @@ int main(int argc, char** argv) {
         plane(redDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f),
         plane(greenDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f),
         // Cornell box content
-        sphere(ballMaterial, Vec4(1.25f, -1.25f, -1.0f, 1.0f), 0.75f),
-        sphere(ballMaterial, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f),
+        sphere(ballMaterial, Vec4(1.25f, -1.0f, -1.0f, 1.0f), 0.75f),
+        sphere(ballMaterial, Vec4(0.75f, 0.0f, 1.0f, 1.0f), 0.75f),
     // sphere(whiteLight, Vec4(1.0f, 2.0f, 0.0f, 1.0f), 0.5f)
 #elif SCENE_NUMBER == 1
         spaceship
 #endif
     };
 
-    Scene scene(FigurePtr(new Figures::BVNode(sceneElements)));
+    Scene scene(FigurePtr(new Figures::BVNode(sceneElements)), maxLight);
 
     // Add points lights to the scene
 
 #if SCENE_NUMBER == 0
     // scene.light(Vec4(-1.0f, 1.8f, 0.0f, 1.0f),
-    //             RGBColor(10000.0f, 10000.0f, 10000.0f));
+    //             RGBColor(maxLight, maxLight, maxLight));
 #elif SCENE_NUMBER == 1
     // No lights for now
 #endif

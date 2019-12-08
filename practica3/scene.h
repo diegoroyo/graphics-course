@@ -18,7 +18,8 @@ class Scene {
     std::vector<PointLight> lights;
     float maxLightEmission;
 
-    Scene(const FigurePtr &_rootNode) : root(_rootNode), lights(), maxLightEmission(0.0f) {}
+    Scene(const FigurePtr &_rootNode, const float _maxLightEmission = 0.0f)
+        : root(_rootNode), lights(), maxLightEmission(_maxLightEmission) {}
 
     // Add a new light to the scene
     void light(const Vec4 &point, const RGBColor &emission) {
