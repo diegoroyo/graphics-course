@@ -68,7 +68,8 @@ struct Mat4 {
     constexpr Mat4() : raw() {}                 // zero-constructor
     constexpr Mat4(std::array<float, 16> _raw)  // all elements constructor
         : raw(_raw) {}
-    constexpr Mat4(Vec4 &u, Vec4 &v, Vec4 &w, Vec4 &o)  // columns constructor
+    constexpr Mat4(const Vec4 &u, const Vec4 &v,  // columns constructor
+                   const Vec4 &w, const Vec4 &o) 
         : raw({u.x, v.x, w.x, o.x,
                u.y, v.y, w.y, o.y,
                u.z, v.z, w.z, o.z,
@@ -104,21 +105,22 @@ struct Mat4 {
     static constexpr Mat4 rotationY(float rad) {
         return Mat4(std::array<float, 16>(
             { cosf(rad), 0.0f,  sinf(rad), 0.0f,
-                       0.0f, 1.0f,           0.0f, 0.0f,
+                   0.0f, 1.0f,       0.0f, 0.0f,
              -sinf(rad), 0.0f,  cosf(rad), 0.0f,
-                       0.0f, 0.0f,           0.0f, 1.0f}));
+                   0.0f, 0.0f,       0.0f, 1.0f}));
     }
     static constexpr Mat4 rotationZ(float rad) {
         return Mat4(std::array<float, 16>(
             { cosf(rad), -sinf(rad), 0.0f, 0.0f,
               sinf(rad),  cosf(rad), 0.0f, 0.0f,
-                       0.0f,           0.0f, 1.0f, 0.0f,
-                       0.0f,           0.0f, 0.0f, 1.0f}));
+                   0.0f,       0.0f, 1.0f, 0.0f,
+                   0.0f,       0.0f, 0.0f, 1.0f}));
     }
     // Change to basis uvw with origin o
     // If directions/points are correct, then
     //   uw = vw = ww = 0, ow = 1
-    static constexpr Mat4 changeOfBasis(Vec4 &u, Vec4 &v, Vec4 &w, Vec4 &o) {
+    static constexpr Mat4 changeOfBasis(const Vec4 &u, const Vec4 &v,
+                                        const Vec4 &w, const Vec4 &o) {
         return Mat4(u, v, w, o);
     }
 

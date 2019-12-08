@@ -1,5 +1,7 @@
 #include "camera.h"
 
+//#define DEBUG_PATH
+
 // Prints fancy progress bar to stdout
 void printProgress(const std::chrono::nanoseconds &beginTime, float progress) {
     // Compare endTime to beginTime
@@ -42,23 +44,25 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const Scene &scene,
 
         // Calculate russian roulette event
         BRDFPtr event = hit.material->selectEvent();
-        RGBColor eventLight = RGBColor::Black;
-        if (event != nullptr) {
+        RGBColor directLight = scene.directLight(hit.point);
+        Vec4 nextDirection;
+        if (event != nullptr &&
+            event->nextRay(cameraRay.direction, hit, nextDirection)) {
 #ifdef DEBUG_PATH
             std::cout << "Event on point " << hit.point << " with normal "
                       << hit.normal << std::endl;
 #endif
-            Vec4 nextDirection = event->nextRay(cameraRay.direction, hit);
             return event->applyBRDF(tracePath(Ray(hit.point, nextDirection),
-                                              scene, backgroundColor));
+                                              scene, backgroundColor) +
+                                    directLight);
 #ifdef DEBUG_PATH
         } else {
             std::cout << "Path died :(" << std::endl;
 #endif
         }
 
-        // Calculate direct light from point light sources
-        return eventLight + scene.directLight(hit.point);
+        // Path died for one reason or another, only return direct light
+        return RGBColor::Black;
     }
 #ifdef DEBUG_PATH
     std::cout << "Ray didn't collide with anything" << std::endl;
@@ -102,7 +106,8 @@ PPMImage Camera::render(int width, int height, int ppp, const Scene &scene,
     // Spawn one core per thread and make them consume work as they finish
     int numPixels = width * height;
     volatile std::atomic<int> nextPixel(0);
-    int cores = std::thread::hardware_concurrency();  // max no. of threads
+    int cores =
+        1;  // std::thread::hardware_concurrency();  // max no. of threads
     std::vector<std::future<void>> threadFutures;  // waits for them to finish
     for (int core = 0; core < cores; core++) {
         threadFutures.emplace_back(std::async([&]() {

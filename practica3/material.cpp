@@ -2,7 +2,8 @@
 
 /// Phong Diffuse ///
 
-Vec4 PhongDiffuse::nextRay(const Vec4 &inDirection, RayHit &hit) {
+bool PhongDiffuse::nextRay(const Vec4 &inDirection, const RayHit &hit,
+                           Vec4 &outDirection) {
     // Random inclination & azimuth
     float randIncl = random01();
     float randAzim = random01();
@@ -12,11 +13,12 @@ Vec4 PhongDiffuse::nextRay(const Vec4 &inDirection, RayHit &hit) {
 
     // Local base to hit point
     Vec4 z = hit.normal;
-    Vec4 x = cross(z, inDirection);
+    Vec4 x = cross(z, inDirection).normalize();
     Vec4 y = cross(z, x);
-    Mat4 cob = Mat4::changeOfBasis(x, y, z, hit.point);
-    return cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
-                      cosf(incl), 0.0f);
+    Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
+    outDirection = cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
+                              cosf(incl), 0.0f);
+    return true;
 }
 
 RGBColor PhongDiffuse::applyBRDF(const RGBColor &lightIn) const {
@@ -25,7 +27,8 @@ RGBColor PhongDiffuse::applyBRDF(const RGBColor &lightIn) const {
 
 /// Phong Specular ///
 
-Vec4 PhongSpecular::nextRay(const Vec4 &inDirection, RayHit &hit) {
+bool PhongSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
+                            Vec4 &outDirection) {
     // Random inclination & azimuth
     float randIncl = random01();
     float randAzim = random01();
@@ -34,24 +37,27 @@ Vec4 PhongSpecular::nextRay(const Vec4 &inDirection, RayHit &hit) {
     float azim = 2 * M_PI * randAzim;
 
     // Save for next iteration
-    this->tempAzimIncCos = dot(inDirection, hit.normal);
+    this->tempAzimIncCos = dot(inDirection, hit.normal) * -1.0f;
     this->tempIncl = incl;
 
     // Local base to hit point
     Vec4 z = (hit.normal * 2.0f + inDirection).normalize();
-    Vec4 x = cross(z, inDirection);
+    Vec4 x = cross(z, inDirection).normalize();
     Vec4 y = cross(z, x);
-    Mat4 cob = Mat4::changeOfBasis(x, y, z, hit.point);
-    return cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
-                      cosf(incl), 0.0f);
+    Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
+    outDirection = cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
+                              cosf(incl), 0.0f);
+    this->tempIncl = dot(outDirection, hit.normal);
+    if (tempIncl < 1e-6f) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 RGBColor PhongSpecular::applyBRDF(const RGBColor &lightIn) const {
     float incl = this->tempIncl;
     float azimIncCos = this->tempAzimIncCos;
-    if (azimIncCos < 1e-6f) {
-        return RGBColor::Black;
-    }
     float azimIncSin = sqrtf(1.0f - azimIncCos * azimIncCos);
     return lightIn * (azimIncCos * azimIncSin * (this->alpha + 2.0f) *
                       (1.0f / ((this->alpha + 1) + sinf(incl))));
@@ -59,8 +65,11 @@ RGBColor PhongSpecular::applyBRDF(const RGBColor &lightIn) const {
 
 /// Perfect Specular (delta BRDF) ///
 
-Vec4 PerfectSpecular::nextRay(const Vec4 &inDirection, RayHit &hit) {
-    return (hit.normal * 2.0f + inDirection).normalize();
+bool PerfectSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
+                              Vec4 &outDirection) {
+    outDirection =
+        inDirection - hit.normal * dot(inDirection, hit.normal) * 2.0f;
+    return true;
 }
 
 RGBColor PerfectSpecular::applyBRDF(const RGBColor &lightIn) const {
@@ -70,9 +79,10 @@ RGBColor PerfectSpecular::applyBRDF(const RGBColor &lightIn) const {
 /// Perfect Refraction (delta BTDF) ///
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel
-Vec4 PerfectRefraction::nextRay(const Vec4 &inDirection, RayHit &hit) {
+bool PerfectRefraction::nextRay(const Vec4 &inDirection, const RayHit &hit,
+                                Vec4 &outDirection) {
     // TODO
-    return Vec4();
+    return true;
 }
 
 RGBColor PerfectRefraction::applyBRDF(const RGBColor &lightIn) const {

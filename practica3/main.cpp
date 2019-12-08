@@ -69,6 +69,7 @@ int main(int argc, char** argv) {
 #define phongDiffuse(kd) BRDFPtr(new PhongDiffuse(kd))
 #define phongSpecular(ks, alpha) BRDFPtr(new PhongSpecular(ks, alpha))
 #define perfectSpecular(ksp) BRDFPtr(new PerfectSpecular(ksp))
+#define perfectRefraction(krp, index) BRDFPtr(new PerfectRefraction(krp, index))
 
     // Add elements to scene
 
@@ -83,16 +84,25 @@ int main(int argc, char** argv) {
     MaterialPtr whiteLight =
         Material::light(RGBColor(10000.0f, 10000.0f, 10000.0f));
     MaterialPtr whiteDiffuse =
-        Material::builder().add(phongDiffuse(RGBColor::White * 0.9f)).build();
+        Material::builder().add(phongDiffuse(RGBColor::White * 0.5f)).build();
+    MaterialPtr whiteMirror = Material::builder()
+                                  .add(phongDiffuse(RGBColor::White * 0.1f))
+                                  .add(phongSpecular(0.5f, 3.0f))
+                                  .add(perfectSpecular(0.35f))
+                                  .build();
     MaterialPtr greenDiffuse =
         Material::builder()
-            .add(phongDiffuse(RGBColor(0.1f, 0.9f, 0.1f)))
+            .add(phongDiffuse(RGBColor(0.1f, 0.5f, 0.1f)))
             .build();
-    MaterialPtr redDiffuse = Material::builder()
-                                 .add(phongDiffuse(RGBColor(0.9f, 0.1f, 0.1f)))
-                                 .build();
-    MaterialPtr ballMaterial =
-        Material::builder().add(perfectSpecular(0.99f)).build();
+    MaterialPtr redDiffuse =
+        Material::builder()
+            .add(phongDiffuse(RGBColor(0.5f, 0.1f, 0.1f)))
+            .build();
+    MaterialPtr ballMaterial = Material::builder()
+                                //    .add(phongDiffuse(RGBColor::White * 0.95f))
+                                //    .add(phongSpecular(0.99f, 10.0f))
+                                .add(perfectSpecular(0.99f))
+                                   .build();
     MaterialPtr pureBlack = Material::none();
 
     // build scene to BVH root node
@@ -100,14 +110,15 @@ int main(int argc, char** argv) {
 #if SCENE_NUMBER == 0
         // Cornell box walls
         plane(whiteDiffuse, Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f),
-        plane(whiteDiffuse, Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f),
-        plane(ballMaterial, Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f),
+        plane(whiteLight, Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f),
+        plane(whiteDiffuse, Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f),
         // plane(pureBlack, Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f),
         plane(redDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f),
         plane(greenDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f),
         // Cornell box content
-        sphere(whiteLight, Vec4(1.25f, -1.25f, -1.0f, 1.0f), 0.75f),
-        sphere(whiteDiffuse, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f),
+        sphere(ballMaterial, Vec4(1.25f, -1.25f, -1.0f, 1.0f), 0.75f),
+        sphere(ballMaterial, Vec4(0.75f, -1.25f, 1.0f, 1.0f), 0.75f),
+    // sphere(whiteLight, Vec4(1.0f, 2.0f, 0.0f, 1.0f), 0.5f)
 #elif SCENE_NUMBER == 1
         spaceship
 #endif
@@ -118,8 +129,8 @@ int main(int argc, char** argv) {
     // Add points lights to the scene
 
 #if SCENE_NUMBER == 0
-    scene.light(Vec4(1.0f, 1.5f, 0.0f, 1.0f),
-                RGBColor(10000.0f, 10000.0f, 10000.0f));
+    // scene.light(Vec4(1.0f, 1.0f, 0.0f, 1.0f),
+    //             RGBColor(10000.0f, 10000.0f, 10000.0f));
 #elif SCENE_NUMBER == 1
     // No lights for now
 #endif
@@ -131,6 +142,7 @@ int main(int argc, char** argv) {
 #undef phongDiffuse
 #undef phongSpecular
 #undef perfectSpecular
+#undef perfectRefraction
 
     // Generate render using argument options and save as PPM
 

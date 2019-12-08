@@ -22,7 +22,8 @@ class BRDF {
 
    public:
     const float prob;
-    virtual Vec4 nextRay(const Vec4 &inDirection, RayHit &hit) = 0;
+    virtual bool nextRay(const Vec4 &inDirection, const RayHit &hit,
+                         Vec4 &outDirection) = 0;
     virtual RGBColor applyBRDF(const RGBColor &lightIn) const = 0;
 };
 
@@ -32,7 +33,8 @@ class PhongDiffuse : public BRDF {
 
     PhongDiffuse(const RGBColor &_kd)
         : BRDF(_kd.max()), kdProb(_kd * (1.0f / _kd.max())) {}
-    Vec4 nextRay(const Vec4 &inDirection, RayHit &hit) override;
+    bool nextRay(const Vec4 &inDirection, const RayHit &hit,
+                 Vec4 &outDirection) override;
     RGBColor applyBRDF(const RGBColor &lightIn) const override;
 };
 
@@ -44,14 +46,16 @@ class PhongSpecular : public BRDF {
     const float alpha;
 
     PhongSpecular(float _ks, float _alpha) : BRDF(_ks), alpha(_alpha) {}
-    Vec4 nextRay(const Vec4 &inDirection, RayHit &hit) override;
+    bool nextRay(const Vec4 &inDirection, const RayHit &hit,
+                 Vec4 &outDirection) override;
     RGBColor applyBRDF(const RGBColor &lightIn) const override;
 };
 
 class PerfectSpecular : public BRDF {
    public:
     PerfectSpecular(float _ksp) : BRDF(_ksp) {}
-    Vec4 nextRay(const Vec4 &inDirection, RayHit &hit) override;
+    bool nextRay(const Vec4 &inDirection, const RayHit &hit,
+                 Vec4 &outDirection) override;
     RGBColor applyBRDF(const RGBColor &lightIn) const override;
 };
 
@@ -61,7 +65,8 @@ class PerfectRefraction : public BRDF {
    public:
     PerfectRefraction(float _krp, float _mediumRefractiveIndex)
         : BRDF(_krp), mediumRefractiveIndex(_mediumRefractiveIndex) {}
-    Vec4 nextRay(const Vec4 &inDirection, RayHit &hit) override;
+    bool nextRay(const Vec4 &inDirection, const RayHit &hit,
+                 Vec4 &outDirection) override;
     RGBColor applyBRDF(const RGBColor &lightIn) const override;
 };
 
