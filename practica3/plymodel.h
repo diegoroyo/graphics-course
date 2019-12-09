@@ -1,15 +1,15 @@
 #pragma once
 
-#include <memory>
-#include <vector>
 #include <algorithm>
 #include <array>
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <vector>
 #include "figures.h"
 #include "geometry.h"
-#include "plymaterial.h"
 #include "rgbcolor.h"
+#include "uvmaterial.h"
 
 class PLYModel {
    private:
@@ -17,7 +17,7 @@ class PLYModel {
     std::vector<std::array<int, 3>> faces;
     std::vector<std::array<float, 2>> uvs;
 
-    const PLYMaterialPtr plyMaterial;
+    const UVMaterialPtr uvMaterial;
 
     // Find bounding box of all faces whose indexes are in findex
     // Box defined as 2 points: min (bb0) and max (bb1)
@@ -34,7 +34,7 @@ class PLYModel {
                          int numIterations);
 
    public:
-    PLYModel(const char *filename, const PLYMaterialPtr &plyMaterial);
+    PLYModel(const char *filename, const UVMaterialPtr &uvMaterial);
 
     inline int nverts() const { return verts.size(); }
     inline int nfaces() const { return faces.size(); }
@@ -44,9 +44,9 @@ class PLYModel {
     inline std::array<float, 2> uv(int i) const { return uvs[i]; }
     // Diffuse texture RGB color given UV coordinates
     inline MaterialPtr material(float uvx, float uvy) const {
-        int pixelX = plyMaterial->width * uvx;
-        int pixelY = plyMaterial->height * uvy;
-        return plyMaterial->data[pixelY][pixelX];
+        int pixelX = uvMaterial->width * uvx;
+        int pixelY = uvMaterial->height * uvy;
+        return uvMaterial->data[pixelY][pixelX];
     }
 
     // Apply model matrix to all vertices

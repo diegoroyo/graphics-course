@@ -1,7 +1,7 @@
 #include "plymodel.h"
 
-PLYModel::PLYModel(const char *filename, const PLYMaterialPtr &_plyMaterial)
-    : plyMaterial(_plyMaterial) {
+PLYModel::PLYModel(const char *filename, const UVMaterialPtr &_uvMaterial)
+    : uvMaterial(_uvMaterial) {
     std::ifstream is(filename);
     if (!is.is_open()) {
         std::cerr << "Can't open file " << filename << std::endl;

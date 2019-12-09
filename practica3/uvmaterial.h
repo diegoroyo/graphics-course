@@ -7,53 +7,53 @@
 typedef std::vector<std::vector<MaterialPtr>> Texture;
 typedef std::vector<std::vector<MaterialBuilder>> TextureBuilder;
 typedef std::shared_ptr<TextureBuilder> TextureBuilderPtr;
-class PLYMaterial;
-typedef std::shared_ptr<PLYMaterial> PLYMaterialPtr;
+class UVMaterial;
+typedef std::shared_ptr<UVMaterial> UVMaterialPtr;
 
 // Extends Material class for PLY models
 // wxh matrix of materials which is UV mapped to model
 
-// helper class for PLYMaterial
-class PLYMaterialBuilder {
+// helper class for UVMaterial
+class UVMaterialBuilder {
    private:
-    const PLYMaterialPtr texturePtr;     // result texture
+    const UVMaterialPtr texturePtr;     // result texture
     const TextureBuilderPtr builderPtr;  // texture being built
     float accumProb;                     // accumulated probability
     const int height, width;             // dimensions of texture
 
-    PLYMaterialBuilder(int _width, int _height,
-                       const PLYMaterialPtr &_texturePtr,
+    UVMaterialBuilder(int _width, int _height,
+                       const UVMaterialPtr &_texturePtr,
                        const TextureBuilderPtr &_builderPtr)
         : texturePtr(_texturePtr),
           builderPtr(_builderPtr),
           accumProb(0.0f),
           height(_height),
           width(_width) {}
-    friend class PLYMaterial;
+    friend class UVMaterial;
 
     void addBRDF(const BRDFPtr &brdf);
 
    public:
     // Two variants of each function: texture UV mapping and constant
     // Same coefficientes for all the model
-    PLYMaterialBuilder addPhongDiffuse(const RGBColor &kd);
-    PLYMaterialBuilder addPhongSpecular(const float ks, const float alpha);
-    PLYMaterialBuilder addPerfectSpecular(const float ksp);
-    PLYMaterialBuilder addPerfectRefraction(const float krp,
+    UVMaterialBuilder addPhongDiffuse(const RGBColor &kd);
+    UVMaterialBuilder addPhongSpecular(const float ks, const float alpha);
+    UVMaterialBuilder addPerfectSpecular(const float ksp);
+    UVMaterialBuilder addPerfectRefraction(const float krp,
                                             const float mediumRefractiveIndex);
     // UV mapped for the model
-    PLYMaterialBuilder addPhongDiffuse(const char *diffuseFilename);
+    UVMaterialBuilder addPhongDiffuse(const char *diffuseFilename);
 
-    PLYMaterialPtr build();
+    UVMaterialPtr build();
 };
 
-class PLYMaterial {
+class UVMaterial {
    public:
     int width, height;
     Texture data;
 
    private:
-    PLYMaterial(int _width, int _height) : width(_width), height(_height) {
+    UVMaterial(int _width, int _height) : width(_width), height(_height) {
         data.resize(height);
         for (int y = 0; y < height; y++) {
             data[y].resize(width, Material::none());
@@ -61,9 +61,9 @@ class PLYMaterial {
     }
 
    public:
-    static PLYMaterialBuilder builder(int width = 1, int height = 1) {
-        PLYMaterialPtr texturePtr =
-            PLYMaterialPtr(new PLYMaterial(width, height));
+    static UVMaterialBuilder builder(int width = 1, int height = 1) {
+        UVMaterialPtr texturePtr =
+            UVMaterialPtr(new UVMaterial(width, height));
         TextureBuilderPtr builderPtr =
             TextureBuilderPtr(new TextureBuilder(height));
         for (int y = 0; y < height; y++) {
@@ -74,6 +74,6 @@ class PLYMaterial {
                 (*builderPtr)[y][x] = Material::builder();
             }
         }
-        return PLYMaterialBuilder(width, height, texturePtr, builderPtr);
+        return UVMaterialBuilder(width, height, texturePtr, builderPtr);
     }
 };

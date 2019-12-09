@@ -11,8 +11,8 @@
 #include "figures.h"
 #include "material.h"
 #include "plymodel.h"
-#include "plymaterial.h"
 #include "scene.h"
+#include "uvmaterial.h"
 
 int main(int argc, char** argv) {
     if (argc < 9) {
@@ -76,13 +76,13 @@ int main(int argc, char** argv) {
 
 #if SCENE_NUMBER == 1
     // load & transform spaceship model, get scene kdtree node
-    PLYMaterialPtr texture =
-        PLYMaterial::builder()
-        // PLYMaterial::builder(512, 512)
-        // .addPhongDiffuse("ply/spaceship_diffuse.ppm")
-        .addPerfectSpecular(0.15f)
-        .addPerfectRefraction(0.8f, 1.5f)
-        .build();
+    UVMaterialPtr texture =
+        UVMaterial::builder()
+            // UVMaterial::builder(512, 512)
+            // .addPhongDiffuse("ply/spaceship_diffuse.ppm")
+            .addPerfectSpecular(0.15f)
+            .addPerfectRefraction(0.8f, 1.5f)
+            .build();
 
     PLYModel spaceshipModel("ply/spaceship.ply", texture);
     spaceshipModel.transform(Mat4::translation(1.0f, -0.5f, 0.0f) *
@@ -111,13 +111,12 @@ int main(int argc, char** argv) {
         Material::builder()
             .add(phongDiffuse(RGBColor(0.5f, 0.02f, 0.02f)))
             .build();
-    MaterialPtr ballMaterial =
-        Material::builder()
-            // .add(phongDiffuse(RGBColor(0.05f, 0.05f, 0.5f)))
-            // .add(phongSpecular(0.29f, 5.0f))
-            .add(perfectSpecular(0.05f))
-            .add(perfectRefraction(0.9f, 1.5f))
-            .build();
+    MaterialPtr ballMaterial = Material::builder()
+                                   // .add(phongDiffuse(RGBColor(0.05f, 0.05f,
+                                   // 0.5f))) .add(phongSpecular(0.29f, 5.0f))
+                                   .add(perfectSpecular(0.05f))
+                                   .add(perfectRefraction(0.9f, 1.5f))
+                                   .build();
     MaterialPtr pureBlack = Material::none();
 
     // build scene to BVH root node
