@@ -106,6 +106,17 @@ RGBColor PerfectRefraction::applyBRDF(const RGBColor &lightIn) const {
 
 /// Material ///
 
+MaterialBuilder MaterialBuilder::add(const BRDFPtr &brdf) {
+    ptr->brdfs.push_back(brdf);
+    accumProb += brdf->prob;
+    ptr->probs.push_back(accumProb);
+    if (accumProb >= 1.0f) {
+        std::cout << "Warning: material has event probabilities"
+                  << " that sum higher than 1" << std::endl;
+    }
+    return *this;
+}
+
 BRDFPtr Material::selectEvent() {
     float event = random01();
     for (int i = 0; i < this->probs.size(); i++) {

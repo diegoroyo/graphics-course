@@ -1,8 +1,8 @@
 #include "plymodel.h"
 
-PLYModel::PLYModel(const char *filename) {
-    std::string plyFilename = std::string(filename) + ".ply";
-    std::ifstream is(plyFilename);
+PLYModel::PLYModel(const char *filename, const PLYMaterialPtr &_plyMaterial)
+    : plyMaterial(_plyMaterial) {
+    std::ifstream is(filename);
     if (!is.is_open()) {
         std::cerr << "Can't open file " << filename << std::endl;
         is.close();
@@ -116,11 +116,6 @@ PLYModel::PLYModel(const char *filename) {
         return;
     }
     is.close();
-
-    // Read texture image if image has UV data
-    std::string textureFilename = std::string(filename) + "_diffuse.ppm";
-    emissionTexture.readFile(textureFilename.c_str());
-    emissionTexture.flipVertically();  // correct for UV mapping
 }
 
 void PLYModel::transform(const Mat4 &modelMatrix) {

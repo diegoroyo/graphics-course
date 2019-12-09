@@ -1,6 +1,8 @@
 #include "camera.h"
 
-//#define DEBUG_PATH
+// Debug settings
+// #define DEBUG_PATH      // show path's hits and moment of stopping
+// #define DEBUG_ONE_CORE  // don't use multithreading (for print debugging)
 
 // Prints fancy progress bar to stdout
 void printProgress(const std::chrono::nanoseconds &beginTime, float progress) {
@@ -109,8 +111,11 @@ PPMImage Camera::render(int width, int height, int ppp, const Scene &scene,
     // Spawn one core per thread and make them consume work as they finish
     int numPixels = width * height;
     volatile std::atomic<int> nextPixel(0);
-    int cores =
-        1;  // std::thread::hardware_concurrency();  // max no. of threads
+#ifdef DEBUG_ONE_CORE
+    int cores = 1;  // only one core, for debug purposes
+#else
+    int cores = std::thread::hardware_concurrency();  // max no. of threads
+#endif
     std::vector<std::future<void>> threadFutures;  // waits for them to finish
     for (int core = 0; core < cores; core++) {
         threadFutures.emplace_back(std::async([&]() {

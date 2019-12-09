@@ -15,6 +15,8 @@ typedef std::shared_ptr<Material> MaterialPtr;
 #include "rgbcolor.h"
 
 /// BRDF ///
+// All different BRDFs and possible interactions on intersections
+// Used by materials which define figures' properties
 
 class BRDF {
    protected:
@@ -70,7 +72,22 @@ class PerfectRefraction : public BRDF {
     RGBColor applyBRDF(const RGBColor &lightIn) const override;
 };
 
-/// Material (BRDF join) ///
+/// Material ///
+// Set of various BRDFs, where each has its own probability
+
+// helper class for Material
+class MaterialBuilder {
+   private:
+    MaterialPtr ptr;  // material being built
+    float accumProb;  // accumulated probability
+
+    MaterialBuilder(MaterialPtr _ptr) : ptr(_ptr), accumProb(0.0f) {}
+    friend class Material;
+
+   public:
+    MaterialBuilder add(const BRDFPtr &brdf);
+    MaterialPtr build() { return ptr; }
+};
 
 class Material {
    public:
@@ -84,7 +101,6 @@ class Material {
         : emitsLight(true), emission(_emission), brdfs() {}
     Material() : emitsLight(false), emission(RGBColor::Black), brdfs() {}
 
-    class MaterialBuilder;  // need forward declaration
    public:
     // Constructor for light emitters
     static MaterialPtr light(const RGBColor &_emission) {
@@ -101,27 +117,4 @@ class Material {
 
     // Roussian roulette event selector
     BRDFPtr selectEvent();
-
-   private:
-    class MaterialBuilder {
-       private:
-        MaterialPtr ptr;  // material being built
-        float accumProb;  // accumulated probability
-
-        MaterialBuilder(MaterialPtr _ptr) : ptr(_ptr), accumProb(0.0f) {}
-        friend MaterialBuilder Material::builder();
-
-       public:
-        MaterialBuilder add(const BRDFPtr &brdf) {
-            ptr->brdfs.push_back(brdf);
-            accumProb += brdf->prob;
-            ptr->probs.push_back(accumProb);
-            if (accumProb >= 1.0f) {
-                std::cout << "Warning: material has event probabilities"
-                          << " that sum higher than 1" << std::endl;
-            }
-            return *this;
-        }
-        MaterialPtr build() { return ptr; }
-    };
 };

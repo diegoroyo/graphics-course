@@ -142,9 +142,10 @@ bool Triangle::intersection(const Ray &ray, RayHit &hit) const {
         tex0 = tex0 > 1.0f - 1e-6f ? 1.0f - 1e-6f : tex0;
         tex1 = tex1 < 1e-6f ? 0.0f : tex1;
         tex1 = tex1 > 1.0f - 1e-6f ? 1.0f - 1e-6f : tex1;
-        // TODO
-        hit.material = Material::none();  // model->emission(tex0, tex1);
-        hit.normal = this->normal;
+        hit.material = this->model->material(tex0, tex1);
+        // Calculate normal as it was a plane
+        hit.enters = dot(this->normal, ray.direction) > 1e-5f;
+        hit.normal = hit.enters ? this->normal * -1.0f : this->normal;
         return true;
     } else {
         // Intersection is behind the camera

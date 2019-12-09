@@ -1,14 +1,14 @@
 #pragma once
 
+#include <memory>
+#include <vector>
 #include <algorithm>
 #include <array>
 #include <fstream>
 #include <iostream>
-#include <memory>
-#include <vector>
 #include "figures.h"
 #include "geometry.h"
-#include "ppmimage.h"
+#include "plymaterial.h"
 #include "rgbcolor.h"
 
 class PLYModel {
@@ -17,12 +17,12 @@ class PLYModel {
     std::vector<std::array<int, 3>> faces;
     std::vector<std::array<float, 2>> uvs;
 
-    PPMImage emissionTexture;
+    const PLYMaterialPtr plyMaterial;
 
     // Find bounding box of all faces whose indexes are in findex
     // Box defined as 2 points: min (bb0) and max (bb1)
-    void getBoundingBox(const std::vector<int> &findex,
-                        Vec4 &bb0, Vec4 &bb1) const;
+    void getBoundingBox(const std::vector<int> &findex, Vec4 &bb0,
+                        Vec4 &bb1) const;
     // Returns a FigurePtr containing either:
     // - numIterations == 0: BVNode whose children are triangles
     // - numIterations > 0: Divide model in half on its biggest axis,
@@ -34,7 +34,7 @@ class PLYModel {
                          int numIterations);
 
    public:
-    PLYModel(const char *filename);
+    PLYModel(const char *filename, const PLYMaterialPtr &plyMaterial);
 
     inline int nverts() const { return verts.size(); }
     inline int nfaces() const { return faces.size(); }
@@ -43,10 +43,10 @@ class PLYModel {
     // Get UV coordinates for a given pixel
     inline std::array<float, 2> uv(int i) const { return uvs[i]; }
     // Diffuse texture RGB color given UV coordinates
-    inline RGBColor emission(float uvx, float uvy) const {
-        int pixelX = emissionTexture.width * uvx;
-        int pixelY = emissionTexture.height * uvy;
-        return emissionTexture.getPixel(pixelX, pixelY);
+    inline MaterialPtr material(float uvx, float uvy) const {
+        int pixelX = plyMaterial->width * uvx;
+        int pixelY = plyMaterial->height * uvy;
+        return plyMaterial->data[pixelY][pixelX];
     }
 
     // Apply model matrix to all vertices
