@@ -113,6 +113,11 @@ MaterialBuilder MaterialBuilder::add(const BRDFPtr &brdf) {
     if (accumProb >= 1.0f) {
         std::cout << "Warning: material has event probabilities"
                   << " that sum higher than 1" << std::endl;
+        std::cout << "Probabilities are: ";
+        for (float p : ptr->probs) {
+            std::cout << p << " ";
+        }
+        std::cout << std::endl;
     }
     return *this;
 }

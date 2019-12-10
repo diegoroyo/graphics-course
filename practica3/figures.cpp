@@ -18,7 +18,7 @@ bool Plane::intersection(const Ray &ray, RayHit &hit) const {
             // Intersection in front of the camera
             hit.distance = alpha;
             hit.point = ray.project(alpha);
-            hit.material = this->material;
+            hit.material = this->getMaterial(hit.point);
             hit.enters = dot(this->normal, ray.direction) > 1e-5f;
             hit.normal = hit.enters ? this->normal * -1.0f : this->normal;
             return true;

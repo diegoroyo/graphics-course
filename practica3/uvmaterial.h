@@ -16,14 +16,13 @@ typedef std::shared_ptr<UVMaterial> UVMaterialPtr;
 // helper class for UVMaterial
 class UVMaterialBuilder {
    private:
-    const UVMaterialPtr texturePtr;     // result texture
+    const UVMaterialPtr texturePtr;      // result texture
     const TextureBuilderPtr builderPtr;  // texture being built
     float accumProb;                     // accumulated probability
     const int height, width;             // dimensions of texture
 
-    UVMaterialBuilder(int _width, int _height,
-                       const UVMaterialPtr &_texturePtr,
-                       const TextureBuilderPtr &_builderPtr)
+    UVMaterialBuilder(int _width, int _height, const UVMaterialPtr &_texturePtr,
+                      const TextureBuilderPtr &_builderPtr)
         : texturePtr(_texturePtr),
           builderPtr(_builderPtr),
           accumProb(0.0f),
@@ -40,11 +39,14 @@ class UVMaterialBuilder {
     UVMaterialBuilder addPhongSpecular(const float ks, const float alpha);
     UVMaterialBuilder addPerfectSpecular(const float ksp);
     UVMaterialBuilder addPerfectRefraction(const float krp,
-                                            const float mediumRefractiveIndex);
+                                           const float mediumRefractiveIndex);
     // UV mapped for the model
     UVMaterialBuilder addPhongDiffuse(const char *diffuseFilename);
+    UVMaterialBuilder addPerfectSpecular(const char *specularFilename);
 
     UVMaterialPtr build();
+    UVMaterialPtr buildOverrideLights(const char *emissionFilename,
+                                      const float emissionFactor);
 };
 
 class UVMaterial {
@@ -62,8 +64,7 @@ class UVMaterial {
 
    public:
     static UVMaterialBuilder builder(int width = 1, int height = 1) {
-        UVMaterialPtr texturePtr =
-            UVMaterialPtr(new UVMaterial(width, height));
+        UVMaterialPtr texturePtr = UVMaterialPtr(new UVMaterial(width, height));
         TextureBuilderPtr builderPtr =
             TextureBuilderPtr(new TextureBuilder(height));
         for (int y = 0; y < height; y++) {
@@ -75,5 +76,11 @@ class UVMaterial {
             }
         }
         return UVMaterialBuilder(width, height, texturePtr, builderPtr);
+    }
+
+    inline MaterialPtr get(const float uvx, const float uvy) const {
+        int x = std::min(width - 1, (int)(uvx * this->width));
+        int y = std::min(height - 1, (int)(uvy * this->height));
+        return this->data[y][x];
     }
 };

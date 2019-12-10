@@ -10,14 +10,15 @@ typedef std::shared_ptr<Figures::Figure> FigurePtr;
 typedef std::vector<FigurePtr> FigurePtrVector;
 class PLYModel;  // needed for function definitions
 
-#include <limits>
 #include <cmath>
+#include <limits>
 #include "geometry.h"
 #include "material.h"
 #include "plymodel.h"
 #include "ray.h"
 #include "rayhit.h"
 #include "rgbcolor.h"
+#include "uvmaterial.h"
 
 namespace Figures {
 
@@ -33,6 +34,61 @@ class Figure {
     }
 };
 
+/// Plane ///
+
+class Plane : public Figure {
+   protected:
+    const Vec4 normal;
+    const float distToOrigin;
+    const UVMaterialPtr uvMaterial;
+    Plane(const Vec4 &_normal, float _distToOrigin)
+        : normal(_normal), distToOrigin(_distToOrigin) {}
+
+   public:
+    bool intersection(const Ray &ray, RayHit &hit) const override;
+    virtual MaterialPtr getMaterial(const Vec4 &hitPoint) const = 0;
+};
+
+class FlatPlane : public Plane {
+    const MaterialPtr material;  // flat material
+
+   public:
+    FlatPlane(const Vec4 &_normal, float _distToOrigin,
+              const MaterialPtr _material)
+        : Plane(_normal, _distToOrigin), material(_material) {}
+    MaterialPtr getMaterial(const Vec4 &hitPoint) const override {
+        return material;
+    }
+};
+
+class TexturedPlane : public Plane {
+    const UVMaterialPtr uvMaterial;  // material depends on hit point
+    const Vec4 uvOrigin, uvX, uvY;
+
+   public:
+    TexturedPlane(const Vec4 &_normal, float _distToOrigin,
+                  const UVMaterialPtr &_uvMaterial, const Vec4 &_uvOrigin,
+                  const Vec4 &_uvX, const Vec4 &_uvY)
+        : Plane(_normal, _distToOrigin),
+          uvMaterial(_uvMaterial),
+          uvOrigin(_uvOrigin),
+          uvX(_uvX),
+          uvY(_uvY) {}
+    MaterialPtr getMaterial(const Vec4 &hitPoint) const override {
+        // TODO prettify
+        Vec4 d = hitPoint - this->uvOrigin;
+        float uvx = fmodf(dot(d, uvX), 1.0f);
+        if (uvx < 1e-6f) uvx += 1.0f;
+        uvx = std::fmax(0.0f, std::fmin(1.0f, uvx));
+        float uvy = fmodf(dot(d, uvY), 1.0f);
+        if (uvy < 1e-6f) uvy += 1.0f;
+        uvy = std::fmax(0.0f, std::fmin(1.0f, uvy));
+        return uvMaterial->get(uvx, uvy);
+    }
+};
+
+/// Sphere ///
+
 class Sphere : public Figure {
     const Vec4 center;
     const float radius;
@@ -44,16 +100,7 @@ class Sphere : public Figure {
     bool intersection(const Ray &ray, RayHit &hit) const override;
 };
 
-class Plane : public Figure {
-    const Vec4 normal;
-    const float distToOrigin;
-    const MaterialPtr material;
-
-   public:
-    Plane(const MaterialPtr _material, const Vec4 &_normal, float _distToOrigin)
-        : material(_material), normal(_normal), distToOrigin(_distToOrigin) {}
-    bool intersection(const Ray &ray, RayHit &hit) const override;
-};
+/// Triangle ///
 
 class Triangle : public Figure {
     const Vec4 v0, v1, v2;
@@ -70,6 +117,8 @@ class Triangle : public Figure {
     bool intersection(const Ray &ray, RayHit &hit) const override;
 };
 
+/// Box ///
+
 // Only Axis-Aligned Bounding Boxes (AABB), doesn't support Oriented ones, see:
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
 class Box : public Figure {
@@ -83,6 +132,8 @@ class Box : public Figure {
         : material(_material), bb0(_bb0), bb1(_bb1) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
 };
+
+/// BVNode / KdTreeNode ///
 
 // Bounding volume node: has a bounding box that envolves all its children,
 // accelerates checks by first checking against the bbox. Then, only if it

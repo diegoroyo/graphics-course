@@ -1,8 +1,8 @@
-// Scene descriptions:
-// Scene 0: Cornell box
-// Scene 1: PLY model with empty background
+// Scene descriptions: (may vary as they are changed a lot)
+// Scene 0: Cornell box (two spheres)
+// Scene 1: Cornell box (different contents, using model)
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 1
+#define SCENE_NUMBER 0
 #endif
 
 #include <iostream>
@@ -48,10 +48,7 @@ int main(int argc, char** argv) {
 
     // Set up camera & scene
 
-#if SCENE_NUMBER == 0
-    Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
-        up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
-#elif SCENE_NUMBER == 1
+#if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
     Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #endif
@@ -60,8 +57,8 @@ int main(int argc, char** argv) {
     Camera camera(origin, forward, up, width / (float)height);
 
 // shortcuts for getting figure pointers
-#define plane(material, normal, dist) \
-    FigurePtr(new Figures::Plane(material, normal, dist))
+#define plane(normal, dist, material) \
+    FigurePtr(new Figures::FlatPlane(normal, dist, material))
 #define sphere(material, pos, radius) \
     FigurePtr(new Figures::Sphere(material, pos, radius))
 #define box(material, bb0, bb1) FigurePtr(new Figures::Box(material, bb0, bb1))
@@ -76,13 +73,12 @@ int main(int argc, char** argv) {
 
 #if SCENE_NUMBER == 1
     // load & transform spaceship model, get scene kdtree node
-    UVMaterialPtr texture =
-        UVMaterial::builder()
-            // UVMaterial::builder(512, 512)
-            // .addPhongDiffuse("ply/spaceship_diffuse.ppm")
-            .addPerfectSpecular(0.15f)
-            .addPerfectRefraction(0.8f, 1.5f)
-            .build();
+    UVMaterialPtr texture = UVMaterial::builder()
+                                // UVMaterial::builder(512, 512)
+                                // .addPhongDiffuse("ply/spaceship_diffuse.ppm")
+                                .addPerfectSpecular(0.15f)
+                                .addPerfectRefraction(0.8f, 1.5f)
+                                .build();
 
     PLYModel spaceshipModel("ply/spaceship.ply", texture);
     spaceshipModel.transform(Mat4::translation(1.0f, -0.5f, 0.0f) *
@@ -111,32 +107,53 @@ int main(int argc, char** argv) {
         Material::builder()
             .add(phongDiffuse(RGBColor(0.5f, 0.02f, 0.02f)))
             .build();
-    MaterialPtr ballMaterial = Material::builder()
-                                   // .add(phongDiffuse(RGBColor(0.05f, 0.05f,
-                                   // 0.5f))) .add(phongSpecular(0.29f, 5.0f))
-                                   .add(perfectSpecular(0.05f))
-                                   .add(perfectRefraction(0.9f, 1.5f))
+    MaterialPtr transparent = Material::builder()
+                                   .add(perfectSpecular(0.1f))
+                                   .add(perfectRefraction(0.85f, 1.5f))
+                                   .build();
+    MaterialPtr mirror = Material::builder()
+                                   .add(phongSpecular(0.35f, 3.0f))
+                                   .add(perfectSpecular(0.6f))
                                    .build();
     MaterialPtr pureBlack = Material::none();
+
+    // UVMaterialPtr diamondTexture =
+    //     UVMaterial::builder(16, 16)
+    //         .addPhongDiffuse("ply/diamondore_diffuse.ppm")
+    //         .addPhongDiffuse("ply/diamondore_emission.ppm")
+    //         .addPerfectSpecular("ply/diamondore_emission.ppm").build();
 
     // build scene to BVH root node
     FigurePtrVector sceneElements = {
 #if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
         // Cornell box walls
-        plane(whiteDiffuse, Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f),
-        plane(whiteLight, Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f),
-        plane(whiteDiffuse, Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f),
-        // plane(pureBlack, Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f),
-        plane(redDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f),
-        plane(greenDiffuse, Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f),
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
+        // FigurePtr(new Figures::TexturedPlane(
+        //     Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, diamondTexture,
+        //     Vec4(2.0f, 0.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, 1.0f, 0.0f),
+        //     Vec4(0.0f, 1.0f, 0.0f, 0.0f))),
+        // plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, pureBlack),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
     // Cornell box content
 #if SCENE_NUMBER == 0
-        sphere(ballMaterial, Vec4(1.0f, -1.0f, -1.0f, 1.0f), 0.75f),
-        sphere(ballMaterial, Vec4(0.5f, 0.0f, 1.0f, 1.0f), 0.75f)
+        sphere(mirror, Vec4(1.0f, -1.05f, -1.0f, 1.0f), 0.75f),
+        sphere(transparent, Vec4(0.5f, 0.0f, 1.0f, 1.0f), 0.75f)
 #elif SCENE_NUMBER == 1
         spaceship,
         sphere(ballMaterial, Vec4(-0.5f, -1.0f, 1.0f, 1.0f), 0.5f)
 #endif
+#elif SCENE_NUMBER == 2
+        FigurePtr(new Figures::TexturedPlane(
+            Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, diamondTexture,
+            Vec4(0.0f, 2.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, 1.0f, 0.0f),
+            Vec4(1.0f, 0.0f, 0.0f, 0.0f))),
+        FigurePtr(new Figures::TexturedPlane(
+            Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, diamondTexture,
+            Vec4(0.0f, -2.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, -1.0f, 0.0f),
+            Vec4(-1.0f, 0.0f, 0.0f, 0.0f))),
 #endif
     };
 
@@ -145,8 +162,10 @@ int main(int argc, char** argv) {
     // Add points lights to the scene
 
 #if SCENE_NUMBER == 0
-    scene.light(Vec4(1.0f, 1.6f, 0.0f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight));
+    scene.light(Vec4(-0.5f, 1.4f, -1.8f, 1.0f),
+                RGBColor(maxLight, maxLight, maxLight) * 1.5f);
+    scene.light(Vec4(-0.5f, 1.4f, 1.8f, 1.0f),
+                RGBColor(maxLight, maxLight, maxLight) * 1.5f);
 #elif SCENE_NUMBER == 1
     // scene.light(Vec4(1.0f, 1.3f, 0.0f, 1.0f),
     //             RGBColor(maxLight, maxLight, maxLight));
