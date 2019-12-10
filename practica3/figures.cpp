@@ -7,23 +7,21 @@ bool Plane::intersection(const Ray &ray, RayHit &hit) const {
     if (std::abs(dot(ray.direction, this->normal)) < 1e-5f) {
         // Ray direction and plane are parallel, they don't meet
         return false;
-    } else {
-        // Ray intersects with plane, return intersection point
-        float alpha = (this->distToOrigin - dot(this->normal, ray.origin)) /
-                      dot(ray.direction, this->normal);
-        if (alpha <= 0.0f) {
-            // Intersection is behind the camera, it isn't visible
-            return false;
-        } else {
-            // Intersection in front of the camera
-            hit.distance = alpha;
-            hit.point = ray.project(alpha);
-            hit.material = this->getMaterial(hit.point);
-            hit.enters = dot(this->normal, ray.direction) > 1e-5f;
-            hit.normal = hit.enters ? this->normal * -1.0f : this->normal;
-            return true;
-        }
     }
+    // Ray intersects with plane, return intersection point
+    float alpha = (this->distToOrigin - dot(this->normal, ray.origin)) /
+                  dot(ray.direction, this->normal);
+    if (alpha <= 0.0f) {
+        // Intersection is behind the camera, it isn't visible
+        return false;
+    }
+    // Intersection in front of the camera
+    hit.distance = alpha;
+    hit.point = ray.project(alpha);
+    hit.material = this->getMaterial(hit.point);
+    hit.enters = dot(this->normal, ray.direction) > 1e-5f;
+    hit.normal = hit.enters ? this->normal * -1.0f : this->normal;
+    return true;
 }
 
 // Ray-sphere intersection algorithm source:
@@ -129,28 +127,27 @@ bool Triangle::intersection(const Ray &ray, RayHit &hit) const {
     // At this stage we can compute t to find out where the intersection point
     // is on the line.
     float t = f * dot(this->edge1, q);
-    if (t > 1e-6f) {
-        // Ray intersection
-        hit.distance = t;
-        hit.point = ray.project(t);
-        // Calculate texture coordinates
-        Vec4 b = getBarycentric(hit.point);
-        float tex0 = uv0[0] * b.x + uv1[0] * b.y + uv2[0] * b.z;
-        float tex1 = uv0[1] * b.x + uv1[1] * b.y + uv2[1] * b.z;
-        // Clamp between 0-1
-        tex0 = tex0 < 1e-6f ? 0.0f : tex0;
-        tex0 = tex0 > 1.0f - 1e-6f ? 1.0f - 1e-6f : tex0;
-        tex1 = tex1 < 1e-6f ? 0.0f : tex1;
-        tex1 = tex1 > 1.0f - 1e-6f ? 1.0f - 1e-6f : tex1;
-        hit.material = this->model->material(tex0, tex1);
-        // Calculate normal as it was a plane
-        hit.enters = dot(this->normal, ray.direction) > 1e-5f;
-        hit.normal = hit.enters ? this->normal * -1.0f : this->normal;
-        return true;
-    } else {
+    if (t < 1e-6f) {
         // Intersection is behind the camera
         return false;
     }
+    // Ray intersection
+    hit.distance = t;
+    hit.point = ray.project(t);
+    // Calculate texture coordinates
+    Vec4 b = getBarycentric(hit.point);
+    float tex0 = uv0[0] * b.x + uv1[0] * b.y + uv2[0] * b.z;
+    float tex1 = uv0[1] * b.x + uv1[1] * b.y + uv2[1] * b.z;
+    // Clamp between 0-1
+    tex0 = tex0 < 1e-6f ? 0.0f : tex0;
+    tex0 = tex0 > 1.0f - 1e-6f ? 1.0f - 1e-6f : tex0;
+    tex1 = tex1 < 1e-6f ? 0.0f : tex1;
+    tex1 = tex1 > 1.0f - 1e-6f ? 1.0f - 1e-6f : tex1;
+    hit.material = this->model->material(tex0, tex1);
+    // Calculate normal as it was a plane
+    hit.enters = dot(this->normal, ray.direction) > 1e-5f;
+    hit.normal = hit.enters ? this->normal * -1.0f : this->normal;
+    return true;
 }
 
 // https://tavianator.com/fast-branchless-raybounding-box-intersections-part-2-nans/
@@ -167,15 +164,16 @@ bool Box::intersection(const Ray &ray, RayHit &hit) const {
     }
 
     // Ray can have 2 hits: tmin contains first one, tmax the second one
-    if (tmax > std::fmax(tmin, 0.0f)) {
+    if (tmax < std::fmax(tmin, 0.0f)) {
+        // No hit
+        return false;
+    } else {
         // If first hit is behind the camera, take the second one
         hit.distance = tmin < 0.0f ? tmax : tmin;
         hit.point = ray.project(hit.distance);
-        hit.material = this->material;
+        // As boxes are only used for BVH/KdTree nodes, they don't
+        // have a material and don't return info about normal/etc.
         return true;
-    } else {
-        // No hit
-        return false;
     }
 }
 

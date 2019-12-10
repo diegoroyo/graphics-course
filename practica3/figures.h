@@ -75,14 +75,14 @@ class TexturedPlane : public Plane {
           uvX(_uvX),
           uvY(_uvY) {}
     MaterialPtr getMaterial(const Vec4 &hitPoint) const override {
-        // TODO prettify
         Vec4 d = hitPoint - this->uvOrigin;
+        // Get U-V as module from 0-1
         float uvx = fmodf(dot(d, uvX), 1.0f);
         if (uvx < 1e-6f) uvx += 1.0f;
-        uvx = std::fmax(0.0f, std::fmin(1.0f, uvx));
+        uvx = std::fmax(0.0f, std::fmin(1.0f, uvx));  // 0-1 clamp
         float uvy = fmodf(dot(d, uvY), 1.0f);
         if (uvy < 1e-6f) uvy += 1.0f;
-        uvy = std::fmax(0.0f, std::fmin(1.0f, uvy));
+        uvy = std::fmax(0.0f, std::fmin(1.0f, uvy));  // 0-1 clamp
         return uvMaterial->get(uvx, uvy);
     }
 };
@@ -123,13 +123,10 @@ class Triangle : public Figure {
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
 class Box : public Figure {
     const Vec4 bb0, bb1;  // bounding box, 2 points define the cube
-    const MaterialPtr material;
+    // no material, as boxes are only used for BVH/KdTree nodes
 
    public:
-    Box(const Vec4 &_bb0, const Vec4 &_bb1)
-        : material(Material::none()), bb0(_bb0), bb1(_bb1) {}
-    Box(const MaterialPtr _material, const Vec4 &_bb0, const Vec4 &_bb1)
-        : material(_material), bb0(_bb0), bb1(_bb1) {}
+    Box(const Vec4 &_bb0, const Vec4 &_bb1) : bb0(_bb0), bb1(_bb1) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
 };
 
