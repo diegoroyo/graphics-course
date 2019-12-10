@@ -1,8 +1,9 @@
 // Scene descriptions: (may vary as they are changed a lot)
-// Scene 0: Cornell box (two spheres)
-// Scene 1: Cornell box (different contents, using model)
+// Scene 0: (may vary) Cornell box (two spheres)
+// Scene 1: (may vary) Cornell box (different contents, using model)
+// Scene 2: (don't change) UVMaterial properties test (diamond ore wall)
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 0
+#define SCENE_NUMBER 1
 #endif
 
 #include <iostream>
@@ -51,6 +52,9 @@ int main(int argc, char** argv) {
 #if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
     Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
+#elif SCENE_NUMBER == 2
+    Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
+        up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #endif
 
     // Camera camera(origin, forward, up, right);
@@ -61,7 +65,8 @@ int main(int argc, char** argv) {
     FigurePtr(new Figures::FlatPlane(normal, dist, material))
 #define sphere(material, pos, radius) \
     FigurePtr(new Figures::Sphere(material, pos, radius))
-#define box(material, bb0, bb1) FigurePtr(new Figures::Box(material, bb0, bb1))
+// #define box(material, bb0, bb1) FigurePtr(new Figures::Box(material, bb0,
+// bb1))
 
 // shortcuts for materials
 #define phongDiffuse(kd) BRDFPtr(new PhongDiffuse(kd))
@@ -90,6 +95,8 @@ int main(int argc, char** argv) {
 
     float maxLight = 10000.0f;
 
+#if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
+
     MaterialPtr whiteLight =
         Material::light(RGBColor(maxLight, maxLight, maxLight));
     MaterialPtr whiteDiffuse =
@@ -108,52 +115,77 @@ int main(int argc, char** argv) {
             .add(phongDiffuse(RGBColor(0.5f, 0.02f, 0.02f)))
             .build();
     MaterialPtr transparent = Material::builder()
-                                   .add(perfectSpecular(0.1f))
-                                   .add(perfectRefraction(0.85f, 1.5f))
-                                   .build();
+                                  .add(perfectSpecular(0.1f))
+                                  .add(perfectRefraction(0.85f, 1.5f))
+                                  .build();
     MaterialPtr mirror = Material::builder()
-                                   .add(phongSpecular(0.35f, 3.0f))
-                                   .add(perfectSpecular(0.6f))
-                                   .build();
+                             .add(phongSpecular(0.35f, 3.0f))
+                             .add(perfectSpecular(0.6f))
+                             .build();
     MaterialPtr pureBlack = Material::none();
 
-    // UVMaterialPtr diamondTexture =
-    //     UVMaterial::builder(16, 16)
-    //         .addPhongDiffuse("ply/diamondore_diffuse.ppm")
-    //         .addPhongDiffuse("ply/diamondore_emission.ppm")
-    //         .addPerfectSpecular("ply/diamondore_emission.ppm").build();
+#elif SCENE_NUMBER == 2
+    MaterialPtr whiteDiffuse =
+        Material::builder().add(phongDiffuse(RGBColor::White * 0.5f)).build();
+    MaterialPtr greenDiffuse =
+        Material::builder()
+            .add(phongDiffuse(RGBColor(0.02f, 0.5f, 0.02f)))
+            .build();
+    MaterialPtr redDiffuse =
+        Material::builder()
+            .add(phongDiffuse(RGBColor(0.5f, 0.02f, 0.02f)))
+            .build();
+    MaterialPtr transparent = Material::builder()
+                                  .add(perfectSpecular(0.1f))
+                                  .add(perfectRefraction(0.85f, 1.5f))
+                                  .build();
+    MaterialPtr mirror = Material::builder()
+                             .add(phongSpecular(0.35f, 3.0f))
+                             .add(perfectSpecular(0.6f))
+                             .build();
+    UVMaterialPtr diamondTexture =
+        UVMaterial::builder(16, 16)
+            .addPhongDiffuse("ply/diamondore_diffuse.ppm")
+            .addPhongDiffuse("ply/diamondore_emission.ppm")
+            .addPerfectSpecular("ply/diamondore_emission.ppm")
+            .build();
+#endif
 
     // build scene to BVH root node
     FigurePtrVector sceneElements = {
-#if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
+#if SCENE_NUMBER == 0
+        // Cornell box walls
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, redDiffuse),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
+        // plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, pureBlack),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
+        // Cornell box content
+        sphere(mirror, Vec4(1.0f, -1.05f, -1.0f, 1.0f), 0.75f),
+        sphere(transparent, Vec4(0.5f, 0.0f, 1.0f, 1.0f), 0.75f)
+#elif SCENE_NUMBER == 1
         // Cornell box walls
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
         plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
-        // FigurePtr(new Figures::TexturedPlane(
-        //     Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, diamondTexture,
-        //     Vec4(2.0f, 0.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, 1.0f, 0.0f),
-        //     Vec4(0.0f, 1.0f, 0.0f, 0.0f))),
         // plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, pureBlack),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
-    // Cornell box content
-#if SCENE_NUMBER == 0
+        spaceship,
+        sphere(transparent, Vec4(-0.5f, -1.0f, 1.0f, 1.0f), 0.5f)
+#elif SCENE_NUMBER == 2
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
+        // diamond ore wall
+        FigurePtr(new Figures::TexturedPlane(
+            Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, diamondTexture,
+            Vec4(2.0f, 0.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, 1.0f, 0.0f),
+            Vec4(0.0f, 1.0f, 0.0f, 0.0f))),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
         sphere(mirror, Vec4(1.0f, -1.05f, -1.0f, 1.0f), 0.75f),
         sphere(transparent, Vec4(0.5f, 0.0f, 1.0f, 1.0f), 0.75f)
-#elif SCENE_NUMBER == 1
-        spaceship,
-        sphere(ballMaterial, Vec4(-0.5f, -1.0f, 1.0f, 1.0f), 0.5f)
-#endif
-#elif SCENE_NUMBER == 2
-        FigurePtr(new Figures::TexturedPlane(
-            Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, diamondTexture,
-            Vec4(0.0f, 2.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, 1.0f, 0.0f),
-            Vec4(1.0f, 0.0f, 0.0f, 0.0f))),
-        FigurePtr(new Figures::TexturedPlane(
-            Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, diamondTexture,
-            Vec4(0.0f, -2.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, -1.0f, 0.0f),
-            Vec4(-1.0f, 0.0f, 0.0f, 0.0f))),
 #endif
     };
 
@@ -161,19 +193,21 @@ int main(int argc, char** argv) {
 
     // Add points lights to the scene
 
-#if SCENE_NUMBER == 0
+#if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
     scene.light(Vec4(-0.5f, 1.4f, -1.8f, 1.0f),
                 RGBColor(maxLight, maxLight, maxLight) * 1.5f);
     scene.light(Vec4(-0.5f, 1.4f, 1.8f, 1.0f),
                 RGBColor(maxLight, maxLight, maxLight) * 1.5f);
-#elif SCENE_NUMBER == 1
-    // scene.light(Vec4(1.0f, 1.3f, 0.0f, 1.0f),
-    //             RGBColor(maxLight, maxLight, maxLight));
+#elif SCENE_NUMBER == 2
+    scene.light(Vec4(-0.5f, 1.4f, -1.8f, 1.0f),
+                RGBColor(maxLight, maxLight, maxLight) * 1.5f);
+    scene.light(Vec4(-0.5f, 1.4f, 1.8f, 1.0f),
+                RGBColor(maxLight, maxLight, maxLight) * 1.5f);
 #endif
 
 #undef plane
 #undef sphere
-#undef box
+    // #undef box
 
 #undef phongDiffuse
 #undef phongSpecular
