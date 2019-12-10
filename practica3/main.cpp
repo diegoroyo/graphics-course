@@ -3,7 +3,7 @@
 // Scene 1: (may vary) Cornell box (different contents, using model)
 // Scene 2: (don't change) UVMaterial properties test (diamond ore wall)
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 1
+#define SCENE_NUMBER 2
 #endif
 
 #include <iostream>
@@ -125,15 +125,23 @@ int main(int argc, char** argv) {
     MaterialPtr pureBlack = Material::none();
 
 #elif SCENE_NUMBER == 2
-    MaterialPtr whiteDiffuse =
-        Material::builder().add(phongDiffuse(RGBColor::White * 0.5f)).build();
-    MaterialPtr greenDiffuse =
-        Material::builder()
-            .add(phongDiffuse(RGBColor(0.02f, 0.5f, 0.02f)))
+    UVMaterialPtr diamondTexture =
+        UVMaterial::builder(16, 16)
+            .addPhongDiffuse("ply/diamondore_diffuse.ppm")
+            .addPhongDiffuse("ply/diamondore_emission.ppm")
+            .addPerfectSpecular("ply/diamondore_emission.ppm")
             .build();
-    MaterialPtr redDiffuse =
-        Material::builder()
-            .add(phongDiffuse(RGBColor(0.5f, 0.02f, 0.02f)))
+    UVMaterialPtr stoneTexture =
+        UVMaterial::builder(16, 16)
+            .addPhongDiffuse("ply/stone_diffuse.ppm")
+            .build();
+    UVMaterialPtr greenWoolTexture =
+        UVMaterial::builder(16, 16)
+            .addPhongDiffuse("ply/greenwool_diffuse.ppm")
+            .build();
+    UVMaterialPtr redWoolTexture =
+        UVMaterial::builder(16, 16)
+            .addPhongDiffuse("ply/redwool_diffuse.ppm")
             .build();
     MaterialPtr transparent = Material::builder()
                                   .add(perfectSpecular(0.1f))
@@ -143,12 +151,6 @@ int main(int argc, char** argv) {
                              .add(phongSpecular(0.35f, 3.0f))
                              .add(perfectSpecular(0.6f))
                              .build();
-    UVMaterialPtr diamondTexture =
-        UVMaterial::builder(16, 16)
-            .addPhongDiffuse("ply/diamondore_diffuse.ppm")
-            .addPhongDiffuse("ply/diamondore_emission.ppm")
-            .addPerfectSpecular("ply/diamondore_emission.ppm")
-            .build();
 #endif
 
     // build scene to BVH root node
@@ -175,15 +177,27 @@ int main(int argc, char** argv) {
         spaceship,
         sphere(transparent, Vec4(-0.5f, -1.0f, 1.0f, 1.0f), 0.5f)
 #elif SCENE_NUMBER == 2
-        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
-        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
+        FigurePtr(new Figures::TexturedPlane(
+            Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, stoneTexture,
+            Vec4(0.0f, 2.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, 1.0f, 0.0f),
+            Vec4(1.0f, 0.0f, 0.0f, 0.0f))),
+        FigurePtr(new Figures::TexturedPlane(
+            Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, stoneTexture,
+            Vec4(0.0f, -2.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, -1.0f, 0.0f),
+            Vec4(-1.0f, 0.0f, 0.0f, 0.0f))),
         // diamond ore wall
         FigurePtr(new Figures::TexturedPlane(
             Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, diamondTexture,
             Vec4(2.0f, 0.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, 1.0f, 0.0f),
             Vec4(0.0f, 1.0f, 0.0f, 0.0f))),
-        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
-        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
+        FigurePtr(new Figures::TexturedPlane(
+            Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, greenWoolTexture,
+            Vec4(0.0f, 0.0f, 2.0f, 1.0f), Vec4(1.0f, 0.0f, 0.0f, 0.0f),
+            Vec4(0.0f, 1.0f, 0.0f, 0.0f))),
+        FigurePtr(new Figures::TexturedPlane(
+            Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, redWoolTexture,
+            Vec4(0.0f, 0.0f, -2.0f, 1.0f), Vec4(-1.0f, 0.0f, 0.0f, 0.0f),
+            Vec4(0.0f, -1.0f, 0.0f, 0.0f))),
         sphere(mirror, Vec4(1.0f, -1.05f, -1.0f, 1.0f), 0.75f),
         sphere(transparent, Vec4(0.5f, 0.0f, 1.0f, 1.0f), 0.75f)
 #endif
@@ -195,14 +209,16 @@ int main(int argc, char** argv) {
 
 #if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
     scene.light(Vec4(-0.5f, 1.4f, -1.8f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight) * 1.5f);
+                RGBColor(maxLight, maxLight, maxLight));
     scene.light(Vec4(-0.5f, 1.4f, 1.8f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight) * 1.5f);
+                RGBColor(maxLight, maxLight, maxLight));
 #elif SCENE_NUMBER == 2
-    scene.light(Vec4(-0.5f, 1.4f, -1.8f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight) * 1.5f);
-    scene.light(Vec4(-0.5f, 1.4f, 1.8f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight) * 1.5f);
+    scene.light(Vec4(-1.0f, 1.4f, -1.8f, 1.0f),
+                RGBColor(maxLight, maxLight, maxLight));
+    scene.light(Vec4(-1.0f, 1.4f, 1.8f, 1.0f),
+                RGBColor(maxLight, maxLight, maxLight));
+    scene.light(Vec4(1.0f, 1.4f, 0.0f, 1.0f),
+                RGBColor(maxLight, maxLight, maxLight));
 #endif
 
 #undef plane

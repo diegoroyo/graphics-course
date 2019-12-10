@@ -33,22 +33,22 @@ bool PhongSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
     float randIncl = random01();
     float randAzim = random01();
     // Phong Specular lobe sampling
-    float incl = acosf(powf(randIncl, 1.0f / (this->alpha + 1)));
+    float incl = acosf(powf(randIncl, 1.0f / (this->alpha + 1.0f)));
     float azim = 2 * M_PI * randAzim;
 
     // Save for next iteration
-    this->tempAzimIncCos = dot(inDirection, hit.normal) * -1.0f;
-    this->tempIncl = incl;
+    this->tempInCos = dot(inDirection, hit.normal) * -1.0f;
 
     // Local base to hit point
-    Vec4 z = (hit.normal * 2.0f + inDirection).normalize();
+    Vec4 z = inDirection - hit.normal * dot(inDirection, hit.normal) * 2.0f;
     Vec4 x = cross(z, inDirection).normalize();
     Vec4 y = cross(z, x);
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
     outDirection = cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
                               cosf(incl), 0.0f);
-    this->tempIncl = dot(outDirection, hit.normal);
-    if (tempIncl < 1e-6f) {
+    float outCos = dot(outDirection, hit.normal);
+    this->tempOutSin = sqrtf(1.0f - outCos * outCos);
+    if (outCos < 1e-6f) {
         return false;
     } else {
         return true;
@@ -56,11 +56,13 @@ bool PhongSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
 }
 
 RGBColor PhongSpecular::applyBRDF(const RGBColor &lightIn) const {
-    float incl = this->tempIncl;
-    float azimIncCos = this->tempAzimIncCos;
-    float azimIncSin = sqrtf(1.0f - azimIncCos * azimIncCos);
-    return lightIn * (azimIncCos * azimIncSin * (this->alpha + 2.0f) *
-                      (1.0f / ((this->alpha + 1) + sinf(incl))));
+    float outSin = this->tempOutSin;
+    float inCos = this->tempInCos;
+    float inSin = sqrtf(1.0f - inCos * inCos);
+    // std::cout << (inCos * inSin * (this->alpha + 2.0f) *
+    //                   (1.0f / ((this->alpha + 1) + outSin))) << std::endl;
+    return lightIn * (inCos * inSin * (this->alpha + 2.0f) *
+                      (1.0f / ((this->alpha + 1) + outSin)));
 }
 
 /// Perfect Specular (delta BRDF) ///
@@ -73,6 +75,7 @@ bool PerfectSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
 }
 
 RGBColor PerfectSpecular::applyBRDF(const RGBColor &lightIn) const {
+    // cos term optimized out (cos / cos)
     return lightIn * (1.0f / this->prob);
 }
 
@@ -101,6 +104,7 @@ bool PerfectRefraction::nextRay(const Vec4 &inDirection, const RayHit &hit,
 }
 
 RGBColor PerfectRefraction::applyBRDF(const RGBColor &lightIn) const {
+    // cos term optimized out (cos / cos)
     return lightIn * (1.0f / this->prob);
 }
 
@@ -113,7 +117,7 @@ MaterialBuilder MaterialBuilder::add(const BRDFPtr &brdf) {
     if (accumProb >= 1.0f) {
         std::cout << "Warning: material has event probabilities"
                   << " that sum higher than 1" << std::endl;
-        std::cout << "Probabilities are: ";
+        std::cout << "Accum. probabilities are: ";
         for (float p : ptr->probs) {
             std::cout << p << " ";
         }

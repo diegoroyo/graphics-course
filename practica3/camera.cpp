@@ -48,7 +48,8 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const Scene &scene,
         BRDFPtr event = hit.material->selectEvent();
         // Only calculate direct light if event is not perfect refraction
         RGBColor directLight;
-        if (std::dynamic_pointer_cast<PerfectRefraction>(event) == nullptr) {
+        if (std::dynamic_pointer_cast<PerfectRefraction>(event) == nullptr &&
+            std::dynamic_pointer_cast<PerfectSpecular>(event) == nullptr) {
             directLight = scene.directLight(hit.point);
         }
         Vec4 nextDirection;
