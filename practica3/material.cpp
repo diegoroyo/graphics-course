@@ -1,5 +1,11 @@
 #include "material.h"
 
+// Calculate reflection of incoming ray with respect to normal
+// used, for example, in perfect specular brdf
+inline Vec4 reflectDirection(const Vec4& incoming, const Vec4 &normal) {
+    return incoming - normal * dot(incoming, normal) * 2.0f;
+}
+
 /// Phong Diffuse ///
 
 bool PhongDiffuse::nextRay(const Vec4 &inDirection, const RayHit &hit,
@@ -46,7 +52,7 @@ bool PhongSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
     this->tempInCos = dot(inDirection, hit.normal) * -1.0f;
 
     // Local base to hit point
-    Vec4 z = inDirection - hit.normal * dot(inDirection, hit.normal) * 2.0f;
+    Vec4 z = reflectDirection(inDirection, hit.normal);
     Vec4 x = cross(z, inDirection).normalize();
     Vec4 y = cross(z, x);
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
@@ -65,8 +71,6 @@ RGBColor PhongSpecular::applyBRDF(const RGBColor &lightIn) const {
     float outSin = this->tempOutSin;
     float inCos = this->tempInCos;
     float inSin = sqrtf(1.0f - inCos * inCos);
-    // std::cout << (inCos * inSin * (this->alpha + 2.0f) *
-    //                   (1.0f / ((this->alpha + 1) + outSin))) << std::endl;
     return lightIn * (inCos * inSin * (this->alpha + 2.0f) *
                       (1.0f / ((this->alpha + 1) + outSin)));
 }
@@ -85,8 +89,7 @@ RGBColor PhongSpecular::applyDirect(const Scene &scene, const RayHit &hit,
 
 bool PerfectSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
                               Vec4 &outDirection) {
-    outDirection =
-        inDirection - hit.normal * dot(inDirection, hit.normal) * 2.0f;
+    outDirection = reflectDirection(inDirection, hit.normal);
     return true;
 }
 
@@ -98,6 +101,8 @@ RGBColor PerfectSpecular::applyBRDF(const RGBColor &lightIn) const {
 RGBColor PerfectSpecular::applyDirect(const Scene &scene, const RayHit &hit,
                                       const Vec4 &inDirection,
                                       const Vec4 &outDirection) {
+    // edge case of delta function ignored
+    // outDirection == reflectDirection(inDirecion, hit.normal)
     return RGBColor::Black;
 }
 
@@ -110,29 +115,52 @@ bool PerfectRefraction::nextRay(const Vec4 &inDirection, const RayHit &hit,
     float incCos = dot(inDirection, hit.normal) * -1.0f;
     float incSin = sqrtf(1.0f - incCos * incCos);
     // Index of Refraction ratio (depends if ray enters medium or leaves)
-    float factor = hit.enters ? 1.0f / this->mediumRefractiveIndex
-                              : this->mediumRefractiveIndex;
+    float n1 = hit.enters ? 1.0f : this->mediumRefractiveIndex;
+    float n2 = hit.enters ? this->mediumRefractiveIndex : 1.0f;
+    float factor = n1 / n2;
     // Angle of outgoing ray
     float outSin = incSin * factor;
     if (outSin > 1.0f) {
         // Out angle is greater than critical angle (see reference)
-        return false;
+        // By fresnel laws, ray is reflected
+        outDirection = reflectDirection(inDirection, hit.normal);
+        return true;
     }
-    float theta2 = asinf(outSin);
-    // m is perpendicular to normal (see reference for details)
-    Vec4 m = (inDirection + hit.normal * incCos) * (1.0f / incSin);
-    outDirection = hit.normal * -1.0f * cosf(theta2) + m * sinf(theta2);
-    return true;
+
+    // Calculate Kr, fresnel law says that light comes from two sources:
+    // Kr comes from reflection, 1 - Kr comes from refraction
+    float outCos = sqrtf(1.0f - outSin * outSin);
+    // See reference for Kr calculation
+    float rs = (n2 * incCos - n1 * outCos) / (n2 * incCos + n1 * outCos);
+    float rp = (n2 * outCos - n1 * incCos) / (n2 * outCos + n1 * incCos);
+    float kr = (rs * rs + rp * rp) / 2; // mean of squares
+    // select a random event (like roussian roulette)
+    // perfect specular has probability kr, perfect refraction 1 - kr
+    if (random01() < kr) {
+        // specular
+        outDirection = reflectDirection(inDirection, hit.normal);
+        return true;
+    } else {
+        // refraction
+        float theta2 = asinf(outSin);
+        // m is perpendicular to normal (see reference for details)
+        Vec4 m = (inDirection + hit.normal * incCos) * (1.0f / incSin);
+        outDirection = hit.normal * -1.0f * cosf(theta2) + m * sinf(theta2);
+        return true;
+    }
 }
 
 RGBColor PerfectRefraction::applyBRDF(const RGBColor &lightIn) const {
     // cos and krp terms optimized out (cos * krp) / (cos * krp)
+    // also it doesn't matter if the ray wasn't refracted and it was
+    // reflected instead, because both interactions return the same
     return lightIn;
 }
 
 RGBColor PerfectRefraction::applyDirect(const Scene &scene, const RayHit &hit,
                                         const Vec4 &inDirection,
                                         const Vec4 &outDirection) {
+    // edge case ignored because refraction uses delta functions
     return RGBColor::Black;
 }
 

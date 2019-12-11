@@ -144,12 +144,10 @@ int main(int argc, char** argv) {
             .addPhongDiffuse("ply/redwool_diffuse.ppm")
             .build();
     MaterialPtr transparent = Material::builder()
-                                  .add(perfectSpecular(0.1f))
-                                  .add(perfectRefraction(0.85f, 1.5f))
+                                  .add(perfectRefraction(0.98f, 1.5f))
                                   .build();
     MaterialPtr mirror = Material::builder()
-                             .add(phongSpecular(0.35f, 3.0f))
-                             .add(perfectSpecular(0.6f))
+                             .add(perfectSpecular(0.98f))
                              .build();
 #endif
 

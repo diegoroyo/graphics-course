@@ -49,7 +49,7 @@ class PhongDiffuse : public BRDF {
 };
 
 class PhongSpecular : public BRDF {
-    // temp. variables, need to save info. between nextRay and applyBRDF
+    // temp. variables, need to save info. for applyBRDF
     float tempInCos, tempOutSin;
 
    public:
