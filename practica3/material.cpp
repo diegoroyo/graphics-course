@@ -25,6 +25,12 @@ RGBColor PhongDiffuse::applyBRDF(const RGBColor &lightIn) const {
     return lightIn * this->kdProb;
 }
 
+RGBColor PhongDiffuse::applyDirect(const Scene &scene, const RayHit &hit,
+                                   const Vec4 &inDirection,
+                                   const Vec4 &outDirection) {
+    return scene.directLight(hit.point) * this->kdProb;
+}
+
 /// Phong Specular ///
 
 bool PhongSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
@@ -65,6 +71,16 @@ RGBColor PhongSpecular::applyBRDF(const RGBColor &lightIn) const {
                       (1.0f / ((this->alpha + 1) + outSin)));
 }
 
+RGBColor PhongSpecular::applyDirect(const Scene &scene, const RayHit &hit,
+                                    const Vec4 &inDirection,
+                                    const Vec4 &outDirection) {
+    RGBColor directLight = scene.directLight(hit.point);
+    float outCos = dot(outDirection, hit.normal);
+    this->tempOutSin = sqrtf(1.0f - outCos * outCos);
+    this->tempInCos = dot(inDirection, hit.normal) * -1.0f;
+    return this->applyBRDF(directLight);
+}
+
 /// Perfect Specular (delta BRDF) ///
 
 bool PerfectSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
@@ -75,8 +91,14 @@ bool PerfectSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
 }
 
 RGBColor PerfectSpecular::applyBRDF(const RGBColor &lightIn) const {
-    // cos term optimized out (cos / cos)
-    return lightIn * (1.0f / this->prob);
+    // cos and ksp terms optimized out (cos * ksp) / (cos * ksp)
+    return lightIn;
+}
+
+RGBColor PerfectSpecular::applyDirect(const Scene &scene, const RayHit &hit,
+                                      const Vec4 &inDirection,
+                                      const Vec4 &outDirection) {
+    return RGBColor::Black;
 }
 
 /// Perfect Refraction (delta BTDF) ///
@@ -104,8 +126,14 @@ bool PerfectRefraction::nextRay(const Vec4 &inDirection, const RayHit &hit,
 }
 
 RGBColor PerfectRefraction::applyBRDF(const RGBColor &lightIn) const {
-    // cos term optimized out (cos / cos)
-    return lightIn * (1.0f / this->prob);
+    // cos and krp terms optimized out (cos * krp) / (cos * krp)
+    return lightIn;
+}
+
+RGBColor PerfectRefraction::applyDirect(const Scene &scene, const RayHit &hit,
+                                        const Vec4 &inDirection,
+                                        const Vec4 &outDirection) {
+    return RGBColor::Black;
 }
 
 /// Material ///

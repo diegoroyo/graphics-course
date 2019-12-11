@@ -1,5 +1,28 @@
 #include "uvmaterial.h"
 
+UVMaterial::UVMaterial(int _width, int _height)
+    : width(_width), height(_height) {
+    data.resize(height);
+    for (int y = 0; y < height; y++) {
+        data[y].resize(width, Material::none());
+    }
+}
+
+UVMaterialBuilder UVMaterial::builder(int width, int height) {
+    UVMaterialPtr texturePtr = UVMaterialPtr(new UVMaterial(width, height));
+    TextureBuilderPtr builderPtr =
+        TextureBuilderPtr(new TextureBuilder(height));
+    for (int y = 0; y < height; y++) {
+        // temp. initialize all row to same builder
+        (*builderPtr)[y].resize(width, Material::builder());
+        for (int x = 0; x < width; x++) {
+            // initialize each column to a different builder
+            (*builderPtr)[y][x] = Material::builder();
+        }
+    }
+    return UVMaterialBuilder(width, height, texturePtr, builderPtr);
+}
+
 void UVMaterialBuilder::addBRDF(const BRDFPtr &brdf) {
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {

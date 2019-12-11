@@ -43,9 +43,7 @@ class PLYModel {
     // Get UV coordinates for a given pixel
     inline std::array<float, 2> uv(int i) const { return uvs[i]; }
     // Diffuse texture RGB color given UV coordinates
-    inline MaterialPtr material(float uvx, float uvy) const {
-        return uvMaterial->get(uvx, uvy);
-    }
+    MaterialPtr material(float uvx, float uvy) const;
 
     // Apply model matrix to all vertices
     void transform(const Mat4 &modelMatrix);

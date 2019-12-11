@@ -1,14 +1,19 @@
 #pragma once
 
+// forward declarations
 #include <memory>
 #include <vector>
-#include "material.h"
-#include "ppmimage.h"
+class Material;
+typedef std::shared_ptr<Material> MaterialPtr;
+class MaterialBuilder;
 typedef std::vector<std::vector<MaterialPtr>> Texture;
 typedef std::vector<std::vector<MaterialBuilder>> TextureBuilder;
 typedef std::shared_ptr<TextureBuilder> TextureBuilderPtr;
 class UVMaterial;
 typedef std::shared_ptr<UVMaterial> UVMaterialPtr;
+
+#include "material.h"
+#include "ppmimage.h"
 
 // Extends Material class for PLY models
 // wxh matrix of materials which is UV mapped to model
@@ -55,28 +60,10 @@ class UVMaterial {
     Texture data;
 
    private:
-    UVMaterial(int _width, int _height) : width(_width), height(_height) {
-        data.resize(height);
-        for (int y = 0; y < height; y++) {
-            data[y].resize(width, Material::none());
-        }
-    }
+    UVMaterial(int _width, int _height);
 
    public:
-    static UVMaterialBuilder builder(int width = 1, int height = 1) {
-        UVMaterialPtr texturePtr = UVMaterialPtr(new UVMaterial(width, height));
-        TextureBuilderPtr builderPtr =
-            TextureBuilderPtr(new TextureBuilder(height));
-        for (int y = 0; y < height; y++) {
-            // temp. initialize all row to same builder
-            (*builderPtr)[y].resize(width, Material::builder());
-            for (int x = 0; x < width; x++) {
-                // initialize each column to a different builder
-                (*builderPtr)[y][x] = Material::builder();
-            }
-        }
-        return UVMaterialBuilder(width, height, texturePtr, builderPtr);
-    }
+    static UVMaterialBuilder builder(int width, int height);
 
     inline MaterialPtr get(const float uvx, const float uvy) const {
         int x = std::min(width - 1, (int)(uvx * this->width));

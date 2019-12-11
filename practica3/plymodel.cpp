@@ -124,6 +124,10 @@ void PLYModel::transform(const Mat4 &modelMatrix) {
     }
 }
 
+MaterialPtr PLYModel::material(const float uvx, const float uvy) const {
+    return uvMaterial->get(uvx, uvy);
+}
+
 void PLYModel::getBoundingBox(const std::vector<int> &findex, Vec4 &bb0,
                               Vec4 &bb1) const {
     // Initialise with first vertex of first face

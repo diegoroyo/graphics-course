@@ -24,6 +24,18 @@ bool Plane::intersection(const Ray &ray, RayHit &hit) const {
     return true;
 }
 
+MaterialPtr TexturedPlane::getMaterial(const Vec4 &hitPoint) const {
+    Vec4 d = hitPoint - this->uvOrigin;
+    // Get U-V as module from 0-1
+    float uvx = fmodf(dot(d, uvX), 1.0f);
+    if (uvx < 1e-6f) uvx += 1.0f;
+    uvx = std::fmax(0.0f, std::fmin(1.0f, uvx));  // 0-1 clamp
+    float uvy = fmodf(dot(d, uvY), 1.0f);
+    if (uvy < 1e-6f) uvy += 1.0f;
+    uvy = std::fmax(0.0f, std::fmin(1.0f, uvy));  // 0-1 clamp
+    return uvMaterial->get(uvx, uvy);
+}
+
 // Ray-sphere intersection algorithm source:
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 bool Sphere::intersection(const Ray &ray, RayHit &hit) const {
