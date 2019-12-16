@@ -12,6 +12,7 @@ typedef std::shared_ptr<Material> MaterialPtr;
 #include <vector>
 #include "geometry.h"
 #include "random.h"
+#include "ray.h"
 #include "rayhit.h"
 #include "rgbcolor.h"
 #include "scene.h"
@@ -27,7 +28,7 @@ class BRDF {
    public:
     const float prob;
     virtual bool nextRay(const Vec4 &inDirection, const RayHit &hit,
-                         Vec4 &outDirection) = 0;
+                         Ray &outRay) = 0;
     virtual RGBColor applyBRDF(const RGBColor &lightIn) const = 0;
     virtual RGBColor applyDirect(const Scene &scene, const RayHit &hit,
                                  const Vec4 &inDirection,
@@ -41,7 +42,7 @@ class PhongDiffuse : public BRDF {
     PhongDiffuse(const RGBColor &_kd)
         : BRDF(_kd.max()), kdProb(_kd * (1.0f / _kd.max())) {}
     bool nextRay(const Vec4 &inDirection, const RayHit &hit,
-                 Vec4 &outDirection) override;
+                 Ray &outRay) override;
     RGBColor applyBRDF(const RGBColor &lightIn) const override;
     RGBColor applyDirect(const Scene &scene, const RayHit &hit,
                          const Vec4 &inDirection,
@@ -57,7 +58,7 @@ class PhongSpecular : public BRDF {
 
     PhongSpecular(float _ks, float _alpha) : BRDF(_ks), alpha(_alpha) {}
     bool nextRay(const Vec4 &inDirection, const RayHit &hit,
-                 Vec4 &outDirection) override;
+                 Ray &outRay) override;
     RGBColor applyBRDF(const RGBColor &lightIn) const override;
     RGBColor applyDirect(const Scene &scene, const RayHit &hit,
                          const Vec4 &inDirection,
@@ -68,7 +69,7 @@ class PerfectSpecular : public BRDF {
    public:
     PerfectSpecular(float _ksp) : BRDF(_ksp) {}
     bool nextRay(const Vec4 &inDirection, const RayHit &hit,
-                 Vec4 &outDirection) override;
+                 Ray &outRay) override;
     RGBColor applyBRDF(const RGBColor &lightIn) const override;
     RGBColor applyDirect(const Scene &scene, const RayHit &hit,
                          const Vec4 &inDirection,
@@ -82,7 +83,22 @@ class PerfectRefraction : public BRDF {
     PerfectRefraction(float _krp, float _mediumRefractiveIndex)
         : BRDF(_krp), mediumRefractiveIndex(_mediumRefractiveIndex) {}
     bool nextRay(const Vec4 &inDirection, const RayHit &hit,
-                 Vec4 &outDirection) override;
+                 Ray &outRay) override;
+    RGBColor applyBRDF(const RGBColor &lightIn) const override;
+    RGBColor applyDirect(const Scene &scene, const RayHit &hit,
+                         const Vec4 &inDirection,
+                         const Vec4 &outDirection) override;
+};
+
+class Portal : public BRDF {
+    const FigurePortalPtr inPortal, outPortal;
+
+   public:
+    Portal(float _kpp, const FigurePortalPtr &_inPortal,
+           const FigurePortalPtr &_outPortal)
+        : BRDF(_kpp), inPortal(_inPortal), outPortal(_outPortal) {}
+    bool nextRay(const Vec4 &inDirection, const RayHit &hit,
+                 Ray &outRay) override;
     RGBColor applyBRDF(const RGBColor &lightIn) const override;
     RGBColor applyDirect(const Scene &scene, const RayHit &hit,
                          const Vec4 &inDirection,

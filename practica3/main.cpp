@@ -2,8 +2,9 @@
 // Scene 0: (may vary) Cornell box (two spheres)
 // Scene 1: (may vary) Cornell box (different contents, using model)
 // Scene 2: (don't change) UVMaterial properties test (diamond ore wall)
+// Scene 3: (don't change) Portal scene
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 2
+#define SCENE_NUMBER 3
 #endif
 
 #include <iostream>
@@ -55,6 +56,9 @@ int main(int argc, char** argv) {
 #elif SCENE_NUMBER == 2
     Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
+#elif SCENE_NUMBER == 3
+    Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
+        up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #endif
 
     // Camera camera(origin, forward, up, right);
@@ -65,8 +69,6 @@ int main(int argc, char** argv) {
     FigurePtr(new Figures::FlatPlane(normal, dist, material))
 #define sphere(material, pos, radius) \
     FigurePtr(new Figures::Sphere(material, pos, radius))
-// #define box(material, bb0, bb1) FigurePtr(new Figures::Box(material, bb0,
-// bb1))
 
 // shortcuts for materials
 #define phongDiffuse(kd) BRDFPtr(new PhongDiffuse(kd))
@@ -131,10 +133,9 @@ int main(int argc, char** argv) {
             .addPhongDiffuse("ply/diamondore_emission.ppm")
             .addPerfectSpecular("ply/diamondore_emission.ppm")
             .build();
-    UVMaterialPtr stoneTexture =
-        UVMaterial::builder(16, 16)
-            .addPhongDiffuse("ply/stone_diffuse.ppm")
-            .build();
+    UVMaterialPtr stoneTexture = UVMaterial::builder(16, 16)
+                                     .addPhongDiffuse("ply/stone_diffuse.ppm")
+                                     .build();
     UVMaterialPtr greenWoolTexture =
         UVMaterial::builder(16, 16)
             .addPhongDiffuse("ply/greenwool_diffuse.ppm")
@@ -143,12 +144,56 @@ int main(int argc, char** argv) {
         UVMaterial::builder(16, 16)
             .addPhongDiffuse("ply/redwool_diffuse.ppm")
             .build();
+    MaterialPtr transparent =
+        Material::builder().add(perfectRefraction(0.98f, 3.0f)).build();
+    MaterialPtr mirror =
+        Material::builder().add(perfectSpecular(0.98f)).build();
+#elif SCENE_NUMBER == 3
+
+    MaterialPtr whiteLight =
+        Material::light(RGBColor(maxLight, maxLight, maxLight));
+    MaterialPtr whiteDiffuse =
+        Material::builder().add(phongDiffuse(RGBColor::White * 0.9f)).build();
+    MaterialPtr greenDiffuse =
+        Material::builder()
+            .add(phongDiffuse(RGBColor(0.1f, 0.9f, 0.1f)))
+            .build();
+    MaterialPtr redDiffuse = Material::builder()
+                                 .add(phongDiffuse(RGBColor(0.9f, 0.1f, 0.1f)))
+                                 .build();
+
     MaterialPtr transparent = Material::builder()
-                                  .add(perfectRefraction(0.98f, 1.5f))
+                                  .add(perfectRefraction(0.9f, 1.5f))
                                   .build();
     MaterialPtr mirror = Material::builder()
-                             .add(perfectSpecular(0.98f))
+                             .add(phongSpecular(0.3f, 3.0f))
+                             .add(perfectSpecular(0.6f))
                              .build();
+
+    FigurePortalPtr bluePortal = FigurePortalPtr(new Figures::TexturedPlane(
+        Vec4(-1.0f, 0.0f, 0.0f, 0.0f), -1.99f, false));
+    FigurePortalPtr orangePortal = FigurePortalPtr(new Figures::TexturedPlane(
+        Vec4(1.0f, 0.0f, 0.0f, 0.0f), -4.99f, false));
+
+    UVMaterialPtr bluePortalTexture =
+        UVMaterial::builder(512, 512)
+            .addPhongDiffuse("ply/portal_blue_diffuse2.ppm")
+            .addPortal("ply/portal_any_portal2.ppm", bluePortal, orangePortal)
+            .build();
+    bluePortalTexture->override("ply/portal_any_mask2.ppm", nullptr);
+    UVMaterialPtr orangePortalTexture =
+        UVMaterial::builder(512, 512)
+            .addPhongDiffuse("ply/portal_orange_diffuse2.ppm")
+            .addPortal("ply/portal_any_portal2.ppm", orangePortal, bluePortal)
+            .build();
+    orangePortalTexture->override("ply/portal_any_mask2.ppm", nullptr);
+
+    bluePortal->setUVMaterial(
+        bluePortalTexture, Vec4(1.99f, -2.0f, -1.5f, 1.0f),
+        Vec4(0.0f, 0.0f, 3.0f, 0.0f), Vec4(0.0f, 4.0f, 0.0f, 0.0f));
+    orangePortal->setUVMaterial(
+        orangePortalTexture, Vec4(-4.99f, -2.0f, 1.5f, 1.0f),
+        Vec4(0.0f, 0.0f, -3.0f, 0.0f), Vec4(0.0f, 4.0f, 0.0f, 0.0f));
 #endif
 
     // build scene to BVH root node
@@ -198,6 +243,20 @@ int main(int argc, char** argv) {
             Vec4(0.0f, -1.0f, 0.0f, 0.0f))),
         sphere(mirror, Vec4(1.0f, -1.05f, -1.0f, 1.0f), 0.75f),
         sphere(transparent, Vec4(0.5f, 0.0f, 1.0f, 1.0f), 0.75f)
+#elif SCENE_NUMBER == 3
+        // Cornell box walls
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, whiteDiffuse),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, greenDiffuse),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, redDiffuse),
+        // Cornell box content
+        bluePortal,
+        orangePortal,
+        sphere(whiteDiffuse, Vec4(0.0f, -1.0f, 0.0f, 1.0f), 0.25f),
+        sphere(mirror, Vec4(1.0f, -1.2f, -1.2f, 1.0f), 0.65f),
+        sphere(transparent, Vec4(0.5f, 0.0f, 1.0f, 1.0f), 0.45f)
 #endif
     };
 
@@ -217,11 +276,17 @@ int main(int argc, char** argv) {
                 RGBColor(maxLight, maxLight, maxLight));
     scene.light(Vec4(1.0f, 1.4f, 0.0f, 1.0f),
                 RGBColor(maxLight, maxLight, maxLight));
+#elif SCENE_NUMBER == 3
+    scene.light(Vec4(-1.0f, 1.4f, -1.8f, 1.0f),
+                RGBColor(maxLight, maxLight, maxLight));
+    scene.light(Vec4(-1.0f, 1.4f, 1.8f, 1.0f),
+                RGBColor(maxLight, maxLight, maxLight));
+    scene.light(Vec4(1.0f, 1.4f, 0.0f, 1.0f),
+                RGBColor(maxLight, maxLight, maxLight));
 #endif
 
 #undef plane
 #undef sphere
-    // #undef box
 
 #undef phongDiffuse
 #undef phongSpecular

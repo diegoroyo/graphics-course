@@ -67,7 +67,7 @@ Mat4 Mat4::inverse() const {
     return adjugate * (1.0f / det);
 }
 
-std::ostream &operator<<(std::ostream &s, const Mat4 &matrix) {
+std::ostream &operator<<(std::ostream &s, Mat4 &matrix) {
     s << std::endl;
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {

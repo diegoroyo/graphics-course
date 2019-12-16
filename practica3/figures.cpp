@@ -18,22 +18,45 @@ bool Plane::intersection(const Ray &ray, RayHit &hit) const {
     // Intersection in front of the camera
     hit.distance = alpha;
     hit.point = ray.project(alpha);
-    hit.material = this->getMaterial(hit.point);
+    if (!this->getMaterial(hit.point, hit.material)) {
+        // plane is not infinite and it has hit outside
+        return false;
+    }
+    // material is stored in hit.material
     hit.enters = dot(this->normal, ray.direction) > 1e-5f;
     hit.normal = hit.enters ? this->normal * -1.0f : this->normal;
     return true;
 }
 
-MaterialPtr TexturedPlane::getMaterial(const Vec4 &hitPoint) const {
+bool TexturedPlane::getMaterial(const Vec4 &hitPoint,
+                                MaterialPtr &materialPtr) const {
     Vec4 d = hitPoint - this->uvOrigin;
     // Get U-V as module from 0-1
-    float uvx = fmodf(dot(d, uvX), 1.0f);
-    if (uvx < 1e-6f) uvx += 1.0f;
-    uvx = std::fmax(0.0f, std::fmin(1.0f, uvx));  // 0-1 clamp
-    float uvy = fmodf(dot(d, uvY), 1.0f);
-    if (uvy < 1e-6f) uvy += 1.0f;
-    uvy = std::fmax(0.0f, std::fmin(1.0f, uvy));  // 0-1 clamp
-    return uvMaterial->get(uvx, uvy);
+    float uvx = dot(d, uvX.normalize()) / uvX.module();
+    float uvy = dot(d, uvY.normalize()) / uvY.module();
+    if (infinite) {
+        uvx = fmodf(uvx, 1.0f);
+        uvy = fmodf(uvy, 1.0f);
+        if (uvx < 1e-6f) uvx += 1.0f;
+        if (uvy < 1e-6f) uvy += 1.0f;
+        uvx = std::fmax(0.0f, std::fmin(1.0f, uvx));  // 0-1 clamp
+        uvy = std::fmax(0.0f, std::fmin(1.0f, uvy));  // 0-1 clamp
+    }
+    if (uvx > 0.0f && uvx < 1.0f && uvy > 0.0f && uvy < 1.0f) {
+        materialPtr = uvMaterial->get(uvx, uvy);
+        return materialPtr != nullptr;
+    } else {
+        return false;
+    }
+}
+
+void TexturedPlane::setUVMaterial(const UVMaterialPtr &_uvMaterial,
+                                  const Vec4 &_uvOrigin, const Vec4 &_uvX,
+                                  const Vec4 &_uvY) {
+    this->uvMaterial = _uvMaterial;
+    this->uvOrigin = _uvOrigin;
+    this->uvX = _uvX;
+    this->uvY = _uvY;
 }
 
 // Ray-sphere intersection algorithm source:

@@ -10,6 +10,7 @@ class Ray {
     // instead of dividing by direction (slower)
     Vec4 invDirection;
 
+    Ray() {}
     Ray(const Vec4& _origin, const Vec4& _direction)
         : origin(_origin),
           direction(_direction),

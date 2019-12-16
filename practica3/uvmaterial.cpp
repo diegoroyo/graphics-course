@@ -90,6 +90,22 @@ UVMaterialBuilder UVMaterialBuilder::addPerfectSpecular(
     return *this;
 }
 
+UVMaterialBuilder UVMaterialBuilder::addPortal(
+    const char *portalFilename, const FigurePortalPtr &inPortal,
+    const FigurePortalPtr &outPortal) {
+    PPMImage portal;
+    portal.readFile(portalFilename);
+    portal.flipVertically();
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            float prob = portal.getPixel(x, y).max() * 0.99f;
+            (*builderPtr)[y][x].add(
+                BRDFPtr(new Portal(prob, inPortal, outPortal)));
+        }
+    }
+    return *this;
+}
+
 UVMaterialPtr UVMaterialBuilder::build() {
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
@@ -99,8 +115,22 @@ UVMaterialPtr UVMaterialBuilder::build() {
     return texturePtr;
 }
 
-UVMaterialPtr UVMaterialBuilder::buildOverrideLights(
-    const char *emissionFilename, const float emissionFactor) {
+void UVMaterial::override(const char *maskFilename,
+                          const MaterialPtr &material) {
+    PPMImage mask;
+    mask.readFile(maskFilename);
+    mask.flipVertically();
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            if (mask.getPixel(x, y).max() > 1e-6f) {
+                data[y][x] = material;
+            }
+        }
+    }
+}
+
+void UVMaterial::overrideLights(const char *emissionFilename,
+                                const float emissionFactor) {
     PPMImage emissionMap;
     emissionMap.readFile(emissionFilename);
     emissionMap.flipVertically();
@@ -108,12 +138,8 @@ UVMaterialPtr UVMaterialBuilder::buildOverrideLights(
         for (int x = 0; x < width; x++) {
             RGBColor color = emissionMap.getPixel(x, y);
             if (color.max() > 1e-6f) {
-                texturePtr->data[y][x] =
-                    Material::light(color * emissionFactor);
-            } else {
-                texturePtr->data[y][x] = (*builderPtr)[y][x].build();
+                data[y][x] = Material::light(color * emissionFactor);
             }
         }
     }
-    return texturePtr;
 }

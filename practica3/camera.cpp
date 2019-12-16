@@ -47,17 +47,17 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const Scene &scene,
         // Calculate russian roulette event
         BRDFPtr event = hit.material->selectEvent();
         // Only calculate direct light if event is not perfect refraction
-        Vec4 nextDirection;
+        Ray nextRay;
         if (event != nullptr &&
-            event->nextRay(cameraRay.direction, hit, nextDirection)) {
+            event->nextRay(cameraRay.direction, hit, nextRay)) {
 #ifdef DEBUG_PATH
             std::cout << "Event on point " << hit.point << " with normal "
                       << hit.normal << std::endl;
 #endif
             RGBColor directLight = event->applyDirect(
-                scene, hit, cameraRay.direction, nextDirection);
-            RGBColor nextEventLight = event->applyBRDF(tracePath(
-                Ray(hit.point, nextDirection), scene, backgroundColor));
+                scene, hit, cameraRay.direction, nextRay.direction);
+            RGBColor nextEventLight =
+                event->applyBRDF(tracePath(nextRay, scene, backgroundColor));
             return nextEventLight + directLight;
 #ifdef DEBUG_PATH
         } else {

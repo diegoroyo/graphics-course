@@ -48,10 +48,11 @@ class UVMaterialBuilder {
     // UV mapped for the model
     UVMaterialBuilder addPhongDiffuse(const char *diffuseFilename);
     UVMaterialBuilder addPerfectSpecular(const char *specularFilename);
+    UVMaterialBuilder addPortal(const char *portalFilename,
+                                const FigurePortalPtr &inPortal,
+                                const FigurePortalPtr &outPortal);
 
     UVMaterialPtr build();
-    UVMaterialPtr buildOverrideLights(const char *emissionFilename,
-                                      const float emissionFactor);
 };
 
 class UVMaterial {
@@ -70,4 +71,8 @@ class UVMaterial {
         int y = std::min(height - 1, (int)(uvy * this->height));
         return this->data[y][x];
     }
+
+    void override(const char *maskFilename, const MaterialPtr &material);
+    void overrideLights(const char *emissionFilename,
+                        const float emissionFactor);
 };

@@ -124,7 +124,7 @@ struct Mat4 {
         return Mat4(u, v, w, o);
     }
 
-    constexpr inline std::array<float, 4> operator[](const int i) const {
+    inline std::array<float, 4> &operator[](const int i) {
         return m[i];
     }
 
@@ -165,5 +165,5 @@ struct Mat4 {
     Mat4 transpose() const;
     Mat4 inverse() const;
 
-    friend std::ostream &operator<<(std::ostream &s, const Mat4 &matrix);
+    friend std::ostream &operator<<(std::ostream &s, Mat4 &matrix);
 };

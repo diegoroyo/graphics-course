@@ -5,8 +5,10 @@
 #include <vector>
 namespace Figures {  // forward declaration for typedef
 class Figure;
-}
+class TexturedPlane;
+}  // namespace Figures
 typedef std::shared_ptr<Figures::Figure> FigurePtr;
+typedef std::shared_ptr<Figures::TexturedPlane> FigurePortalPtr;
 typedef std::vector<FigurePtr> FigurePtrVector;
 class PLYModel;  // needed for function definitions
 
@@ -46,7 +48,8 @@ class Plane : public Figure {
 
    public:
     bool intersection(const Ray &ray, RayHit &hit) const override;
-    virtual MaterialPtr getMaterial(const Vec4 &hitPoint) const = 0;
+    virtual bool getMaterial(const Vec4 &hitPoint,
+                             MaterialPtr &materialPtr) const = 0;
 };
 
 class FlatPlane : public Plane {
@@ -56,25 +59,39 @@ class FlatPlane : public Plane {
     FlatPlane(const Vec4 &_normal, float _distToOrigin,
               const MaterialPtr _material)
         : Plane(_normal, _distToOrigin), material(_material) {}
-    MaterialPtr getMaterial(const Vec4 &hitPoint) const override {
-        return material;
+    bool getMaterial(const Vec4 &hitPoint,
+                     MaterialPtr &materialPtr) const override {
+        materialPtr = material;
+        return true;
     }
 };
 
 class TexturedPlane : public Plane {
-    const UVMaterialPtr uvMaterial;  // material depends on hit point
-    const Vec4 uvOrigin, uvX, uvY;
+    UVMaterialPtr uvMaterial;  // material depends on hit point
+    const bool infinite;       // repeat texture or not
 
    public:
+    Vec4 uvOrigin, uvX, uvY;
+
+    // this constructor should use setUVMaterial afterwards
+    TexturedPlane(const Vec4 &_normal, float _distToOrigin,
+                  bool _infinite = true)
+        : Plane(_normal, _distToOrigin), infinite(_infinite) {}
+    // init w/ material
     TexturedPlane(const Vec4 &_normal, float _distToOrigin,
                   const UVMaterialPtr &_uvMaterial, const Vec4 &_uvOrigin,
-                  const Vec4 &_uvX, const Vec4 &_uvY)
+                  const Vec4 &_uvX, const Vec4 &_uvY, bool _infinite = true)
         : Plane(_normal, _distToOrigin),
           uvMaterial(_uvMaterial),
           uvOrigin(_uvOrigin),
           uvX(_uvX),
-          uvY(_uvY) {}
-    MaterialPtr getMaterial(const Vec4 &hitPoint) const override;
+          uvY(_uvY),
+          infinite(_infinite) {}
+    bool getMaterial(const Vec4 &hitPoint,
+                     MaterialPtr &materialPtr) const override;
+    // special method for portals (material depends on objects)
+    void setUVMaterial(const UVMaterialPtr &_uvMaterial, const Vec4 &_uvOrigin,
+                       const Vec4 &_uvX, const Vec4 &_uvY);
 };
 
 /// Sphere ///

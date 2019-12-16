@@ -2,14 +2,14 @@
 
 // Calculate reflection of incoming ray with respect to normal
 // used, for example, in perfect specular brdf
-inline Vec4 reflectDirection(const Vec4& incoming, const Vec4 &normal) {
+inline Vec4 reflectDirection(const Vec4 &incoming, const Vec4 &normal) {
     return incoming - normal * dot(incoming, normal) * 2.0f;
 }
 
 /// Phong Diffuse ///
 
 bool PhongDiffuse::nextRay(const Vec4 &inDirection, const RayHit &hit,
-                           Vec4 &outDirection) {
+                           Ray &outRay) {
     // Random inclination & azimuth
     float randIncl = random01();
     float randAzim = random01();
@@ -22,8 +22,9 @@ bool PhongDiffuse::nextRay(const Vec4 &inDirection, const RayHit &hit,
     Vec4 x = cross(z, inDirection).normalize();
     Vec4 y = cross(z, x);
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
-    outDirection = cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
-                              cosf(incl), 0.0f);
+    Vec4 outDirection = cob * Vec4(sinf(incl) * cosf(azim),
+                                   sinf(incl) * sinf(azim), cosf(incl), 0.0f);
+    outRay = Ray(hit.point, outDirection);
     return true;
 }
 
@@ -40,7 +41,7 @@ RGBColor PhongDiffuse::applyDirect(const Scene &scene, const RayHit &hit,
 /// Phong Specular ///
 
 bool PhongSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
-                            Vec4 &outDirection) {
+                            Ray &outRay) {
     // Random inclination & azimuth
     float randIncl = random01();
     float randAzim = random01();
@@ -56,8 +57,9 @@ bool PhongSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
     Vec4 x = cross(z, inDirection).normalize();
     Vec4 y = cross(z, x);
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
-    outDirection = cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
-                              cosf(incl), 0.0f);
+    Vec4 outDirection = cob * Vec4(sinf(incl) * cosf(azim),
+                                   sinf(incl) * sinf(azim), cosf(incl), 0.0f);
+    outRay = Ray(hit.point, outDirection);
     float outCos = dot(outDirection, hit.normal);
     this->tempOutSin = sqrtf(1.0f - outCos * outCos);
     if (outCos < 1e-6f) {
@@ -88,8 +90,9 @@ RGBColor PhongSpecular::applyDirect(const Scene &scene, const RayHit &hit,
 /// Perfect Specular (delta BRDF) ///
 
 bool PerfectSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
-                              Vec4 &outDirection) {
-    outDirection = reflectDirection(inDirection, hit.normal);
+                              Ray &outRay) {
+    Vec4 outDirection = reflectDirection(inDirection, hit.normal);
+    outRay = Ray(hit.point, outDirection);
     return true;
 }
 
@@ -110,7 +113,7 @@ RGBColor PerfectSpecular::applyDirect(const Scene &scene, const RayHit &hit,
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel
 bool PerfectRefraction::nextRay(const Vec4 &inDirection, const RayHit &hit,
-                                Vec4 &outDirection) {
+                                Ray &outRay) {
     // Incoming ray's cosine and sine with respect to hit.normal
     float incCos = dot(inDirection, hit.normal) * -1.0f;
     float incSin = sqrtf(1.0f - incCos * incCos);
@@ -123,7 +126,8 @@ bool PerfectRefraction::nextRay(const Vec4 &inDirection, const RayHit &hit,
     if (outSin > 1.0f) {
         // Out angle is greater than critical angle (see reference)
         // By fresnel laws, ray is reflected
-        outDirection = reflectDirection(inDirection, hit.normal);
+        Vec4 outDirection = reflectDirection(inDirection, hit.normal);
+        outRay = Ray(hit.point, outDirection);
         return true;
     }
 
@@ -133,19 +137,22 @@ bool PerfectRefraction::nextRay(const Vec4 &inDirection, const RayHit &hit,
     // See reference for Kr calculation
     float rs = (n2 * incCos - n1 * outCos) / (n2 * incCos + n1 * outCos);
     float rp = (n2 * outCos - n1 * incCos) / (n2 * outCos + n1 * incCos);
-    float kr = (rs * rs + rp * rp) / 2; // mean of squares
+    float kr = (rs * rs + rp * rp) / 2;  // mean of squares
     // select a random event (like roussian roulette)
     // perfect specular has probability kr, perfect refraction 1 - kr
     if (random01() < kr) {
         // specular
-        outDirection = reflectDirection(inDirection, hit.normal);
+        Vec4 outDirection = reflectDirection(inDirection, hit.normal);
+        outRay = Ray(hit.point, outDirection);
         return true;
     } else {
         // refraction
         float theta2 = asinf(outSin);
         // m is perpendicular to normal (see reference for details)
         Vec4 m = (inDirection + hit.normal * incCos) * (1.0f / incSin);
-        outDirection = hit.normal * -1.0f * cosf(theta2) + m * sinf(theta2);
+        Vec4 outDirection =
+            hit.normal * -1.0f * cosf(theta2) + m * sinf(theta2);
+        outRay = Ray(hit.point, outDirection);
         return true;
     }
 }
@@ -161,6 +168,48 @@ RGBColor PerfectRefraction::applyDirect(const Scene &scene, const RayHit &hit,
                                         const Vec4 &inDirection,
                                         const Vec4 &outDirection) {
     // edge case ignored because refraction uses delta functions
+    return RGBColor::Black;
+}
+
+/// Portal ///
+
+bool Portal::nextRay(const Vec4 &inDirection, const RayHit &hit, Ray &outRay) {
+    // Out portal basis
+    Vec4 x = this->outPortal->uvX.normalize();
+    Vec4 y = this->outPortal->uvY.normalize();
+    Vec4 z = cross(x, y);
+
+    // Out direction in global coords
+    Mat4 cobIn = Mat4::changeOfBasis(this->inPortal->uvX.normalize(),
+                                     this->inPortal->uvY.normalize(),
+                                     hit.normal, this->inPortal->uvOrigin)
+                     .inverse();
+
+    Mat4 cob = Mat4::changeOfBasis(x, y, z, this->outPortal->uvOrigin);
+    Vec4 coords = cobIn * inDirection;
+    coords.x *= -1.0f;
+    coords.z *= -1.0f;
+    Vec4 outDirection = cob * coords;
+
+    // Position coordinates in local base to in portal
+    Vec4 d = hit.point - this->inPortal->uvOrigin;
+    float bx = 3.0f - dot(d, this->inPortal->uvX.normalize());
+    float by = dot(d, this->inPortal->uvY.normalize());
+    Vec4 outPoint = cob * Vec4(bx, by, 0.0f, 1.0f);
+
+    outRay = Ray(outPoint, outDirection);
+    return true;
+}
+
+RGBColor Portal::applyBRDF(const RGBColor &lightIn) const {
+    // technically ray didn't hit on a surface, no brdf required
+    return lightIn;
+}
+
+RGBColor Portal::applyDirect(const Scene &scene, const RayHit &hit,
+                             const Vec4 &inDirection,
+                             const Vec4 &outDirection) {
+    // ignore direct light
     return RGBColor::Black;
 }
 
