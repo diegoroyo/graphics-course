@@ -130,14 +130,15 @@ void UVMaterial::override(const char *maskFilename,
 }
 
 void UVMaterial::overrideLights(const char *emissionFilename,
-                                const float emissionFactor) {
+                                const float emissionFactor,
+                                const float minColor) {
     PPMImage emissionMap;
     emissionMap.readFile(emissionFilename);
     emissionMap.flipVertically();
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             RGBColor color = emissionMap.getPixel(x, y);
-            if (color.max() > 1e-6f) {
+            if (color.max() > minColor) {
                 data[y][x] = Material::light(color * emissionFactor);
             }
         }

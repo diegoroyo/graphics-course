@@ -74,5 +74,6 @@ class UVMaterial {
 
     void override(const char *maskFilename, const MaterialPtr &material);
     void overrideLights(const char *emissionFilename,
-                        const float emissionFactor);
+                        const float emissionFactor,
+                        const float minColor = 0.0f);
 };

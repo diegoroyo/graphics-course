@@ -1,1 +1,5 @@
-time bin/pathtracer -w 600 -h 600 -r 32 -o out/spaceship.ppm && ../practica2/bin/tonemapper out/spaceship.ppm -t CLAMP_GAMMA 0.8 0.7 -o out/spaceship.png -p
+#!/bin/bash
+time bin/pathtracer -w 1600 -h 1600 -p 256 -o out/spaceship.ppm
+echo "Convirtiendo a PNG..."
+../practica2/bin/tonemapper out/spaceship.ppm -t CLAMP_GAMMA 0.85 0.8 -o out/spaceship.png -p
+echo "Done"

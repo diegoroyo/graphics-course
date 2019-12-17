@@ -177,15 +177,17 @@ int main(int argc, char** argv) {
 
     UVMaterialPtr bluePortalTexture =
         UVMaterial::builder(512, 512)
-            .addPhongDiffuse("ply/portal_blue_diffuse2.ppm")
+            // .addPhongDiffuse("ply/portal_blue_diffuse2.ppm")
             .addPortal("ply/portal_any_portal2.ppm", bluePortal, orangePortal)
             .build();
+    bluePortalTexture->overrideLights("ply/portal_blue_diffuse2.ppm", maxLight, 0.3f);
     bluePortalTexture->override("ply/portal_any_mask2.ppm", nullptr);
     UVMaterialPtr orangePortalTexture =
         UVMaterial::builder(512, 512)
-            .addPhongDiffuse("ply/portal_orange_diffuse2.ppm")
+            // .addPhongDiffuse("ply/portal_orange_diffuse2.ppm")
             .addPortal("ply/portal_any_portal2.ppm", orangePortal, bluePortal)
             .build();
+    orangePortalTexture->overrideLights("ply/portal_orange_diffuse2.ppm", maxLight, 0.3f);
     orangePortalTexture->override("ply/portal_any_mask2.ppm", nullptr);
 
     bluePortal->setUVMaterial(
@@ -278,11 +280,11 @@ int main(int argc, char** argv) {
                 RGBColor(maxLight, maxLight, maxLight));
 #elif SCENE_NUMBER == 3
     scene.light(Vec4(-1.0f, 1.4f, -1.8f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight));
+                RGBColor(maxLight, maxLight, maxLight) * 0.75f);
     scene.light(Vec4(-1.0f, 1.4f, 1.8f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight));
+                RGBColor(maxLight, maxLight, maxLight) * 0.75f);
     scene.light(Vec4(1.0f, 1.4f, 0.0f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight));
+                RGBColor(maxLight, maxLight, maxLight) * 0.75f);
 #endif
 
 #undef plane
