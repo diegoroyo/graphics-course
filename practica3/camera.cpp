@@ -23,14 +23,24 @@ void printProgress(const std::chrono::nanoseconds &beginTime, float progress) {
 
 /// Camera ///
 
-inline Vec4 Camera::cameraToWorld(const Vec4 &v) {
+inline Vec4 Camera::cameraToWorld(const Vec4 &v) const {
     // static to it doesn't construct the matrix more than once
     static Mat4 cob(right, up, forward, origin);
     return cob * v;
 }
 
+inline Vec4 Camera::generateOrigin() const {
+    if (dofRadius == 0.0f) {
+        return origin;
+    } else {
+        float r = dofRadius * sqrtf(random01());
+        Mat4 rotZ = Mat4::rotationZ(random01() * 2.0f * M_PI);
+        return cameraToWorld(rotZ * Vec4(0.0f, r, 0.0f, 1.0f));
+    }
+}
+
 RGBColor Camera::tracePath(const Ray &cameraRay, const Scene &scene,
-                           const RGBColor &backgroundColor) {
+                           const RGBColor &backgroundColor) const {
     // Ray from camera's origin to pixel's center
     RayHit hit;
     if (scene.root->intersection(cameraRay, hit)) {
@@ -76,14 +86,14 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const Scene &scene,
 
 RGBColor Camera::tracePixel(const Vec4 &d0, const Vec4 &deltaX,
                             const Vec4 &deltaY, int ppp, const Scene &scene,
-                            const RGBColor &backgroundColor) {
+                            const RGBColor &backgroundColor) const {
     RGBColor pixelColor(backgroundColor);
     for (int p = 0; p < ppp; ++p) {
         float randX = random01();
         float randY = random01();
         Vec4 direction = d0 + deltaX * randX + deltaY * randY;
         // Trace ray and store mean in result
-        Ray ray(this->origin, direction.normalize());
+        Ray ray(this->generateOrigin(), direction.normalize());
 #ifdef DEBUG_PATH
         std::cout << std::endl << "> Ray begins" << std::endl;
 #endif
@@ -98,7 +108,7 @@ RGBColor Camera::tracePixel(const Vec4 &d0, const Vec4 &deltaX,
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
 PPMImage Camera::render(int width, int height, int ppp, const Scene &scene,
-                        const RGBColor &backgroundColor) {
+                        const RGBColor &backgroundColor) const {
     // Initialize image with width/height and bg color
     PPMImage result(width, height, std::numeric_limits<int>::max());
     result.fillPixels(backgroundColor);

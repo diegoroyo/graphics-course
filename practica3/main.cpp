@@ -57,12 +57,13 @@ int main(int argc, char** argv) {
     Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #elif SCENE_NUMBER == 3
-    Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
-        up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
+    Vec4 origin(-2.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
+        up(0.0f, 2.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 2.0f, 0.0f);
 #endif
 
     // Camera camera(origin, forward, up, right);
     Camera camera(origin, forward, up, width / (float)height);
+    camera.setDepthOfField(0.01f);
 
 // shortcuts for getting figure pointers
 #define plane(normal, dist, material) \
