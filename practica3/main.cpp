@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
 
     // Camera camera(origin, forward, up, right);
     Camera camera(origin, forward, up, width / (float)height);
-    camera.setDepthOfField(0.01f);
+    camera.setDepthOfField(0.015f);
 
 // shortcuts for getting figure pointers
 #define plane(normal, dist, material) \
@@ -154,11 +154,27 @@ int main(int argc, char** argv) {
     MaterialPtr whiteLight =
         Material::light(RGBColor(maxLight, maxLight, maxLight));
     MaterialPtr whiteDiffuse =
-        Material::builder().add(phongDiffuse(RGBColor::White * 0.9f)).build();
+        Material::builder()
+        .add(phongDiffuse(RGBColor::White * 0.9f))
+        .build();
     MaterialPtr greenDiffuse =
         Material::builder()
-            .add(phongDiffuse(RGBColor(0.1f, 0.9f, 0.1f)))
+            // .add(phongDiffuse(RGBColor(0.1f, 0.9f, 0.1f)))
+            .add(phongSpecular(0.9f, 50.0f))
             .build();
+
+    MaterialPtr yellow =
+        Material::builder()
+            .add(phongDiffuse(RGBColor(0.9f, 0.9f, 0.1f)))
+            .build();
+
+    
+    MaterialPtr purple =
+        Material::builder()
+            .add(phongDiffuse(RGBColor(0.9f, 0.1f, 0.9f)))
+            .build();
+
+
     MaterialPtr redDiffuse = Material::builder()
                                  .add(phongDiffuse(RGBColor(0.9f, 0.1f, 0.1f)))
                                  .build();
@@ -172,9 +188,9 @@ int main(int argc, char** argv) {
                              .build();
 
     FigurePortalPtr bluePortal = FigurePortalPtr(new Figures::TexturedPlane(
-        Vec4(-1.0f, 0.0f, 0.0f, 0.0f), -1.99f, false));
+        Vec4(0.0f, 0.0f, -1.0f, 0.0f), -1.99f, false));
     FigurePortalPtr orangePortal = FigurePortalPtr(new Figures::TexturedPlane(
-        Vec4(1.0f, 0.0f, 0.0f, 0.0f), -4.99f, false));
+        Vec4(0.0f, 0.0f, 1.0f, 0.0f), -1.99f, false));
 
     UVMaterialPtr bluePortalTexture =
         UVMaterial::builder(512, 512)
@@ -192,11 +208,11 @@ int main(int argc, char** argv) {
     orangePortalTexture->override("ply/portal_any_mask2.ppm", nullptr);
 
     bluePortal->setUVMaterial(
-        bluePortalTexture, Vec4(1.99f, -2.0f, -1.5f, 1.0f),
-        Vec4(0.0f, 0.0f, 3.0f, 0.0f), Vec4(0.0f, 4.0f, 0.0f, 0.0f));
+        bluePortalTexture, Vec4(1.0f, -2.0f, 1.99f, 1.0f),
+        Vec4(-2.0f, 0.0f, 0.0f, 0.0f), Vec4(0.0f, 4.0f, 0.0f, 0.0f));
     orangePortal->setUVMaterial(
-        orangePortalTexture, Vec4(-4.99f, -2.0f, 1.5f, 1.0f),
-        Vec4(0.0f, 0.0f, -3.0f, 0.0f), Vec4(0.0f, 4.0f, 0.0f, 0.0f));
+        orangePortalTexture, Vec4(-1.0f, -2.0f, -1.99f, 1.0f),
+        Vec4(2.0f, 0.0f, 0.0f, 0.0f), Vec4(0.0f, 4.0f, 0.0f, 0.0f));
 #endif
 
     // build scene to BVH root node
@@ -250,7 +266,7 @@ int main(int argc, char** argv) {
         // Cornell box walls
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
-        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, greenDiffuse),
         plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, whiteDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, greenDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, redDiffuse),
@@ -258,8 +274,9 @@ int main(int argc, char** argv) {
         bluePortal,
         orangePortal,
         sphere(whiteDiffuse, Vec4(0.0f, -1.0f, 0.0f, 1.0f), 0.25f),
-        sphere(mirror, Vec4(1.0f, -1.2f, -1.2f, 1.0f), 0.65f),
-        sphere(transparent, Vec4(0.5f, 0.0f, 1.0f, 1.0f), 0.45f)
+        sphere(yellow, Vec4(1.0f, -1.2f, -1.2f, 1.0f), 0.65f),
+        sphere(purple, Vec4(0.0f, 0.0f, 2.0f, 1.0f), 0.4f),
+        sphere(purple, Vec4(0.0f, 0.0f, -2.0f, 1.0f), 0.4f)
 #endif
     };
 

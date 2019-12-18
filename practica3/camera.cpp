@@ -29,13 +29,13 @@ inline Vec4 Camera::cameraToWorld(const Vec4 &v) const {
     return cob * v;
 }
 
-inline Vec4 Camera::generateOrigin() const {
+inline Vec4 Camera::getDoFDisplacement() const {
     if (dofRadius == 0.0f) {
-        return origin;
+        return Vec4();
     } else {
         float r = dofRadius * sqrtf(random01());
         Mat4 rotZ = Mat4::rotationZ(random01() * 2.0f * M_PI);
-        return cameraToWorld(rotZ * Vec4(0.0f, r, 0.0f, 1.0f));
+        return cameraToWorld(rotZ * Vec4(0.0f, r, 0.0f, 0.0f));
     }
 }
 
@@ -64,8 +64,7 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const Scene &scene,
             std::cout << "Event on point " << hit.point << " with normal "
                       << hit.normal << std::endl;
 #endif
-            RGBColor directLight = event->applyDirect(
-                scene, hit, cameraRay.direction, nextRay.direction);
+            RGBColor directLight = scene.directLight(hit, event);
             RGBColor nextEventLight =
                 event->applyBRDF(tracePath(nextRay, scene, backgroundColor));
             return nextEventLight + directLight;
@@ -91,9 +90,10 @@ RGBColor Camera::tracePixel(const Vec4 &d0, const Vec4 &deltaX,
     for (int p = 0; p < ppp; ++p) {
         float randX = random01();
         float randY = random01();
+        Vec4 dof = this->getDoFDisplacement();
         Vec4 direction = d0 + deltaX * randX + deltaY * randY;
         // Trace ray and store mean in result
-        Ray ray(this->generateOrigin(), direction.normalize());
+        Ray ray(this->origin + dof, (direction - dof).normalize());
 #ifdef DEBUG_PATH
         std::cout << std::endl << "> Ray begins" << std::endl;
 #endif

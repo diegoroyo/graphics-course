@@ -29,13 +29,12 @@ bool PhongDiffuse::nextRay(const Vec4 &inDirection, const RayHit &hit,
 }
 
 RGBColor PhongDiffuse::applyBRDF(const RGBColor &lightIn) const {
-    return lightIn * this->kdProb;
+    return lightIn * this->kd * (1.0f / this->prob);
 }
 
-RGBColor PhongDiffuse::applyDirect(const Scene &scene, const RayHit &hit,
-                                   const Vec4 &inDirection,
-                                   const Vec4 &outDirection) {
-    return scene.directLight(hit.point) * this->kdProb;
+RGBColor PhongDiffuse::applyDirect(const RGBColor &lightIn,
+                                   const Vec4 &wi) const {
+    return lightIn * this->kd * (1.0f / M_PI);
 }
 
 /// Phong Specular ///
@@ -54,6 +53,7 @@ bool PhongSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
 
     // Local base to hit point
     Vec4 z = reflectDirection(inDirection, hit.normal);
+    this->tempRefl = z;
     Vec4 x = cross(z, inDirection).normalize();
     Vec4 y = cross(z, x);
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
@@ -77,14 +77,13 @@ RGBColor PhongSpecular::applyBRDF(const RGBColor &lightIn) const {
                       (1.0f / ((this->alpha + 1) + outSin)));
 }
 
-RGBColor PhongSpecular::applyDirect(const Scene &scene, const RayHit &hit,
-                                    const Vec4 &inDirection,
-                                    const Vec4 &outDirection) {
-    RGBColor directLight = scene.directLight(hit.point);
-    float outCos = dot(outDirection, hit.normal);
-    this->tempOutSin = sqrtf(1.0f - outCos * outCos);
-    this->tempInCos = dot(inDirection, hit.normal) * -1.0f;
-    return this->applyBRDF(directLight);
+RGBColor PhongSpecular::applyDirect(const RGBColor &lightIn,
+                                    const Vec4 &wi) const {
+    // TODO check
+    Vec4 refl = this->tempRefl;
+    float incl = dot(refl, wi);
+    return lightIn * this->prob * fabs(powf(cosf(incl), this->alpha)) *
+           ((this->alpha + 2.0f) / (2.0f * M_PI));
 }
 
 /// Perfect Specular (delta BRDF) ///
@@ -101,9 +100,8 @@ RGBColor PerfectSpecular::applyBRDF(const RGBColor &lightIn) const {
     return lightIn;
 }
 
-RGBColor PerfectSpecular::applyDirect(const Scene &scene, const RayHit &hit,
-                                      const Vec4 &inDirection,
-                                      const Vec4 &outDirection) {
+RGBColor PerfectSpecular::applyDirect(const RGBColor &lightIn,
+                                      const Vec4 &wi) const {
     // edge case of delta function ignored
     // outDirection == reflectDirection(inDirecion, hit.normal)
     return RGBColor::Black;
@@ -164,9 +162,8 @@ RGBColor PerfectRefraction::applyBRDF(const RGBColor &lightIn) const {
     return lightIn;
 }
 
-RGBColor PerfectRefraction::applyDirect(const Scene &scene, const RayHit &hit,
-                                        const Vec4 &inDirection,
-                                        const Vec4 &outDirection) {
+RGBColor PerfectRefraction::applyDirect(const RGBColor &lightIn,
+                                        const Vec4 &wi) const {
     // edge case ignored because refraction uses delta functions
     return RGBColor::Black;
 }
@@ -187,13 +184,14 @@ bool Portal::nextRay(const Vec4 &inDirection, const RayHit &hit, Ray &outRay) {
 
     Mat4 cob = Mat4::changeOfBasis(x, y, z, this->outPortal->uvOrigin);
     Vec4 coords = cobIn * inDirection;
-    coords.x *= -1.0f;
     coords.z *= -1.0f;
+    coords.x *= -1.0f;
     Vec4 outDirection = cob * coords;
 
     // Position coordinates in local base to in portal
     Vec4 d = hit.point - this->inPortal->uvOrigin;
-    float bx = 3.0f - dot(d, this->inPortal->uvX.normalize());
+    float bx =
+        this->inPortal->uvX.module() - dot(d, this->inPortal->uvX.normalize());
     float by = dot(d, this->inPortal->uvY.normalize());
     Vec4 outPoint = cob * Vec4(bx, by, 0.0f, 1.0f);
 
@@ -206,9 +204,7 @@ RGBColor Portal::applyBRDF(const RGBColor &lightIn) const {
     return lightIn;
 }
 
-RGBColor Portal::applyDirect(const Scene &scene, const RayHit &hit,
-                             const Vec4 &inDirection,
-                             const Vec4 &outDirection) {
+RGBColor Portal::applyDirect(const RGBColor &lightIn, const Vec4 &wi) const {
     // ignore direct light
     return RGBColor::Black;
 }

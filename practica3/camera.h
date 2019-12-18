@@ -19,8 +19,8 @@ class Camera {
     // Convert camera's local space to world space
     Vec4 cameraToWorld(const Vec4 &v) const;
 
-    //
-    Vec4 generateOrigin() const;
+    // Get random DoF displacement (simulate bigger camera hole)
+    Vec4 getDoFDisplacement() const;
 
     // Trace the path followed by the cameraRay (multiple hits etc)
     RGBColor tracePath(const Ray &cameraRay, const Scene &scene,
