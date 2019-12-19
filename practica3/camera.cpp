@@ -64,9 +64,10 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const Scene &scene,
             std::cout << "Event on point " << hit.point << " with normal "
                       << hit.normal << std::endl;
 #endif
-            RGBColor directLight = scene.directLight(hit, event);
+            RGBColor directLight = scene.directLight(hit, nextRay.direction, event);
             RGBColor nextEventLight =
-                event->applyBRDF(tracePath(nextRay, scene, backgroundColor));
+                event->applyBRDF(tracePath(nextRay, scene, backgroundColor),
+                                 cameraRay.direction, nextRay.direction);
             return nextEventLight + directLight;
 #ifdef DEBUG_PATH
         } else {
@@ -99,7 +100,9 @@ RGBColor Camera::tracePixel(const Vec4 &d0, const Vec4 &deltaX,
 #endif
         RGBColor rayColor = tracePath(ray, scene, backgroundColor);
         if (rayColor.max() > scene.maxLightEmission) {
+            // std::cout << "El rayo devuelve " << rayColor << std::endl;
             rayColor = rayColor * (scene.maxLightEmission / rayColor.max());
+            // std::cout << "Despues del check es " << rayColor << std::endl;
         }
         pixelColor = pixelColor + rayColor * (1.0f / ppp);
     }
@@ -142,6 +145,7 @@ PPMImage Camera::render(int width, int height, int ppp, const Scene &scene,
                 int y = pixelIndex / width;
                 Vec4 direction = firstDirection + deltaX * x + deltaY * y;
                 // Generate ppp rays and store mean in result image
+                // std::cout << ">>> Pixel " << x << ", " << y << std::endl;
                 result.setPixel(x, y,
                                 tracePixel(direction, deltaX, deltaY, ppp,
                                            scene, backgroundColor));

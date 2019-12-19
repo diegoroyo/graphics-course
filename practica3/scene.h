@@ -30,5 +30,6 @@ class Scene {
     }
 
     // Calculate direct light incoming from point lights
-    RGBColor directLight(const RayHit &hit, const BRDFPtr &brdf) const;
+    RGBColor directLight(const RayHit &hit, const Vec4 &wo,
+                         const BRDFPtr &brdf) const;
 };

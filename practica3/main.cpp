@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
 
     // Camera camera(origin, forward, up, right);
     Camera camera(origin, forward, up, width / (float)height);
-    camera.setDepthOfField(0.015f);
+    // camera.setDepthOfField(0.015f);
 
 // shortcuts for getting figure pointers
 #define plane(normal, dist, material) \
@@ -159,25 +159,21 @@ int main(int argc, char** argv) {
         .build();
     MaterialPtr greenDiffuse =
         Material::builder()
-            // .add(phongDiffuse(RGBColor(0.1f, 0.9f, 0.1f)))
-            .add(phongSpecular(0.9f, 5.0f))
+            .add(phongDiffuse(RGBColor(0.1f, 0.9f, 0.1f)))
             .build();
+    MaterialPtr redDiffuse = Material::builder()
+                                 .add(phongDiffuse(RGBColor(0.9f, 0.1f, 0.1f)))
+                                 .build();
 
+    // TODO remove
     MaterialPtr yellow =
         Material::builder()
             .add(phongDiffuse(RGBColor(0.9f, 0.9f, 0.1f)))
             .build();
-
-    
     MaterialPtr purple =
         Material::builder()
             .add(phongDiffuse(RGBColor(0.9f, 0.1f, 0.9f)))
             .build();
-
-
-    MaterialPtr redDiffuse = Material::builder()
-                                 .add(phongDiffuse(RGBColor(0.9f, 0.1f, 0.1f)))
-                                 .build();
 
     MaterialPtr transparent = Material::builder()
                                   .add(perfectRefraction(0.9f, 1.5f))
@@ -208,10 +204,10 @@ int main(int argc, char** argv) {
     orangePortalTexture->override("ply/portal_any_mask2.ppm", nullptr);
 
     bluePortal->setUVMaterial(
-        bluePortalTexture, Vec4(1.0f, -2.0f, 1.99f, 1.0f),
+        bluePortalTexture, Vec4(1.5f, -2.0f, 1.99f, 1.0f),
         Vec4(-2.0f, 0.0f, 0.0f, 0.0f), Vec4(0.0f, 4.0f, 0.0f, 0.0f));
     orangePortal->setUVMaterial(
-        orangePortalTexture, Vec4(-1.0f, -2.0f, -1.99f, 1.0f),
+        orangePortalTexture, Vec4(-0.5f, -2.0f, -1.99f, 1.0f),
         Vec4(2.0f, 0.0f, 0.0f, 0.0f), Vec4(0.0f, 4.0f, 0.0f, 0.0f));
 #endif
 
@@ -266,17 +262,16 @@ int main(int argc, char** argv) {
         // Cornell box walls
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
-        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, greenDiffuse),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
         plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, whiteDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, greenDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, redDiffuse),
         // Cornell box content
-        // bluePortal,
-        // orangePortal,
-        sphere(whiteDiffuse, Vec4(0.0f, -1.0f, 0.0f, 1.0f), 0.25f),
-        sphere(yellow, Vec4(1.0f, -1.2f, -1.2f, 1.0f), 0.65f),
-        sphere(purple, Vec4(0.0f, 0.0f, 2.0f, 1.0f), 0.4f),
-        sphere(purple, Vec4(0.0f, 0.0f, -2.0f, 1.0f), 0.4f)
+        bluePortal,
+        orangePortal,
+        sphere(mirror, Vec4(1.0f, 0.0f, 0.0f, 1.0f), 1.0f),
+        sphere(mirror, Vec4(0.5f, 0.0f, 2.0f, 1.0f), 0.5f),
+        sphere(mirror, Vec4(0.5f, 0.0f, -2.0f, 1.0f), 0.5f)
 #endif
     };
 
@@ -298,9 +293,9 @@ int main(int argc, char** argv) {
                 RGBColor(maxLight, maxLight, maxLight));
 #elif SCENE_NUMBER == 3
     // scene.light(Vec4(-1.0f, 1.4f, -1.8f, 1.0f),
-    //             RGBColor(maxLight, maxLight, maxLight) * 0.75f);
+    //             RGBColor(maxLight, maxLight, maxLight));
     // scene.light(Vec4(-1.0f, 1.4f, 1.8f, 1.0f),
-    //             RGBColor(maxLight, maxLight, maxLight) * 0.75f);
+    //             RGBColor(maxLight, maxLight, maxLight));
     scene.light(Vec4(1.0f, 1.4f, 0.0f, 1.0f),
                 RGBColor(maxLight, maxLight, maxLight));
 #endif

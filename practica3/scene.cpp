@@ -1,6 +1,7 @@
 #include "scene.h"
 
-RGBColor Scene::directLight(const RayHit& hit, const BRDFPtr& brdf) const {
+RGBColor Scene::directLight(const RayHit& hit, const Vec4& wo,
+                            const BRDFPtr& brdf) const {
     RGBColor result = RGBColor::Black;
     // Check all lights in the scene
     for (auto light : lights) {
@@ -14,7 +15,7 @@ RGBColor Scene::directLight(const RayHit& hit, const BRDFPtr& brdf) const {
             // Add light's emission to the result
             RGBColor inEmission =
                 light.emission * (1.0f / (norm * norm)) * dot(hit.normal, wi);
-            result = result + brdf->applyDirect(inEmission, hit, wi);
+            result = result + brdf->applyDirect(inEmission, hit, wi, wo);
         }
     }
     return result;
