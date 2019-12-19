@@ -32,7 +32,7 @@ RGBColor PhongDiffuse::applyBRDF(const RGBColor &lightIn) const {
     return lightIn * this->kd * (1.0f / this->prob);
 }
 
-RGBColor PhongDiffuse::applyDirect(const RGBColor &lightIn,
+RGBColor PhongDiffuse::applyDirect(const RGBColor &lightIn, const RayHit &hit,
                                    const Vec4 &wi) const {
     return lightIn * this->kd * (1.0f / M_PI);
 }
@@ -50,10 +50,10 @@ bool PhongSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
 
     // Save for next iteration
     this->tempInCos = dot(inDirection, hit.normal) * -1.0f;
+    this->tempOutDirection = inDirection * -1.0f;
 
     // Local base to hit point
     Vec4 z = reflectDirection(inDirection, hit.normal);
-    this->tempRefl = z;
     Vec4 x = cross(z, inDirection).normalize();
     Vec4 y = cross(z, x);
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
@@ -77,12 +77,14 @@ RGBColor PhongSpecular::applyBRDF(const RGBColor &lightIn) const {
                       (1.0f / ((this->alpha + 1) + outSin)));
 }
 
-RGBColor PhongSpecular::applyDirect(const RGBColor &lightIn,
+RGBColor PhongSpecular::applyDirect(const RGBColor &lightIn, const RayHit &hit,
                                     const Vec4 &wi) const {
-    // TODO check
-    Vec4 refl = this->tempRefl;
-    float incl = dot(refl, wi);
-    return lightIn * this->prob * fabs(powf(cosf(incl), this->alpha)) *
+    // cosine should be between light out direction (wo = inDirection * -1.0f)
+    // which is saved in nextRay and light refraction direction (wr)
+    Vec4 wo = this->tempOutDirection;
+    Vec4 wr = reflectDirection(wi.normalize() * -1.0f, hit.normal);
+    float cosInclR = dot(wr, wo);
+    return lightIn * this->prob * fabs(powf(cosInclR, this->alpha)) *
            ((this->alpha + 2.0f) / (2.0f * M_PI));
 }
 
@@ -101,7 +103,7 @@ RGBColor PerfectSpecular::applyBRDF(const RGBColor &lightIn) const {
 }
 
 RGBColor PerfectSpecular::applyDirect(const RGBColor &lightIn,
-                                      const Vec4 &wi) const {
+                                      const RayHit &hit, const Vec4 &wi) const {
     // edge case of delta function ignored
     // outDirection == reflectDirection(inDirecion, hit.normal)
     return RGBColor::Black;
@@ -163,6 +165,7 @@ RGBColor PerfectRefraction::applyBRDF(const RGBColor &lightIn) const {
 }
 
 RGBColor PerfectRefraction::applyDirect(const RGBColor &lightIn,
+                                        const RayHit &hit,
                                         const Vec4 &wi) const {
     // edge case ignored because refraction uses delta functions
     return RGBColor::Black;
@@ -204,7 +207,8 @@ RGBColor Portal::applyBRDF(const RGBColor &lightIn) const {
     return lightIn;
 }
 
-RGBColor Portal::applyDirect(const RGBColor &lightIn, const Vec4 &wi) const {
+RGBColor Portal::applyDirect(const RGBColor &lightIn, const RayHit &hit,
+                             const Vec4 &wi) const {
     // ignore direct light
     return RGBColor::Black;
 }

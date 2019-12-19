@@ -74,7 +74,7 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const Scene &scene,
 #endif
         }
 
-        // Path died for one reason or another, only return direct light
+        // Path died for one reason or another
         return RGBColor::Black;
     }
 #ifdef DEBUG_PATH

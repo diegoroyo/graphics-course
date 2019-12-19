@@ -160,7 +160,7 @@ int main(int argc, char** argv) {
     MaterialPtr greenDiffuse =
         Material::builder()
             // .add(phongDiffuse(RGBColor(0.1f, 0.9f, 0.1f)))
-            .add(phongSpecular(0.9f, 50.0f))
+            .add(phongSpecular(0.9f, 5.0f))
             .build();
 
     MaterialPtr yellow =
@@ -271,8 +271,8 @@ int main(int argc, char** argv) {
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, greenDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, redDiffuse),
         // Cornell box content
-        bluePortal,
-        orangePortal,
+        // bluePortal,
+        // orangePortal,
         sphere(whiteDiffuse, Vec4(0.0f, -1.0f, 0.0f, 1.0f), 0.25f),
         sphere(yellow, Vec4(1.0f, -1.2f, -1.2f, 1.0f), 0.65f),
         sphere(purple, Vec4(0.0f, 0.0f, 2.0f, 1.0f), 0.4f),
@@ -297,12 +297,12 @@ int main(int argc, char** argv) {
     scene.light(Vec4(1.0f, 1.4f, 0.0f, 1.0f),
                 RGBColor(maxLight, maxLight, maxLight));
 #elif SCENE_NUMBER == 3
-    scene.light(Vec4(-1.0f, 1.4f, -1.8f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight) * 0.75f);
-    scene.light(Vec4(-1.0f, 1.4f, 1.8f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight) * 0.75f);
+    // scene.light(Vec4(-1.0f, 1.4f, -1.8f, 1.0f),
+    //             RGBColor(maxLight, maxLight, maxLight) * 0.75f);
+    // scene.light(Vec4(-1.0f, 1.4f, 1.8f, 1.0f),
+    //             RGBColor(maxLight, maxLight, maxLight) * 0.75f);
     scene.light(Vec4(1.0f, 1.4f, 0.0f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight) * 0.75f);
+                RGBColor(maxLight, maxLight, maxLight));
 #endif
 
 #undef plane
