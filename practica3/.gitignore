@@ -2,6 +2,7 @@ bin/*
 .vscode
 cmake-build-debug
 .clang-format
+*.txt
 *.ppm
 *.png
 *.ply

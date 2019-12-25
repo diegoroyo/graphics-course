@@ -4,7 +4,7 @@
 // Scene 2: (don't change) UVMaterial properties test (diamond ore wall)
 // Scene 3: (don't change) Portal scene
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 0
+#define SCENE_NUMBER 2
 #endif
 
 #include <iostream>
@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
     MaterialPtr whiteLight =
         Material::light(RGBColor(maxLight, maxLight, maxLight));
     MaterialPtr whiteDiffuse =
-        Material::builder().add(phongDiffuse(RGBColor::White * 0.5f)).build();
+        Material::builder().add(phongDiffuse(RGBColor::White * 0.95f)).build();
     MaterialPtr whiteMirror = Material::builder()
                                   .add(phongDiffuse(RGBColor::White * 0.1f))
                                   .add(phongSpecular(0.5f, 3.0f))
@@ -114,20 +114,18 @@ int main(int argc, char** argv) {
                                   .build();
     MaterialPtr greenDiffuse =
         Material::builder()
-            .add(phongDiffuse(RGBColor(0.02f, 0.5f, 0.02f)))
+            .add(phongDiffuse(RGBColor(0.0f, 0.95f, 0.0f)))
             .build();
     MaterialPtr redDiffuse =
         Material::builder()
-            .add(phongDiffuse(RGBColor(0.5f, 0.02f, 0.02f)))
+            .add(phongDiffuse(RGBColor(0.95f, 0.0f, 0.0f)))
             .build();
     MediumPtr glass = Medium::create(1.5f);
     MaterialPtr transparent = Material::builder()
-                                  .add(perfectSpecular(0.1f))
-                                  .add(perfectRefraction(0.85f, glass))
+                                  .add(perfectRefraction(0.95f, glass))
                                   .build();
     MaterialPtr mirror = Material::builder()
-                             .add(phongSpecular(0.35f, 3.0f))
-                             .add(perfectSpecular(0.6f))
+                             .add(perfectSpecular(0.95f))
                              .build();
     MaterialPtr pureBlack = Material::none();
 
@@ -283,7 +281,7 @@ int main(int argc, char** argv) {
     // Add points lights to the scene
 
 #if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
-    scene.light(Vec4(0.0f, 1.5f, 0.0f, 1.0f),
+    scene.light(Vec4(0.0f, 1.0f, 0.0f, 1.0f),
                 RGBColor(maxLight, maxLight, maxLight));
 #elif SCENE_NUMBER == 2
     scene.light(Vec4(0.0f, 1.5f, -1.5f, 1.0f),
