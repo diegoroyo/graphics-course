@@ -55,19 +55,19 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const Scene &scene,
         }
 
         // Calculate russian roulette event
-        BRDFPtr event = hit.material->selectEvent();
+        EventPtr event = hit.material->selectEvent();
         // Only calculate direct light if event is not perfect refraction
         Ray nextRay;
-        if (event != nullptr &&
-            event->nextRay(cameraRay.direction, hit, nextRay)) {
+        if (event != nullptr && event->nextRay(cameraRay, hit, nextRay)) {
 #ifdef DEBUG_PATH
             std::cout << "Event on point " << hit.point << " with normal "
                       << hit.normal << std::endl;
 #endif
-            RGBColor directLight = scene.directLight(hit, nextRay.direction, event);
-            RGBColor nextEventLight =
-                event->applyBRDF(tracePath(nextRay, scene, backgroundColor),
-                                 cameraRay.direction, nextRay.direction);
+            RGBColor directLight =
+                scene.directLight(hit, nextRay.direction, event);
+            RGBColor nextEventLight = event->applyMonteCarlo(
+                tracePath(nextRay, scene, backgroundColor), hit,
+                cameraRay.direction, nextRay.direction);
             return nextEventLight + directLight;
 #ifdef DEBUG_PATH
         } else {
@@ -94,7 +94,7 @@ RGBColor Camera::tracePixel(const Vec4 &d0, const Vec4 &deltaX,
         Vec4 dof = this->getDoFDisplacement();
         Vec4 direction = d0 + deltaX * randX + deltaY * randY;
         // Trace ray and store mean in result
-        Ray ray(this->origin + dof, (direction - dof).normalize());
+        Ray ray(this->origin + dof, (direction - dof).normalize(), scene.air);
 #ifdef DEBUG_PATH
         std::cout << std::endl << "> Ray begins" << std::endl;
 #endif

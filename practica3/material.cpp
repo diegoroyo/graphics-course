@@ -8,8 +8,7 @@ inline Vec4 reflectDirection(const Vec4 &incoming, const Vec4 &normal) {
 
 /// Phong Diffuse ///
 
-bool PhongDiffuse::nextRay(const Vec4 &inDirection, const RayHit &hit,
-                           Ray &outRay) {
+bool PhongDiffuse::nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) {
     // Random inclination & azimuth
     float randIncl = random01();
     float randAzim = random01();
@@ -19,29 +18,30 @@ bool PhongDiffuse::nextRay(const Vec4 &inDirection, const RayHit &hit,
 
     // Local base to hit point
     Vec4 z = hit.normal;
-    Vec4 x = cross(z, inDirection).normalize();
+    Vec4 x = cross(z, inRay.direction).normalize();
     Vec4 y = cross(z, x);
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
     Vec4 outDirection = cob * Vec4(sinf(incl) * cosf(azim),
                                    sinf(incl) * sinf(azim), cosf(incl), 0.0f);
-    outRay = Ray(hit.point, outDirection);
+    outRay = Ray(hit.point, outDirection, inRay.medium);
     return true;
 }
 
-RGBColor PhongDiffuse::applyBRDF(const RGBColor &lightIn, const Vec4 &wi,
-                                 const Vec4 &wo) const {
+RGBColor PhongDiffuse::applyMonteCarlo(const RGBColor &lightIn,
+                                       const RayHit &hit, const Vec4 &wi,
+                                       const Vec4 &wo) const {
     return lightIn * this->kd * (1.0f / this->prob);
 }
 
-RGBColor PhongDiffuse::applyDirect(const RGBColor &lightIn, const RayHit &hit,
-                                   const Vec4 &wi, const Vec4 &wo) const {
+RGBColor PhongDiffuse::applyNextEvent(const RGBColor &lightIn,
+                                      const RayHit &hit, const Vec4 &wi,
+                                      const Vec4 &wo) const {
     return lightIn * this->kd * (1.0f / M_PI);
 }
 
 /// Phong Specular ///
 
-bool PhongSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
-                            Ray &outRay) {
+bool PhongSpecular::nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) {
     // Random inclination & azimuth
     float randIncl = random01();
     float randAzim = random01();
@@ -49,38 +49,36 @@ bool PhongSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
     float incl = acosf(powf(randIncl, 1.0f / (this->alpha + 1.0f)));
     float azim = 2 * M_PI * randAzim;
 
-    // Save for next iteration
-    this->tempInCos = dot(inDirection, hit.normal) * -1.0f;
-    this->tempOutDirection = inDirection * -1.0f;
-
     // Local base to hit point
-    Vec4 z = reflectDirection(inDirection, hit.normal);
-    Vec4 x = cross(z, inDirection).normalize();
+    Vec4 z = reflectDirection(inRay.direction, hit.normal);
+    Vec4 x = cross(z, inRay.direction).normalize();
     Vec4 y = cross(z, x);
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
     Vec4 outDirection = cob * Vec4(sinf(incl) * cosf(azim),
                                    sinf(incl) * sinf(azim), cosf(incl), 0.0f);
-    outRay = Ray(hit.point, outDirection);
-    float outCos = dot(outDirection, hit.normal);
-    this->tempOutSin = sqrtf(1.0f - outCos * outCos);
-    if (outCos < 1e-6f) {
+    outRay = Ray(hit.point, outDirection, inRay.medium);
+    if (dot(outDirection, hit.normal) < 1e-6f) {
         return false;
     } else {
         return true;
     }
 }
 
-RGBColor PhongSpecular::applyBRDF(const RGBColor &lightIn, const Vec4 &wi,
-                                  const Vec4 &wo) const {
-    float outSin = this->tempOutSin;
-    float inCos = this->tempInCos;
+RGBColor PhongSpecular::applyMonteCarlo(const RGBColor &lightIn,
+                                        const RayHit &hit, const Vec4 &wi,
+                                        const Vec4 &wo) const {
+    Vec4 wr = reflectDirection(wi, hit.normal);
+    float outCos = dot(wr, hit.normal);
+    float outSin = sqrtf(1.0f - outCos * outCos);
+    float inCos = dot(wi, hit.normal) * -1.0f;
     float inSin = sqrtf(1.0f - inCos * inCos);
     return lightIn * (inCos * inSin * (this->alpha + 2.0f) *
                       (1.0f / ((this->alpha + 1) + outSin)));
 }
 
-RGBColor PhongSpecular::applyDirect(const RGBColor &lightIn, const RayHit &hit,
-                                    const Vec4 &wi, const Vec4 &wo) const {
+RGBColor PhongSpecular::applyNextEvent(const RGBColor &lightIn,
+                                       const RayHit &hit, const Vec4 &wi,
+                                       const Vec4 &wo) const {
     // cosine should be between light out direction (wo = inDirection * -1.0f)
     // which is saved in nextRay and light refraction direction (wr)
     Vec4 wr = reflectDirection(wi.normalize() * -1.0f, hit.normal);
@@ -91,22 +89,23 @@ RGBColor PhongSpecular::applyDirect(const RGBColor &lightIn, const RayHit &hit,
 
 /// Perfect Specular (delta BRDF) ///
 
-bool PerfectSpecular::nextRay(const Vec4 &inDirection, const RayHit &hit,
+bool PerfectSpecular::nextRay(const Ray &inRay, const RayHit &hit,
                               Ray &outRay) {
-    Vec4 outDirection = reflectDirection(inDirection, hit.normal);
-    outRay = Ray(hit.point, outDirection);
+    Vec4 outDirection = reflectDirection(inRay.direction, hit.normal);
+    outRay = Ray(hit.point, outDirection, inRay.medium);
     return true;
 }
 
-RGBColor PerfectSpecular::applyBRDF(const RGBColor &lightIn, const Vec4 &wi,
-                                    const Vec4 &wo) const {
+RGBColor PerfectSpecular::applyMonteCarlo(const RGBColor &lightIn,
+                                          const RayHit &hit, const Vec4 &wi,
+                                          const Vec4 &wo) const {
     // cos and ksp terms optimized out (cos * ksp) / (cos * ksp)
     return lightIn;
 }
 
-RGBColor PerfectSpecular::applyDirect(const RGBColor &lightIn,
-                                      const RayHit &hit, const Vec4 &wi,
-                                      const Vec4 &wo) const {
+RGBColor PerfectSpecular::applyNextEvent(const RGBColor &lightIn,
+                                         const RayHit &hit, const Vec4 &wi,
+                                         const Vec4 &wo) const {
     // edge case of delta function ignored
     // outDirection == reflectDirection(inDirecion, hit.normal)
     return RGBColor::Black;
@@ -115,22 +114,24 @@ RGBColor PerfectSpecular::applyDirect(const RGBColor &lightIn,
 /// Perfect Refraction (delta BTDF) ///
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel
-bool PerfectRefraction::nextRay(const Vec4 &inDirection, const RayHit &hit,
+bool PerfectRefraction::nextRay(const Ray &inRay, const RayHit &hit,
                                 Ray &outRay) {
     // Incoming ray's cosine and sine with respect to hit.normal
-    float incCos = dot(inDirection, hit.normal) * -1.0f;
+    float incCos = dot(inRay.direction, hit.normal) * -1.0f;
     float incSin = sqrtf(1.0f - incCos * incCos);
     // Index of Refraction ratio (depends if ray enters medium or leaves)
-    float n1 = hit.enters ? 1.0f : this->mediumRefractiveIndex;
-    float n2 = hit.enters ? this->mediumRefractiveIndex : 1.0f;
+    MediumPtr inMedium = hit.enters ? Medium::air : this->medium;
+    MediumPtr outMedium = hit.enters ? this->medium : Medium::air;
+    float n1 = inMedium->refractiveIndex;
+    float n2 = outMedium->refractiveIndex;
     float factor = n1 / n2;
     // Angle of outgoing ray
     float outSin = incSin * factor;
     if (outSin > 1.0f) {
         // Out angle is greater than critical angle (see reference)
         // By fresnel laws, ray is reflected
-        Vec4 outDirection = reflectDirection(inDirection, hit.normal);
-        outRay = Ray(hit.point, outDirection);
+        Vec4 outDirection = reflectDirection(inRay.direction, hit.normal);
+        outRay = Ray(hit.point, outDirection, inMedium);
         return true;
     }
 
@@ -145,39 +146,40 @@ bool PerfectRefraction::nextRay(const Vec4 &inDirection, const RayHit &hit,
     // perfect specular has probability kr, perfect refraction 1 - kr
     if (random01() < kr) {
         // specular
-        Vec4 outDirection = reflectDirection(inDirection, hit.normal);
-        outRay = Ray(hit.point, outDirection);
+        Vec4 outDirection = reflectDirection(inRay.direction, hit.normal);
+        outRay = Ray(hit.point, outDirection, inMedium);
         return true;
     } else {
         // refraction
         float theta2 = asinf(outSin);
         // m is perpendicular to normal (see reference for details)
-        Vec4 m = (inDirection + hit.normal * incCos) * (1.0f / incSin);
+        Vec4 m = (inRay.direction + hit.normal * incCos) * (1.0f / incSin);
         Vec4 outDirection =
             hit.normal * -1.0f * cosf(theta2) + m * sinf(theta2);
-        outRay = Ray(hit.point, outDirection);
+        outRay = Ray(hit.point, outDirection, outMedium);
         return true;
     }
 }
 
-RGBColor PerfectRefraction::applyBRDF(const RGBColor &lightIn, const Vec4 &wi,
-                                      const Vec4 &wo) const {
+RGBColor PerfectRefraction::applyMonteCarlo(const RGBColor &lightIn,
+                                            const RayHit &hit, const Vec4 &wi,
+                                            const Vec4 &wo) const {
     // cos and krp terms optimized out (cos * krp) / (cos * krp)
     // also it doesn't matter if the ray wasn't refracted and it was
     // reflected instead, because both interactions return the same
     return lightIn;
 }
 
-RGBColor PerfectRefraction::applyDirect(const RGBColor &lightIn,
-                                        const RayHit &hit, const Vec4 &wi,
-                                        const Vec4 &wo) const {
+RGBColor PerfectRefraction::applyNextEvent(const RGBColor &lightIn,
+                                           const RayHit &hit, const Vec4 &wi,
+                                           const Vec4 &wo) const {
     // edge case ignored because refraction uses delta functions
     return RGBColor::Black;
 }
 
 /// Portal ///
 
-bool Portal::nextRay(const Vec4 &inDirection, const RayHit &hit, Ray &outRay) {
+bool Portal::nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) {
     // Out portal basis
     Vec4 x = this->outPortal->uvX.normalize();
     Vec4 y = this->outPortal->uvY.normalize();
@@ -190,7 +192,7 @@ bool Portal::nextRay(const Vec4 &inDirection, const RayHit &hit, Ray &outRay) {
                      .inverse();
 
     Mat4 cob = Mat4::changeOfBasis(x, y, z, this->outPortal->uvOrigin);
-    Vec4 coords = cobIn * inDirection;
+    Vec4 coords = cobIn * inRay.direction;
     coords.z *= -1.0f;
     coords.x *= -1.0f;
     Vec4 outDirection = cob * coords;
@@ -202,27 +204,27 @@ bool Portal::nextRay(const Vec4 &inDirection, const RayHit &hit, Ray &outRay) {
     float by = dot(d, this->inPortal->uvY.normalize());
     Vec4 outPoint = cob * Vec4(bx, by, 0.0f, 1.0f);
 
-    outRay = Ray(outPoint, outDirection);
+    outRay = Ray(outPoint, outDirection, inRay.medium);
     return true;
 }
 
-RGBColor Portal::applyBRDF(const RGBColor &lightIn, const Vec4 &wi,
-                           const Vec4 &wo) const {
+RGBColor Portal::applyMonteCarlo(const RGBColor &lightIn, const RayHit &hit,
+                                 const Vec4 &wi, const Vec4 &wo) const {
     // technically ray didn't hit on a surface, no brdf required
     return lightIn;
 }
 
-RGBColor Portal::applyDirect(const RGBColor &lightIn, const RayHit &hit,
-                             const Vec4 &wi, const Vec4 &wo) const {
+RGBColor Portal::applyNextEvent(const RGBColor &lightIn, const RayHit &hit,
+                                const Vec4 &wi, const Vec4 &wo) const {
     // ignore direct light
     return RGBColor::Black;
 }
 
 /// Material ///
 
-MaterialBuilder MaterialBuilder::add(const BRDFPtr &brdf) {
-    ptr->brdfs.push_back(brdf);
-    accumProb += brdf->prob;
+MaterialBuilder MaterialBuilder::add(const EventPtr &event) {
+    ptr->events.push_back(event);
+    accumProb += event->prob;
     ptr->probs.push_back(accumProb);
     if (accumProb >= 1.0f) {
         std::cout << "Warning: material has event probabilities"
@@ -236,11 +238,11 @@ MaterialBuilder MaterialBuilder::add(const BRDFPtr &brdf) {
     return *this;
 }
 
-BRDFPtr Material::selectEvent() {
+EventPtr Material::selectEvent() {
     float event = random01();
     for (int i = 0; i < this->probs.size(); i++) {
         if (event < this->probs[i]) {
-            return this->brdfs[i];
+            return this->events[i];
         }
     }
     return nullptr;

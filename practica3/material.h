@@ -4,105 +4,96 @@ class Scene;  // needed forward declaration
 
 // typedef for material pointers
 #include <memory>
-class BRDF;
-typedef std::shared_ptr<BRDF> BRDFPtr;
+class Event;
+typedef std::shared_ptr<Event> EventPtr;
 class Material;
 typedef std::shared_ptr<Material> MaterialPtr;
 
 #include <vector>
 #include "geometry.h"
+#include "medium.h"
 #include "random.h"
 #include "ray.h"
 #include "rayhit.h"
 #include "rgbcolor.h"
 #include "scene.h"
 
-/// BRDF ///
-// All different BRDFs and possible interactions on intersections
+/// Event ///
+// All different events and possible interactions on intersections
 // Used by materials which define figures' properties
 
-class BRDF {
+class Event {
    protected:
-    BRDF(float _prob) : prob(_prob) {}
+    Event(float _prob) : prob(_prob) {}
 
    public:
     const float prob;
-    virtual bool nextRay(const Vec4 &inDirection, const RayHit &hit,
-                         Ray &outRay) = 0;
-    virtual RGBColor applyBRDF(const RGBColor &lightIn, const Vec4 &wi,
-                               const Vec4 &wo) const = 0;
-    virtual RGBColor applyDirect(const RGBColor &lightIn, const RayHit &hit,
-                                 const Vec4 &wi, const Vec4 &wo) const = 0;
+    virtual bool nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) = 0;
+    virtual RGBColor applyMonteCarlo(const RGBColor &lightIn, const RayHit &hit,
+                                     const Vec4 &wi, const Vec4 &wo) const = 0;
+    virtual RGBColor applyNextEvent(const RGBColor &lightIn, const RayHit &hit,
+                                    const Vec4 &wi, const Vec4 &wo) const = 0;
 };
 
-class PhongDiffuse : public BRDF {
+class PhongDiffuse : public Event {
    public:
     const RGBColor kd;
 
-    PhongDiffuse(const RGBColor &_kd) : BRDF(_kd.max()), kd(_kd) {}
-    bool nextRay(const Vec4 &inDirection, const RayHit &hit,
-                 Ray &outRay) override;
-    RGBColor applyBRDF(const RGBColor &lightIn, const Vec4 &wi,
-                       const Vec4 &wo) const override;
-    RGBColor applyDirect(const RGBColor &lightIn, const RayHit &hit,
-                         const Vec4 &wi, const Vec4 &wo) const override;
+    PhongDiffuse(const RGBColor &_kd) : Event(_kd.max()), kd(_kd) {}
+    bool nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) override;
+    RGBColor applyMonteCarlo(const RGBColor &lightIn, const RayHit &hit,
+                             const Vec4 &wi, const Vec4 &wo) const override;
+    RGBColor applyNextEvent(const RGBColor &lightIn, const RayHit &hit,
+                            const Vec4 &wi, const Vec4 &wo) const override;
 };
 
-class PhongSpecular : public BRDF {
-    // temp. variables, need to save info. for applyBRDF
-    float tempInCos, tempOutSin;
-    Vec4 tempOutDirection;
-
+class PhongSpecular : public Event {
    public:
     const float alpha;
 
-    PhongSpecular(float _ks, float _alpha) : BRDF(_ks), alpha(_alpha) {}
-    bool nextRay(const Vec4 &inDirection, const RayHit &hit,
-                 Ray &outRay) override;
-    RGBColor applyBRDF(const RGBColor &lightIn, const Vec4 &wi,
-                       const Vec4 &wo) const override;
-    RGBColor applyDirect(const RGBColor &lightIn, const RayHit &hit,
-                         const Vec4 &wi, const Vec4 &wo) const override;
+    PhongSpecular(float _ks, float _alpha) : Event(_ks), alpha(_alpha) {}
+    bool nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) override;
+    RGBColor applyMonteCarlo(const RGBColor &lightIn, const RayHit &hit,
+                             const Vec4 &wi, const Vec4 &wo) const override;
+    RGBColor applyNextEvent(const RGBColor &lightIn, const RayHit &hit,
+                            const Vec4 &wi, const Vec4 &wo) const override;
 };
 
-class PerfectSpecular : public BRDF {
+class PerfectSpecular : public Event {
    public:
-    PerfectSpecular(float _ksp) : BRDF(_ksp) {}
-    bool nextRay(const Vec4 &inDirection, const RayHit &hit,
-                 Ray &outRay) override;
-    RGBColor applyBRDF(const RGBColor &lightIn, const Vec4 &wi,
-                       const Vec4 &wo) const override;
-    RGBColor applyDirect(const RGBColor &lightIn, const RayHit &hit,
-                         const Vec4 &wi, const Vec4 &wo) const override;
+    PerfectSpecular(float _ksp) : Event(_ksp) {}
+    bool nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) override;
+    RGBColor applyMonteCarlo(const RGBColor &lightIn, const RayHit &hit,
+                             const Vec4 &wi, const Vec4 &wo) const override;
+    RGBColor applyNextEvent(const RGBColor &lightIn, const RayHit &hit,
+                            const Vec4 &wi, const Vec4 &wo) const override;
 };
 
-class PerfectRefraction : public BRDF {
-    const float mediumRefractiveIndex;
+class PerfectRefraction : public Event {
+    const MediumPtr medium;
 
    public:
-    PerfectRefraction(float _krp, float _mediumRefractiveIndex)
-        : BRDF(_krp), mediumRefractiveIndex(_mediumRefractiveIndex) {}
-    bool nextRay(const Vec4 &inDirection, const RayHit &hit,
-                 Ray &outRay) override;
-    RGBColor applyBRDF(const RGBColor &lightIn, const Vec4 &wi,
-                       const Vec4 &wo) const override;
-    RGBColor applyDirect(const RGBColor &lightIn, const RayHit &hit,
-                         const Vec4 &wi, const Vec4 &wo) const override;
+    PerfectRefraction(float _krp, const MediumPtr &_medium)
+        : Event(_krp), medium(_medium) {}
+    bool nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) override;
+    RGBColor applyMonteCarlo(const RGBColor &lightIn, const RayHit &hit,
+                             const Vec4 &wi, const Vec4 &wo) const override;
+    RGBColor applyNextEvent(const RGBColor &lightIn, const RayHit &hit,
+                            const Vec4 &wi, const Vec4 &wo) const override;
 };
 
-class Portal : public BRDF {
+class Portal : public Event {
     const FigurePortalPtr inPortal, outPortal;
 
    public:
     Portal(float _kpp, const FigurePortalPtr &_inPortal,
            const FigurePortalPtr &_outPortal)
-        : BRDF(_kpp), inPortal(_inPortal), outPortal(_outPortal) {}
-    bool nextRay(const Vec4 &inDirection, const RayHit &hit,
-                 Ray &outRay) override;
-    RGBColor applyBRDF(const RGBColor &lightIn, const Vec4 &wi,
-                       const Vec4 &wo) const override;
-    RGBColor applyDirect(const RGBColor &lightIn, const RayHit &hit,
-                         const Vec4 &wi, const Vec4 &wo) const override;
+        : Event(_kpp), inPortal(_inPortal), outPortal(_outPortal) {}
+    bool nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) override;
+    RGBColor applyMonteCarlo(const RGBColor &lightIn, const RayHit &hit,
+                             const Vec4 &wi, const Vec4 &wo) const override;
+    RGBColor applyNextEvent(const RGBColor &lightIn, const RayHit &hit,
+                            const Vec4 &wi, const Vec4 &wo) const override;
 };
 
 /// Material ///
@@ -118,7 +109,7 @@ class MaterialBuilder {
     friend class Material;
 
    public:
-    MaterialBuilder add(const BRDFPtr &brdf);
+    MaterialBuilder add(const EventPtr &event);
     MaterialPtr build() { return ptr; }
 };
 
@@ -127,12 +118,12 @@ class Material {
     const bool emitsLight;
     const RGBColor emission;
     std::vector<float> probs;    // event probability accum list
-    std::vector<BRDFPtr> brdfs;  // random <= probs[i] => do event i
+    std::vector<EventPtr> events;  // random <= probs[i] => do event i
 
    private:
     Material(const RGBColor &_emission)
-        : emitsLight(true), emission(_emission), brdfs() {}
-    Material() : emitsLight(false), emission(RGBColor::Black), brdfs() {}
+        : emitsLight(true), emission(_emission), events() {}
+    Material() : emitsLight(false), emission(RGBColor::Black), events() {}
 
    public:
     // Constructor for light emitters
@@ -149,5 +140,5 @@ class Material {
     static MaterialPtr none() { return MaterialPtr(new Material()); }
 
     // Roussian roulette event selector
-    BRDFPtr selectEvent();
+    EventPtr selectEvent();
 };

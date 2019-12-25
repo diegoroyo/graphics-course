@@ -4,7 +4,7 @@
 // Scene 2: (don't change) UVMaterial properties test (diamond ore wall)
 // Scene 3: (don't change) Portal scene
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 3
+#define SCENE_NUMBER 0
 #endif
 
 #include <iostream>
@@ -12,6 +12,7 @@
 #include "camera.h"
 #include "figures.h"
 #include "material.h"
+#include "medium.h"
 #include "plymodel.h"
 #include "scene.h"
 #include "uvmaterial.h"
@@ -72,20 +73,22 @@ int main(int argc, char** argv) {
     FigurePtr(new Figures::Sphere(material, pos, radius))
 
 // shortcuts for materials
-#define phongDiffuse(kd) BRDFPtr(new PhongDiffuse(kd))
-#define phongSpecular(ks, alpha) BRDFPtr(new PhongSpecular(ks, alpha))
-#define perfectSpecular(ksp) BRDFPtr(new PerfectSpecular(ksp))
-#define perfectRefraction(krp, index) BRDFPtr(new PerfectRefraction(krp, index))
+#define phongDiffuse(kd) EventPtr(new PhongDiffuse(kd))
+#define phongSpecular(ks, alpha) EventPtr(new PhongSpecular(ks, alpha))
+#define perfectSpecular(ksp) EventPtr(new PerfectSpecular(ksp))
+#define perfectRefraction(krp, medium) \
+    EventPtr(new PerfectRefraction(krp, medium))
 
     // Add elements to scene
 
 #if SCENE_NUMBER == 1
     // load & transform spaceship model, get scene kdtree node
+    MediumPtr glass = Medium::create(1.5f);
     UVMaterialPtr texture = UVMaterial::builder()
                                 // UVMaterial::builder(512, 512)
                                 // .addPhongDiffuse("ply/spaceship_diffuse.ppm")
                                 .addPerfectSpecular(0.15f)
-                                .addPerfectRefraction(0.8f, 1.5f)
+                                .addPerfectRefraction(0.8f, glass)
                                 .build();
 
     PLYModel spaceshipModel("ply/spaceship.ply", texture);
@@ -117,9 +120,10 @@ int main(int argc, char** argv) {
         Material::builder()
             .add(phongDiffuse(RGBColor(0.5f, 0.02f, 0.02f)))
             .build();
+    MediumPtr glass = Medium::create(1.5f);
     MaterialPtr transparent = Material::builder()
                                   .add(perfectSpecular(0.1f))
-                                  .add(perfectRefraction(0.85f, 1.5f))
+                                  .add(perfectRefraction(0.85f, glass))
                                   .build();
     MaterialPtr mirror = Material::builder()
                              .add(phongSpecular(0.35f, 3.0f))
@@ -145,8 +149,9 @@ int main(int argc, char** argv) {
         UVMaterial::builder(16, 16)
             .addPhongDiffuse("ply/redwool_diffuse.ppm")
             .build();
+    MediumPtr glass = Medium::create(1.5f);
     MaterialPtr transparent =
-        Material::builder().add(perfectRefraction(0.98f, 3.0f)).build();
+        Material::builder().add(perfectRefraction(0.98f, glass)).build();
     MaterialPtr mirror =
         Material::builder().add(perfectSpecular(0.98f)).build();
 #elif SCENE_NUMBER == 3
@@ -154,9 +159,7 @@ int main(int argc, char** argv) {
     MaterialPtr whiteLight =
         Material::light(RGBColor(maxLight, maxLight, maxLight));
     MaterialPtr whiteDiffuse =
-        Material::builder()
-        .add(phongDiffuse(RGBColor::White * 0.9f))
-        .build();
+        Material::builder().add(phongDiffuse(RGBColor::White * 0.9f)).build();
     MaterialPtr greenDiffuse =
         Material::builder()
             .add(phongDiffuse(RGBColor(0.1f, 0.9f, 0.1f)))
@@ -166,18 +169,16 @@ int main(int argc, char** argv) {
                                  .build();
 
     // TODO remove
-    MaterialPtr yellow =
-        Material::builder()
-            .add(phongDiffuse(RGBColor(0.9f, 0.9f, 0.1f)))
-            .build();
-    MaterialPtr purple =
-        Material::builder()
-            .add(phongDiffuse(RGBColor(0.9f, 0.1f, 0.9f)))
-            .build();
+    MaterialPtr yellow = Material::builder()
+                             .add(phongDiffuse(RGBColor(0.9f, 0.9f, 0.1f)))
+                             .build();
+    MaterialPtr purple = Material::builder()
+                             .add(phongDiffuse(RGBColor(0.9f, 0.1f, 0.9f)))
+                             .build();
 
-    MaterialPtr transparent = Material::builder()
-                                  .add(perfectRefraction(0.9f, 1.5f))
-                                  .build();
+    MediumPtr glass = Medium::create(1.5f);
+    MaterialPtr transparent =
+        Material::builder().add(perfectRefraction(0.9f, glass)).build();
     MaterialPtr mirror = Material::builder()
                              .add(phongSpecular(0.3f, 3.0f))
                              .add(perfectSpecular(0.6f))
@@ -193,19 +194,21 @@ int main(int argc, char** argv) {
             // .addPhongDiffuse("ply/portal_blue_diffuse2.ppm")
             .addPortal("ply/portal_any_portal2.ppm", bluePortal, orangePortal)
             .build();
-    bluePortalTexture->overrideLights("ply/portal_blue_diffuse2.ppm", maxLight, 0.3f);
+    bluePortalTexture->overrideLights("ply/portal_blue_diffuse2.ppm", maxLight,
+                                      0.3f);
     bluePortalTexture->override("ply/portal_any_mask2.ppm", nullptr);
     UVMaterialPtr orangePortalTexture =
         UVMaterial::builder(512, 512)
             // .addPhongDiffuse("ply/portal_orange_diffuse2.ppm")
             .addPortal("ply/portal_any_portal2.ppm", orangePortal, bluePortal)
             .build();
-    orangePortalTexture->overrideLights("ply/portal_orange_diffuse2.ppm", maxLight, 0.3f);
+    orangePortalTexture->overrideLights("ply/portal_orange_diffuse2.ppm",
+                                        maxLight, 0.3f);
     orangePortalTexture->override("ply/portal_any_mask2.ppm", nullptr);
 
-    bluePortal->setUVMaterial(
-        bluePortalTexture, Vec4(1.5f, -2.0f, 1.99f, 1.0f),
-        Vec4(-2.0f, 0.0f, 0.0f, 0.0f), Vec4(0.0f, 4.0f, 0.0f, 0.0f));
+    bluePortal->setUVMaterial(bluePortalTexture, Vec4(1.5f, -2.0f, 1.99f, 1.0f),
+                              Vec4(-2.0f, 0.0f, 0.0f, 0.0f),
+                              Vec4(0.0f, 4.0f, 0.0f, 0.0f));
     orangePortal->setUVMaterial(
         orangePortalTexture, Vec4(-0.5f, -2.0f, -1.99f, 1.0f),
         Vec4(2.0f, 0.0f, 0.0f, 0.0f), Vec4(0.0f, 4.0f, 0.0f, 0.0f));
@@ -216,7 +219,7 @@ int main(int argc, char** argv) {
 #if SCENE_NUMBER == 0
         // Cornell box walls
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
-        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, redDiffuse),
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
         plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
         // plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, pureBlack),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
@@ -280,16 +283,18 @@ int main(int argc, char** argv) {
     // Add points lights to the scene
 
 #if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
-    scene.light(Vec4(-0.5f, 1.4f, -1.8f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight));
-    scene.light(Vec4(-0.5f, 1.4f, 1.8f, 1.0f),
+    scene.light(Vec4(0.0f, 1.5f, 0.0f, 1.0f),
                 RGBColor(maxLight, maxLight, maxLight));
 #elif SCENE_NUMBER == 2
-    scene.light(Vec4(-1.0f, 1.4f, -1.8f, 1.0f),
+    scene.light(Vec4(0.0f, 1.5f, -1.5f, 1.0f),
                 RGBColor(maxLight, maxLight, maxLight));
-    scene.light(Vec4(-1.0f, 1.4f, 1.8f, 1.0f),
+    scene.light(Vec4(0.0f, 1.5f, 1.5f, 1.0f),
                 RGBColor(maxLight, maxLight, maxLight));
-    scene.light(Vec4(1.0f, 1.4f, 0.0f, 1.0f),
+    scene.light(Vec4(1.5f, 1.5f, 0.0f, 1.0f),
+                RGBColor(maxLight, maxLight, maxLight));
+    scene.light(Vec4(1.5f, 1.5f, -1.5f, 1.0f),
+                RGBColor(maxLight, maxLight, maxLight));
+    scene.light(Vec4(1.5f, 1.5f, 1.5f, 1.0f),
                 RGBColor(maxLight, maxLight, maxLight));
 #elif SCENE_NUMBER == 3
     // scene.light(Vec4(-1.0f, 1.4f, -1.8f, 1.0f),

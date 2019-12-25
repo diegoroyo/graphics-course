@@ -3,6 +3,7 @@
 #include <vector>
 #include "figures.h"
 #include "geometry.h"
+#include "medium.h"
 #include "rgbcolor.h"
 
 class Scene {
@@ -16,10 +17,14 @@ class Scene {
    public:
     const FigurePtr root;
     std::vector<PointLight> lights;
+    const MediumPtr air;
     float maxLightEmission;
 
     Scene(const FigurePtr &_rootNode, const float _maxLightEmission = 0.0f)
-        : root(_rootNode), lights(), maxLightEmission(_maxLightEmission) {}
+        : root(_rootNode),
+          lights(),
+          air(Medium::air),
+          maxLightEmission(_maxLightEmission) {}
 
     // Add a new light to the scene
     void light(const Vec4 &point, const RGBColor &emission) {
@@ -31,5 +36,5 @@ class Scene {
 
     // Calculate direct light incoming from point lights
     RGBColor directLight(const RayHit &hit, const Vec4 &wo,
-                         const BRDFPtr &brdf) const;
+                         const EventPtr &event) const;
 };

@@ -13,6 +13,7 @@ class UVMaterial;
 typedef std::shared_ptr<UVMaterial> UVMaterialPtr;
 
 #include "material.h"
+#include "medium.h"
 #include "ppmimage.h"
 
 // Extends Material class for PLY models
@@ -35,7 +36,7 @@ class UVMaterialBuilder {
           width(_width) {}
     friend class UVMaterial;
 
-    void addBRDF(const BRDFPtr &brdf);
+    void addEvent(const EventPtr &event);
 
    public:
     // Two variants of each function: texture UV mapping and constant

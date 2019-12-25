@@ -23,10 +23,10 @@ UVMaterialBuilder UVMaterial::builder(int width, int height) {
     return UVMaterialBuilder(width, height, texturePtr, builderPtr);
 }
 
-void UVMaterialBuilder::addBRDF(const BRDFPtr &brdf) {
+void UVMaterialBuilder::addEvent(const EventPtr &event) {
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            (*builderPtr)[y][x].add(brdf);
+            (*builderPtr)[y][x].add(event);
         }
     }
 }
@@ -34,24 +34,25 @@ void UVMaterialBuilder::addBRDF(const BRDFPtr &brdf) {
 /// Constant (same BRDF for all model) builders ///
 
 UVMaterialBuilder UVMaterialBuilder::addPhongDiffuse(const RGBColor &kd) {
-    addBRDF(BRDFPtr(new PhongDiffuse(kd)));
+    addEvent(EventPtr(new PhongDiffuse(kd)));
     return *this;
 }
 
 UVMaterialBuilder UVMaterialBuilder::addPhongSpecular(const float ks,
                                                       const float alpha) {
-    addBRDF(BRDFPtr(new PhongSpecular(ks, alpha)));
+    addEvent(EventPtr(new PhongSpecular(ks, alpha)));
     return *this;
 }
 
 UVMaterialBuilder UVMaterialBuilder::addPerfectSpecular(const float ksp) {
-    addBRDF(BRDFPtr(new PerfectSpecular(ksp)));
+    addEvent(EventPtr(new PerfectSpecular(ksp)));
     return *this;
 }
 
 UVMaterialBuilder UVMaterialBuilder::addPerfectRefraction(
     const float krp, const float mediumRefractiveIndex) {
-    addBRDF(BRDFPtr(new PerfectRefraction(krp, mediumRefractiveIndex)));
+    MediumPtr medium = Medium::create(mediumRefractiveIndex);
+    addEvent(EventPtr(new PerfectRefraction(krp, medium)));
     return *this;
 }
 
@@ -65,7 +66,7 @@ UVMaterialBuilder UVMaterialBuilder::addPhongDiffuse(
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             RGBColor kd = diffuse.getPixel(x, y) * 0.99f;
-            (*builderPtr)[y][x].add(BRDFPtr(new PhongDiffuse(kd)));
+            (*builderPtr)[y][x].add(EventPtr(new PhongDiffuse(kd)));
         }
     }
     return *this;
@@ -84,7 +85,7 @@ UVMaterialBuilder UVMaterialBuilder::addPerfectSpecular(
         for (int x = 0; x < width; x++) {
             RGBColor color = specular.getPixel(x, y) * 0.99f;
             float meanProb = (color.r + color.g + color.b) / 3.0f;
-            (*builderPtr)[y][x].add(BRDFPtr(new PerfectSpecular(meanProb)));
+            (*builderPtr)[y][x].add(EventPtr(new PerfectSpecular(meanProb)));
         }
     }
     return *this;
@@ -100,7 +101,7 @@ UVMaterialBuilder UVMaterialBuilder::addPortal(
         for (int x = 0; x < width; x++) {
             float prob = portal.getPixel(x, y).max() * 0.99f;
             (*builderPtr)[y][x].add(
-                BRDFPtr(new Portal(prob, inPortal, outPortal)));
+                EventPtr(new Portal(prob, inPortal, outPortal)));
         }
     }
     return *this;
