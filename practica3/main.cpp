@@ -4,7 +4,7 @@
 // Scene 2: (don't change) UVMaterial properties test (diamond ore wall)
 // Scene 3: (don't change) Portal scene
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 2
+#define SCENE_NUMBER 0
 #endif
 
 #include <iostream>
@@ -17,7 +17,45 @@
 #include "scene.h"
 #include "uvmaterial.h"
 
-int main(int argc, char** argv) {
+/// test purposes ///
+
+bool out(const Vec4 &pos) {
+    // scene 0 cornell box test purposes
+    return pos.x < -5.01f || pos.x > 2.01f || pos.y < -2.01f || pos.y > 2.01f ||
+           pos.z < -2.01f || pos.z > 2.01f;
+}
+
+void addDebugHits(FigurePtrVector &root, Ray ray, const EventPtr &event,
+                  const MaterialPtr &material) {
+    FigurePtr rootNode = FigurePtr(new Figures::BVNode(root));
+
+    // Debug spheres on ray hit
+    RayHit hit;
+    FigurePtrVector extra;
+    int n = 0;
+    while (n < 1000 && rootNode->intersection(ray, hit) && !out(hit.point)) {
+        extra.push_back(
+            FigurePtr(new Figures::Sphere(material, hit.point, 0.05f)));
+        std::cout << "Ray hits at " << hit.point << " w/ normal " << hit.normal
+                  << std::endl;
+        while (!event->nextRay(ray, hit, ray)) {
+            std::cout << "Event's next ray is invalid. Trying again..."
+                      << std::endl;
+        }
+        std::cout << "New ray comes from " << ray.origin << " w/ dir "
+                  << ray.direction << std::endl;
+        n++;
+    }
+    if (n != 1000) {
+        std::cout << "Ray number " << n << " failed on point " << hit.point
+                  << std::endl;
+    }
+    root.insert(root.end(), extra.begin(), extra.end());
+}
+
+/// test purposes ///
+
+int main(int argc, char **argv) {
     if (argc < 9) {
         std::cerr << "Usage: " << argv[0]
                   << " -w <width> -h <height> -p <ppp> -o <out_ppm>"
@@ -116,16 +154,15 @@ int main(int argc, char** argv) {
         Material::builder()
             .add(phongDiffuse(RGBColor(0.0f, 0.95f, 0.0f)))
             .build();
-    MaterialPtr redDiffuse =
-        Material::builder()
-            .add(phongDiffuse(RGBColor(0.95f, 0.0f, 0.0f)))
-            .build();
+    MaterialPtr redDiffuse = Material::builder()
+                                 .add(phongDiffuse(RGBColor(0.95f, 0.0f, 0.0f)))
+                                 .build();
     MediumPtr glass = Medium::create(1.5f);
-    MaterialPtr transparent = Material::builder()
-                                  .add(perfectRefraction(0.95f, glass))
-                                  .build();
+    MaterialPtr transparent =
+        Material::builder().add(perfectRefraction(0.95f, glass)).build();
     MaterialPtr mirror = Material::builder()
-                             .add(perfectSpecular(0.95f))
+                             .add(phongSpecular(0.5f, 15.0f))
+                             .add(phongDiffuse(RGBColor::White * 0.45f))
                              .build();
     MaterialPtr pureBlack = Material::none();
 
@@ -276,13 +313,21 @@ int main(int argc, char** argv) {
 #endif
     };
 
-    Scene scene(FigurePtr(new Figures::BVNode(sceneElements)), maxLight);
+    // Debug a random path
+    // MaterialPtr debugSphere = Material::light(RGBColor::Cyan * maxLight);
+    // EventPtr debugEvent = phongDiffuse(RGBColor::White);
+    // addDebugHits(sceneElements, Ray(origin, forward.normalize(),
+    // Medium::air),
+    //              debugEvent, debugSphere);
+
+    FigurePtr rootNode = FigurePtr(new Figures::BVNode(sceneElements));
+
+    Scene scene(rootNode, maxLight);
 
     // Add points lights to the scene
 
 #if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
-    scene.light(Vec4(0.0f, 1.0f, 0.0f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight));
+    scene.light(Vec4(0.0f, 1.6f, 0.0f, 1.0f), RGBColor::White * maxLight);
 #elif SCENE_NUMBER == 2
     scene.light(Vec4(0.0f, 1.5f, -1.5f, 1.0f),
                 RGBColor(maxLight, maxLight, maxLight));
