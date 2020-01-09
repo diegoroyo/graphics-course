@@ -6,6 +6,8 @@
 #include "rgbcolor.h"
 #include "tonemapper.h"
 
+class ToneMapper;
+
 /*
  * PPM Image loader/saver (P3 format)
  *
@@ -49,6 +51,7 @@ class PPMImage {
     // Initialize image metadata with empty data vector
     void initialize(const int _w, const int _h, const int _c, const float _max);
     void setMax(const float max) { this->max = max; }
+    float calculateMax() const;
 
     // Read PPM file, store in same object
     bool readFile(const char* filename);

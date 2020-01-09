@@ -19,6 +19,16 @@ void PPMImage::initialize(const int _w, const int _h, const int _c,
     clearData(width, height);
 }
 
+float PPMImage::calculateMax() const {
+    float max = 0.0f;
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            max = std::fmaxf(max, this->getPixel(x, y).max());
+        }
+    }
+    return max;
+}
+
 bool PPMImage::readFile(const char* filename) {
     std::ifstream is(filename);
     if (!is.is_open()) {

@@ -5,6 +5,8 @@
 #include "ppmimage.h"
 #include "rgbcolor.h"
 
+class PPMImage;
+
 // Implementation of different tone-mapping functions
 // first set-up the function you want, then you can use it
 // with tonemapfunction.map(input)
@@ -14,39 +16,32 @@ class ToneMapper {
     // Base for all tone-mapping functions
     class Function {
        public:
-        virtual float map(float in) const { return in; }
+        virtual float map(float in) const = 0;
     };
+
     // Clamps values higher than max
     // values lower than max are put in a gamma curve
     class FClampGamma : public Function {
-        float max;
-        float gamma;
+        const float max, gamma;
 
        public:
         FClampGamma(float _max, float _gamma = 1.0f)
             : max(_max), gamma(_gamma) {}
-        float map(float in) const override {
-            if (in > max) {
-                // clamp
-                return 1.0f;
-            } else {
-                // equalize and put in gamma curve (x^gamma)
-                return std::pow(in / max, gamma);
-            }
-        }
+        float map(float in) const override;
     };
+
     // Reinhard02 tone-mapper (see paper)
     class FReinhard02 : public Function {
-        float max;
-        float minWhiteSq;
+        const float useLab;      // LAB or RGB channels
+        const float minWhiteSq;  // smallest luminance that
+                                 // will be mapped to white
+        float alphaMean;         // alpha / exp(mean(log(Lw)))
+        const float DELTA = 1e-6f;
 
        public:
-        FReinhard02(float _max, float _minWhite)
-            : max(_max), minWhiteSq(_minWhite * _minWhite) {}
-        float map(float in) const override {
-            float l = in / max;
-            return (l * (1.0f + l / minWhiteSq)) / (1.0f + l);
-        }
+        FReinhard02(const PPMImage &_image, bool _useLab, float _minWhite,
+                    float _alpha);
+        float map(float in) const override;
     };
 
     ToneMapper();
@@ -55,21 +50,11 @@ class ToneMapper {
     std::unique_ptr<Function> f;
 
    public:
-    static ToneMapper CLAMP_1() {
-        ToneMapper tm(new ToneMapper::FClampGamma(1.0f));
-        return tm;
-    }
-    static ToneMapper EQUALIZE_CLAMP(float max) {
-        ToneMapper tm(new ToneMapper::FClampGamma(max));
-        return tm;
-    }
-    static ToneMapper CLAMP_GAMMA(float max, float gamma = 2.2f) {
-        ToneMapper tm(new ToneMapper::FClampGamma(max, gamma));
-        return tm;
-    }
-    static ToneMapper REINHARD_02(float max, float minWhite) {
-        ToneMapper tm(new ToneMapper::FReinhard02(max, minWhite));
-        return tm;
-    }
-    float map(float in) const { return f->map(in); }
+    static ToneMapper CLAMP_1();
+    static ToneMapper EQUALIZE_CLAMP(float max);
+    static ToneMapper CLAMP_GAMMA(float max, float gamma = 2.2f);
+    static ToneMapper REINHARD_02(const PPMImage &image, bool useLab,
+                                  float minWhite, float alpha = 0.18f);
+
+    float map(float in) const;
 };
