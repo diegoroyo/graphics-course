@@ -11,6 +11,7 @@ int main(int argc, char** argv) {
         std::cerr << std::endl;
         std::cerr << "Tone mapper options:" << std::endl;
         std::cerr << "\t-o Specify output file name (add .ppm/.png)" << std::endl;
+        std::cerr << "\t-l Use LAB for color mapping instead of RGB" << std::endl;
         std::cerr << "\t-p Output as PNG instead of PPM" << std::endl;
         std::cerr << "\t-t CLAMP_1" << std::endl;
         std::cerr << "\t   EQUALIZE_CLAMP\t\t<clamp_pct>" << std::endl;
@@ -33,6 +34,7 @@ int main(int argc, char** argv) {
     // Process options
     std::string filenameOut;
     bool generatePng = false;  // generate PNG instead of PPM
+    bool useLab = false;       // convert using LAB instead of RGB channels
     ToneMapper toneMapper = ToneMapper::CLAMP_1();  // default tmo
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-o") == 0) {
@@ -72,7 +74,7 @@ int main(int argc, char** argv) {
 
     // Convert HDR to LDR using said toneMapper
     PPMImage ldr;
-    hdr.applyToneMap(ldr, toneMapper);
+    hdr.applyToneMap(ldr, toneMapper, useLab);
 
     if (generatePng) {
         PNGImage pngImage = ldr.convertToPNG();

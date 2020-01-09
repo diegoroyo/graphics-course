@@ -121,12 +121,15 @@ bool PPMImage::writeFile(const char* filename, bool ldr) const {
                    << int(data[y][x].b * LDR_RESOLUTION) << "     ";
             } else {
                 // Write data in same HDR range
-                float rangeR = std::min(1.0f - 1e-3f, data[y][x].r / max);
-                float rangeG = std::min(1.0f - 1e-3f, data[y][x].g / max);
-                float rangeB = std::min(1.0f - 1e-3f, data[y][x].b / max);
-                os << int(rangeR * colorResolution) << " "
-                   << int(rangeG * colorResolution) << " "
-                   << int(rangeB * colorResolution) << "     ";
+#define clamp(value) \
+    ((unsigned)(value) > colorResolution ? colorResolution : (unsigned)(value))
+                float rangeR = std::fmin(1.0f, data[y][x].r / max);
+                float rangeG = std::fmin(1.0f, data[y][x].g / max);
+                float rangeB = std::fmin(1.0f, data[y][x].b / max);
+                os << clamp(rangeR * colorResolution) << " "
+                   << clamp(rangeG * colorResolution) << " "
+                   << clamp(rangeB * colorResolution) << "     ";
+#undef clamp
             }
         }
         os << std::endl;
@@ -135,16 +138,24 @@ bool PPMImage::writeFile(const char* filename, bool ldr) const {
     return true;
 }
 
-void PPMImage::applyToneMap(PPMImage& result, ToneMapper& tm) {
+void PPMImage::applyToneMap(PPMImage& result, const ToneMapper& tm,
+                            bool useLab) {
     result.initialize(width, height, colorResolution, max);
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            // Convert RGB data to Lab data
-            RGBColor labColor = data[y][x].rgb2lab(max);
-            // Map [0, max] luminance to [0, 1] using tm.map function
-            labColor.lab.l = tm.map(labColor.lab.l);
-            // Convert back to RGB
-            result.data[y][x] = labColor.lab2rgb(max);
+            if (useLab) {
+                // Convert RGB data to Lab data
+                RGBColor labColor = data[y][x].rgb2lab(max);
+                // Map [0, max] luminance to [0, 1] using tm.map function
+                labColor.lab.l = tm.map(labColor.lab.l);
+                // Convert back to RGB
+                result.data[y][x] = labColor.lab2rgb(max);
+            } else {
+                // Map [0, max] RGB components to [0, 1]
+                result.data[y][x].r = tm.map(data[y][x].r);
+                result.data[y][x].g = tm.map(data[y][x].g);
+                result.data[y][x].b = tm.map(data[y][x].b);
+            }
         }
     }
 }
