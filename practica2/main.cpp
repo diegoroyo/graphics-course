@@ -6,7 +6,7 @@ int main(int argc, char** argv) {
     if (argc == 1) {
         std::cerr
             << "Usage: " << argv[0]
-            << " <ppm_image_in> -t <tone_mapper> [ -o <ppm_image_out> ] [ -p ]"
+            << " <ppm_image_in> [ -l ] -t <tone_mapper> [ -o <ppm_image_out> ] [ -p ]"
             << std::endl;
         std::cerr << std::endl;
         std::cerr << "Tone mapper options:" << std::endl;
