@@ -6,6 +6,17 @@ inline Vec4 reflectDirection(const Vec4 &incoming, const Vec4 &normal) {
     return incoming - normal * dot(incoming, normal) * 2.0f;
 }
 
+// Generate a valid orthonormal base with normal as z
+inline Vec4 baseFromNormal(const Vec4 &normal, Vec4 &x, Vec4 &y, Vec4 &z) {
+    z = normal;
+    if (std::fabs(z.x) > std::fabs(z.y)) {
+        x = Vec4(z.z, 0.0f, z.x * -1.0f, 0.0f).normalize();
+    } else {
+        x = Vec4(0.0f, z.z * -1.0f, z.y, 0.0f).normalize();
+    }
+    y = cross(x, z);
+}
+
 /// Phong Diffuse ///
 
 bool PhongDiffuse::nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) {
@@ -17,9 +28,8 @@ bool PhongDiffuse::nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) {
     float azim = 2 * M_PI * randAzim;
 
     // Local base to hit point
-    Vec4 z = hit.normal;
-    Vec4 x = cross(z, inRay.direction).normalize();
-    Vec4 y = cross(z, x);
+    Vec4 x, y, z;
+    baseFromNormal(hit.normal, x, y, z);
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
     Vec4 outDirection = cob * Vec4(sinf(incl) * cosf(azim),
                                    sinf(incl) * sinf(azim), cosf(incl), 0.0f);
@@ -50,9 +60,9 @@ bool PhongSpecular::nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) {
     float azim = 2 * M_PI * randAzim;
 
     // Local base to hit point
-    Vec4 z = reflectDirection(inRay.direction, hit.normal);
-    Vec4 x = cross(z, inRay.direction).normalize();
-    Vec4 y = cross(z, x);
+    Vec4 reflectNormal = reflectDirection(inRay.direction, hit.normal);
+    Vec4 x, y, z;
+    baseFromNormal(hit.normal, x, y, z);
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
     Vec4 outDirection = cob * Vec4(sinf(incl) * cosf(azim),
                                    sinf(incl) * sinf(azim), cosf(incl), 0.0f);

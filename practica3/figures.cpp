@@ -11,7 +11,7 @@ bool Plane::intersection(const Ray &ray, RayHit &hit) const {
     // Ray intersects with plane, return intersection point
     float alpha = (this->distToOrigin - dot(this->normal, ray.origin)) /
                   dot(ray.direction, this->normal);
-    if (alpha <= 0.0f) {
+    if (alpha < 1e-5f) {
         // Intersection is behind the camera, it isn't visible
         return false;
     }
@@ -37,8 +37,8 @@ bool TexturedPlane::getMaterial(const Vec4 &hitPoint,
     if (infinite) {
         uvx = fmodf(uvx, 1.0f);
         uvy = fmodf(uvy, 1.0f);
-        if (uvx < 1e-6f) uvx += 1.0f;
-        if (uvy < 1e-6f) uvy += 1.0f;
+        if (uvx < 1e-5f) uvx += 1.0f;
+        if (uvy < 1e-5f) uvy += 1.0f;
         uvx = std::fmax(0.0f, std::fmin(1.0f, uvx));  // 0-1 clamp
         uvy = std::fmax(0.0f, std::fmin(1.0f, uvy));  // 0-1 clamp
     }
@@ -64,7 +64,7 @@ void TexturedPlane::setUVMaterial(const UVMaterialPtr &_uvMaterial,
 bool Sphere::intersection(const Ray &ray, RayHit &hit) const {
     Vec4 l = this->center - ray.origin;
     float tca = dot(l, ray.direction);
-    if (tca < 0) {
+    if (tca < 1e-5f) {
         // Sphere is behind the camera, no intersection
         return false;
     }
@@ -75,9 +75,9 @@ bool Sphere::intersection(const Ray &ray, RayHit &hit) const {
         return false;
     }
     float thc = sqrtf(radius2 - d2);
-    if (tca - thc < 1e-4f) {
+    if (tca - thc < 1e-5f) {
         // First hit is behind the camera
-        if (tca + thc < 1e-4f) {
+        if (tca + thc < 1e-5f) {
             // Second hit is behind the camera, doesn't intersect
             return false;
         } else {
@@ -130,7 +130,7 @@ Vec4 Triangle::getBarycentric(const Vec4 &p) const {
     // also (x + y) <= z (so 1-u-v is also positive)
     // Finally, if z = 0 the triangle is degenerate and shouldn't be drawn
     Vec4 coords(-1.0f, -1.0f, -1.0f, 0.0f);
-    if (std::abs(vcross.z) > 1e-6f) {  // check degenerate triangle
+    if (std::abs(vcross.z) > 1e-5f) {  // check degenerate triangle
         coords.y = vcross.x / vcross.z;
         coords.z = vcross.y / vcross.z;
         // add small epsilon to prevent float precision errors
@@ -145,7 +145,7 @@ bool Triangle::intersection(const Ray &ray, RayHit &hit) const {
     float a, f, u, v;
     h = cross(ray.direction, this->edge1);
     a = dot(this->edge0, h);
-    if (std::abs(a) < 1e-6f) {
+    if (std::abs(a) < 1e-5f) {
         return false;  // This ray is parallel to this triangle.
     }
     f = 1.0f / a;
@@ -162,7 +162,7 @@ bool Triangle::intersection(const Ray &ray, RayHit &hit) const {
     // At this stage we can compute t to find out where the intersection point
     // is on the line.
     float t = f * dot(this->edge1, q);
-    if (t < 1e-6f) {
+    if (t < 1e-5f) {
         // Intersection is behind the camera
         return false;
     }
@@ -174,10 +174,10 @@ bool Triangle::intersection(const Ray &ray, RayHit &hit) const {
     float tex0 = uv0[0] * b.x + uv1[0] * b.y + uv2[0] * b.z;
     float tex1 = uv0[1] * b.x + uv1[1] * b.y + uv2[1] * b.z;
     // Clamp between 0-1
-    tex0 = tex0 < 1e-6f ? 0.0f : tex0;
-    tex0 = tex0 > 1.0f - 1e-6f ? 1.0f - 1e-6f : tex0;
-    tex1 = tex1 < 1e-6f ? 0.0f : tex1;
-    tex1 = tex1 > 1.0f - 1e-6f ? 1.0f - 1e-6f : tex1;
+    tex0 = tex0 < 1e-5f ? 0.0f : tex0;
+    tex0 = tex0 > 1.0f - 1e-5f ? 1.0f - 1e-5f : tex0;
+    tex1 = tex1 < 1e-5f ? 0.0f : tex1;
+    tex1 = tex1 > 1.0f - 1e-5f ? 1.0f - 1e-5f : tex1;
     hit.material = this->model->material(tex0, tex1);
     // Calculate normal as it was a plane
     hit.enters = dot(this->normal, ray.direction) > 1e-5f;
