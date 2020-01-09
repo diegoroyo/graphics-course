@@ -14,7 +14,7 @@ class ToneMapper {
     // Base for all tone-mapping functions
     class Function {
        public:
-        virtual float map(float in) { return in; }
+        virtual float map(float in) const { return in; }
     };
     // Clamps values higher than max
     // values lower than max are put in a gamma curve
@@ -25,10 +25,10 @@ class ToneMapper {
        public:
         FClampGamma(float _max, float _gamma = 1.0f)
             : max(_max), gamma(_gamma) {}
-        float map(float in) override {
+        float map(float in) const override {
             if (in > max) {
                 // clamp
-                return max;
+                return 1.0f;
             } else {
                 // equalize and put in gamma curve (x^gamma)
                 return std::pow(in / max, gamma);
@@ -43,7 +43,7 @@ class ToneMapper {
        public:
         FReinhard02(float _max, float _minWhite)
             : max(_max), minWhiteSq(_minWhite * _minWhite) {}
-        float map(float in) override {
+        float map(float in) const override {
             float l = in / max;
             return (l * (1.0f + l / minWhiteSq)) / (1.0f + l);
         }
@@ -71,5 +71,5 @@ class ToneMapper {
         ToneMapper tm(new ToneMapper::FReinhard02(max, minWhite));
         return tm;
     }
-    float map(float in) { return f->map(in); }
+    float map(float in) const { return f->map(in); }
 };
