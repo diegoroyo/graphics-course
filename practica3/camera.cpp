@@ -43,7 +43,7 @@ RGBColor Camera::tracePath(const Ray &cameraRay, const Scene &scene,
                            const RGBColor &backgroundColor) const {
     // Ray from camera's origin to pixel's center
     RayHit hit;
-    if (scene.root->intersection(cameraRay, hit)) {
+    if (scene.intersection(cameraRay, hit)) {
         // Special case: hit a light
         if (hit.material->emitsLight) {
 // Return the light emission
@@ -170,13 +170,7 @@ PPMImage Camera::render(int width, int height, int ppp, const Scene &scene,
     }
 
     // Set result's max value to the render's max value
-    float max = 0.0f;
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            max = std::max(max, result.getPixel(x, y).max());
-        }
-    }
-    result.setMax(max);
+    result.setMax(result.calculateMax());
 
     // Result is saved in PPM image's data
     return result;
