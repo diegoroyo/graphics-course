@@ -1,11 +1,11 @@
 #pragma once
 
+class ToneMapper;
+
 #include <cmath>
 #include <memory>
-#include "ppmimage.h"
-#include "rgbcolor.h"
-
-class PPMImage;
+#include "io/ppmimage.h"
+#include "math/rgbcolor.h"
 
 // Implementation of different tone-mapping functions
 // first set-up the function you want, then you can use it

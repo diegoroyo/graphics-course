@@ -10,17 +10,16 @@ class TexturedPlane;
 typedef std::shared_ptr<Figures::Figure> FigurePtr;
 typedef std::shared_ptr<Figures::TexturedPlane> FigurePortalPtr;
 typedef std::vector<FigurePtr> FigurePtrVector;
-class PLYModel;  // needed for function definitions
 
 #include <cmath>
 #include <limits>
-#include "geometry.h"
-#include "material.h"
-#include "plymodel.h"
-#include "ray.h"
-#include "rayhit.h"
-#include "rgbcolor.h"
-#include "uvmaterial.h"
+#include "camera/ray.h"
+#include "camera/rayhit.h"
+#include "io/plymodel.h"
+#include "math/geometry.h"
+#include "math/rgbcolor.h"
+#include "scene/material.h"
+#include "scene/uvmaterial.h"
 
 namespace Figures {
 

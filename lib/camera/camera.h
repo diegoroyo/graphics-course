@@ -5,11 +5,11 @@
 #include <future>
 #include <memory>
 #include <string>
-#include "figures.h"
-#include "geometry.h"
-#include "ppmimage.h"
-#include "random.h"
-#include "scene.h"
+#include "io/ppmimage.h"
+#include "math/geometry.h"
+#include "math/random.h"
+#include "scene/figures.h"
+#include "scene/scene.h"
 
 class Camera {
     const Vec4 origin, forward, up, right;
@@ -41,12 +41,11 @@ class Camera {
           dofRadius(0.0f) {}
 
     Camera(Vec4 _origin, Vec4 _forward, Vec4 _up, float _aspectRatio)
-        : Camera(_origin, _forward, _up,
-                 cross(_forward, _up).normalize() * _up.module() * _aspectRatio) {}
+        : Camera(
+              _origin, _forward, _up,
+              cross(_forward, _up).normalize() * _up.module() * _aspectRatio) {}
 
-    void setDepthOfField(const float radius) {
-        this->dofRadius = radius;
-    }
+    void setDepthOfField(const float radius) { this->dofRadius = radius; }
 
     // Generate an image render (see implementation)
     PPMImage render(int width, int height, int ppp, const Scene &scene,

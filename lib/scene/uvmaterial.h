@@ -12,9 +12,9 @@ typedef std::shared_ptr<TextureBuilder> TextureBuilderPtr;
 class UVMaterial;
 typedef std::shared_ptr<UVMaterial> UVMaterialPtr;
 
-#include "material.h"
-#include "medium.h"
-#include "ppmimage.h"
+#include "camera/medium.h"
+#include "io/ppmimage.h"
+#include "scene/material.h"
 
 // Extends Material class for PLY models
 // wxh matrix of materials which is UV mapped to model

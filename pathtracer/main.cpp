@@ -9,13 +9,13 @@
 
 #include <iostream>
 #include <memory>
-#include "camera.h"
-#include "figures.h"
-#include "material.h"
-#include "medium.h"
-#include "plymodel.h"
-#include "scene.h"
-#include "uvmaterial.h"
+#include "camera/camera.h"
+#include "camera/medium.h"
+#include "io/plymodel.h"
+#include "scene/figures.h"
+#include "scene/material.h"
+#include "scene/scene.h"
+#include "scene/uvmaterial.h"
 
 /// test purposes ///
 
@@ -260,8 +260,8 @@ int main(int argc, char **argv) {
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
         // Cornell box content
-        sphere(mirror, Vec4(1.0f, -1.05f, -1.0f, 1.0f), 0.75f),
-        sphere(transparent, Vec4(0.5f, 0.0f, 1.0f, 1.0f), 0.75f)
+        sphere(mirror, Vec4(1.0f, 0.5f, -1.0f, 1.0f), 0.75f),
+        sphere(transparent, Vec4(0.5f, -0.5f, 1.0f, 1.0f), 0.75f)
 #elif SCENE_NUMBER == 1
         // Cornell box walls
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
@@ -327,7 +327,7 @@ int main(int argc, char **argv) {
     // Add points lights to the scene
 
 #if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
-    scene.light(Vec4(0.0f, 1.6f, 0.0f, 1.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(0.0f, 1.3f, 0.0f, 1.0f), RGBColor::White * maxLight);
 #elif SCENE_NUMBER == 2
     scene.light(Vec4(0.0f, 1.5f, -1.5f, 1.0f),
                 RGBColor(maxLight, maxLight, maxLight));

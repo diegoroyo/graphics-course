@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "rgbcolor.h"
+#include "math/rgbcolor.h"
 
 // Una imagen PNG está formada por varios chunks de este tipo
 // http://www.libpng.org/pub/png/spec/1.2/PNG-Chunks.html

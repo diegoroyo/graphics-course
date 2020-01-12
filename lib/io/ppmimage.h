@@ -1,12 +1,12 @@
 #pragma once
 
+class PPMImage;
+
 #include <functional>
 #include <vector>
-#include "pngimage.h"
-#include "rgbcolor.h"
-#include "tonemapper.h"
-
-class ToneMapper;
+#include "io/pngimage.h"
+#include "io/tonemapper.h"
+#include "math/rgbcolor.h"
 
 /*
  * PPM Image loader/saver (P3 format)

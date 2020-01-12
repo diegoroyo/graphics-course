@@ -1,7 +1,9 @@
 #pragma once
 
-#include "geometry.h"
-#include "material.h"
+struct RayHit;
+
+#include "math/geometry.h"
+#include "scene/material.h"
 
 // Used to save information about figure-ray intersections
 struct RayHit {

@@ -1,6 +1,6 @@
 #include <memory>
-#include "ppmimage.h"
-#include "tonemapper.h"
+#include "io/ppmimage.h"
+#include "io/tonemapper.h"
 
 int main(int argc, char** argv) {
     if (argc == 1) {
@@ -87,6 +87,7 @@ int main(int argc, char** argv) {
         PPMImage aux;
         hdr.applyToneMap(aux, toneMapper, useLab);
         aux.setMax(aux.calculateMax());
+        std::cout << aux.max << std::endl;
         // Equalize to set in range
         ToneMapper equalize = ToneMapper::EQUALIZE_CLAMP(aux.max);
         aux.applyToneMap(ldr, equalize, false);

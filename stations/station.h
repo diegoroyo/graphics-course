@@ -1,6 +1,6 @@
 #pragma once
 
-#include "geometry.h"
+#include "math/geometry.h"
 
 class Station {
    public:

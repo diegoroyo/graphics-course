@@ -1,15 +1,17 @@
 #pragma once
 
+class PLYModel;
+
 #include <algorithm>
 #include <array>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <vector>
-#include "figures.h"
-#include "geometry.h"
-#include "rgbcolor.h"
-#include "uvmaterial.h"
+#include "math/geometry.h"
+#include "math/rgbcolor.h"
+#include "scene/figures.h"
+#include "scene/uvmaterial.h"
 
 class PLYModel {
    private:

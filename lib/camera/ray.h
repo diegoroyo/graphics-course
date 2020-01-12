@@ -1,7 +1,7 @@
 #pragma once
 
-#include "geometry.h"
-#include "medium.h"
+#include "camera/medium.h"
+#include "math/geometry.h"
 
 class Ray {
    public:

@@ -1,9 +1,9 @@
-#include "geometry.h"
-#include "station.h"
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
+
+#include "math/geometry.h"
+#include "station.h"
 
 Station loadStation(std::ifstream& is) {
     char kk;

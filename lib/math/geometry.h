@@ -97,10 +97,10 @@ struct Mat4 {
     }
     static constexpr Mat4 rotationX(float rad) {
         return Mat4(std::array<float, 16>(
-            {1.0f,           0.0f,           0.0f, 0.0f,
+            {1.0f,       0.0f,       0.0f, 0.0f,
              0.0f,  cosf(rad), -sinf(rad), 0.0f,
              0.0f,  sinf(rad),  cosf(rad), 0.0f,
-             0.0f,            0.0f,          0.0f, 1.0f}));
+             0.0f,        0.0f,      0.0f, 1.0f}));
     }
     static constexpr Mat4 rotationY(float rad) {
         return Mat4(std::array<float, 16>(

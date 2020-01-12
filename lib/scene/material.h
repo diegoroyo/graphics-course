@@ -1,7 +1,5 @@
 #pragma once
 
-class Scene;  // needed forward declaration
-
 // typedef for material pointers
 #include <memory>
 class Event;
@@ -10,13 +8,14 @@ class Material;
 typedef std::shared_ptr<Material> MaterialPtr;
 
 #include <vector>
-#include "geometry.h"
-#include "medium.h"
-#include "random.h"
-#include "ray.h"
-#include "rayhit.h"
-#include "rgbcolor.h"
-#include "scene.h"
+#include "camera/medium.h"
+#include "camera/ray.h"
+#include "camera/rayhit.h"
+#include "math/geometry.h"
+#include "math/random.h"
+#include "math/rgbcolor.h"
+#include "scene/figures.h"
+#include "scene/scene.h"
 
 /// Event ///
 // All different events and possible interactions on intersections
@@ -117,7 +116,7 @@ class Material {
    public:
     const bool emitsLight;
     const RGBColor emission;
-    std::vector<float> probs;    // event probability accum list
+    std::vector<float> probs;      // event probability accum list
     std::vector<EventPtr> events;  // random <= probs[i] => do event i
 
    private:

@@ -1,10 +1,14 @@
 #pragma once
 
+class Scene;
+
 #include <vector>
-#include "figures.h"
-#include "geometry.h"
-#include "medium.h"
-#include "rgbcolor.h"
+#include "camera/medium.h"
+#include "camera/ray.h"
+#include "camera/rayhit.h"
+#include "math/geometry.h"
+#include "math/rgbcolor.h"
+#include "scene/figures.h"
 
 class Scene {
     struct PointLight {

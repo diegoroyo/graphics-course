@@ -2,8 +2,8 @@
 
 #include <stdint.h>
 #include <cstring>
-#include "pngchunk.h"
-#include "rgbcolor.h"
+#include "io/pngchunk.h"
+#include "math/rgbcolor.h"
 
 // Métodos de apoyo para la lectura/escritura de imágenes PNG y su modificación
 // Referencia: https://en.wikipedia.org/wiki/Portable_Network_Graphics

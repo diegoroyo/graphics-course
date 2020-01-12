@@ -74,8 +74,8 @@ RGBColor RGBColor::rgb2lab(float max) const {
     }
 
     lab.lab.l = (116.0f * y) - 16.0f;  // L
-    lab.lab.a = 500.0f * (x - y);     // a
-    lab.lab.b = 200.0f * (y - z);     // b
+    lab.lab.a = 500.0f * (x - y);      // a
+    lab.lab.b = 200.0f * (y - z);      // b
 
     // Lab's luminance attribute comes in [0..100] range
     // Re-scale it to [0..max] range for later tone mapping
@@ -121,9 +121,9 @@ RGBColor RGBColor::lab2rgb(float max) const {
     // y does not need correcting
     z = z * 82.5188f / 100.0f;
 
-    rgb.r = x *  3.2406f + y * -1.5372f + z * -0.4986f;
-    rgb.g = x * -0.9689f + y *  1.8758f + z *  0.0415f;
-    rgb.b = x *  0.0557f + y * -0.2040f + z *  1.0570f;
+    rgb.r = x * 3.2406f + y * -1.5372f + z * -0.4986f;
+    rgb.g = x * -0.9689f + y * 1.8758f + z * 0.0415f;
+    rgb.b = x * 0.0557f + y * -0.2040f + z * 1.0570f;
 
     // Re-apply gamma correction
     if (rgb.r > 0.0031308f) {
