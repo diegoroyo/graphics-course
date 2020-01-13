@@ -3,8 +3,8 @@
 /// Builder ///
 
 PhotonKdTree::NodePtr PhotonKdTree::Builder::dividePhotons(
-    std::vector<PointLight>::iterator &vbegin,
-    std::vector<PointLight>::iterator &vend) {
+    std::vector<Photon>::iterator &vbegin,
+    std::vector<Photon>::iterator &vend) {
     if (vend - vbegin <= 1) {
         if (vend - vbegin == 1) {
             return NodePtr(new Node(*vbegin));
@@ -38,33 +38,33 @@ PhotonKdTree::NodePtr PhotonKdTree::Builder::dividePhotons(
     }
 
     // Find median in that axis
-    std::vector<PointLight>::iterator vmedian =
+    std::vector<Photon>::iterator vmedian =
         vbegin + (vend - vbegin - 1) / 2;
     std::nth_element(vbegin, vmedian, vend,
-                     [&axis](const PointLight &lhs, const PointLight &rhs) {
+                     [&axis](const Photon &lhs, const Photon &rhs) {
                          return dot(lhs.point, axis) < dot(rhs.point, axis);
                      });
 
     // Sort left and right sides and return node
     NodePtr left = dividePhotons(vbegin, vmedian);
-    std::vector<PointLight>::iterator vnext = vmedian + 1;
+    std::vector<Photon>::iterator vnext = vmedian + 1;
     NodePtr right = dividePhotons(vnext, vend);
     return NodePtr(new Node(*vmedian, axis, left, right));
 }
 
 PhotonKdTree PhotonKdTree::Builder::build() {
-    std::vector<PointLight>::iterator begin = photons.begin();
-    std::vector<PointLight>::iterator end = photons.end();
+    std::vector<Photon>::iterator begin = photons.begin();
+    std::vector<Photon>::iterator end = photons.end();
     return PhotonKdTree(dividePhotons(begin, end));
 }
 
 /// KdTree: Searches, etc ///
 
-void PhotonKdTree::searchNode(std::vector<const PointLight *> &best,
+void PhotonKdTree::searchNode(std::vector<const Photon *> &best,
                               const Vec4 &point, int k, const NodePtr &node,
                               float &worstDistance) const {
-    static const auto compare = [&point](const PointLight *lhs,
-                                         const PointLight *rhs) {
+    static const auto compare = [&point](const Photon *lhs,
+                                         const Photon *rhs) {
         return (lhs->point - point).module() < (rhs->point - point).module();
     };
 
@@ -116,7 +116,7 @@ void PhotonKdTree::searchNode(std::vector<const PointLight *> &best,
     }
 }
 
-void PhotonKdTree::searchNN(std::vector<const PointLight *> &photons,
+void PhotonKdTree::searchNN(std::vector<const Photon *> &photons,
                             const Vec4 &point, int k) const {
     photons.clear();
     float worstDistance = std::numeric_limits<float>::max();
