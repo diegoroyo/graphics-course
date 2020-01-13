@@ -9,15 +9,9 @@ class Scene;
 #include "math/geometry.h"
 #include "math/rgbcolor.h"
 #include "scene/figures.h"
+#include "scene/light.h"
 
 class Scene {
-    struct PointLight {
-        const Vec4 point;
-        const RGBColor emission;
-        PointLight(const Vec4 &_point, const RGBColor &_emission)
-            : point(_point), emission(_emission) {}
-    };
-
    public:
     const FigurePtr root;
     std::vector<PointLight> lights;
