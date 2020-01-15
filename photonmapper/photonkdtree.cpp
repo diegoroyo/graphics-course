@@ -2,12 +2,12 @@
 
 /// Builder ///
 
-PhotonKdTree::NodePtr PhotonKdTree::Builder::dividePhotons(
+PhotonKdTree::NodePtr PhotonKdTreeBuilder::dividePhotons(
     std::vector<Photon>::iterator &vbegin,
     std::vector<Photon>::iterator &vend) {
     if (vend - vbegin <= 1) {
         if (vend - vbegin == 1) {
-            return NodePtr(new Node(*vbegin));
+            return PhotonKdTree::NodePtr(new PhotonKdTree::Node(*vbegin));
         } else {
             return nullptr;
         }
@@ -38,24 +38,26 @@ PhotonKdTree::NodePtr PhotonKdTree::Builder::dividePhotons(
     }
 
     // Find median in that axis
-    std::vector<Photon>::iterator vmedian =
-        vbegin + (vend - vbegin - 1) / 2;
+    std::vector<Photon>::iterator vmedian = vbegin + (vend - vbegin - 1) / 2;
     std::nth_element(vbegin, vmedian, vend,
                      [&axis](const Photon &lhs, const Photon &rhs) {
                          return dot(lhs.point, axis) < dot(rhs.point, axis);
                      });
 
     // Sort left and right sides and return node
-    NodePtr left = dividePhotons(vbegin, vmedian);
+    PhotonKdTree::NodePtr left = dividePhotons(vbegin, vmedian);
     std::vector<Photon>::iterator vnext = vmedian + 1;
-    NodePtr right = dividePhotons(vnext, vend);
-    return NodePtr(new Node(*vmedian, axis, left, right));
+    PhotonKdTree::NodePtr right = dividePhotons(vnext, vend);
+    return PhotonKdTree::NodePtr(
+        new PhotonKdTree::Node(*vmedian, axis, left, right));
 }
 
-PhotonKdTree PhotonKdTree::Builder::build() {
+PhotonKdTree PhotonKdTreeBuilder::build() {
     std::vector<Photon>::iterator begin = photons.begin();
     std::vector<Photon>::iterator end = photons.end();
-    return PhotonKdTree(dividePhotons(begin, end));
+    PhotonKdTree::NodePtr root = dividePhotons(begin, end);
+    photons.clear();
+    return PhotonKdTree(root);
 }
 
 /// KdTree: Searches, etc ///
@@ -63,8 +65,7 @@ PhotonKdTree PhotonKdTree::Builder::build() {
 void PhotonKdTree::searchNode(std::vector<const Photon *> &best,
                               const Vec4 &point, int k, const NodePtr &node,
                               float &worstDistance) const {
-    static const auto compare = [&point](const Photon *lhs,
-                                         const Photon *rhs) {
+    static const auto compare = [&point](const Photon *lhs, const Photon *rhs) {
         return (lhs->point - point).module() < (rhs->point - point).module();
     };
 
@@ -72,8 +73,7 @@ void PhotonKdTree::searchNode(std::vector<const Photon *> &best,
         // Still haven't found k elements, add it to the list
         best.push_back(&node->photon);
         if (best.size() == k) {
-            std::make_heap(
-                best.begin(), best.end(), compare);
+            std::make_heap(best.begin(), best.end(), compare);
             worstDistance = (best.front()->point - point).module();
         }
     } else {
@@ -81,12 +81,10 @@ void PhotonKdTree::searchNode(std::vector<const Photon *> &best,
         float distance = (node->photon.point - point).module();
         if (distance < worstDistance) {
             // Switch it and update worst distance
-            std::pop_heap(
-                best.begin(), best.end(), compare);
+            std::pop_heap(best.begin(), best.end(), compare);
             best.pop_back();
             best.push_back(&node->photon);
-            std::push_heap(
-                best.begin(), best.end(), compare);
+            std::push_heap(best.begin(), best.end(), compare);
             worstDistance = (best.front()->point - point).module();
         }
     }
@@ -116,11 +114,12 @@ void PhotonKdTree::searchNode(std::vector<const Photon *> &best,
     }
 }
 
-void PhotonKdTree::searchNN(std::vector<const Photon *> &photons,
-                            const Vec4 &point, int k) const {
+float PhotonKdTree::searchNN(std::vector<const Photon *> &photons,
+                             const Vec4 &point, int k) const {
     photons.clear();
     float worstDistance = std::numeric_limits<float>::max();
     searchNode(photons, point, k, this->root, worstDistance);
+    return worstDistance;
 }
 
 std::ostream &PhotonKdTree::printNode(std::ostream &os,

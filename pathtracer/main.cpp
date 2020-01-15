@@ -360,7 +360,7 @@ int main(int argc, char **argv) {
 
     // Generate render using argument options and save as PPM
     camera.tracePixels(scene);
-    pathTracer->result().writeFile(filenameOut.c_str());
-
+    camera.storeResult(filenameOut);
+    
     return 0;
 }

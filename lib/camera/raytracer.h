@@ -13,5 +13,8 @@ class RayTracer {
    public:
     virtual void tracePixel(const int px, const int py, const Film &film,
                             const Scene &scene) = 0;
-    virtual PPMImage &result() = 0;
+    virtual PPMImage &result() {
+        throw std::domain_error(
+            "This kind of RayTracer doesn't allow for saving results");
+    }
 };

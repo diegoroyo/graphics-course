@@ -33,6 +33,13 @@ class Figure {
     virtual bool peek(const Ray &ray, RayHit &hit) const {
         return this->intersection(ray, hit);
     }
+
+    // // Random point chosen in the figure's area
+    // virtual Vec4 randomPoint() const;
+    // // Random direction for a given point in the figure
+    // virtual Vec4 randomDirecion(const Vec4 &point) const;
+    // // Total area of the figure
+    // virtual float getTotalArea() const;
 };
 
 /// Plane ///
