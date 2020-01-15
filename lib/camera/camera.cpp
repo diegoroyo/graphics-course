@@ -1,7 +1,6 @@
 #include "camera.h"
 
 // Debug settings
-// #define DEBUG_PATH      // show path's hits and moment of stopping
 // #define DEBUG_ONE_CORE  // don't use multithreading (for print debugging)
 
 // Prints fancy progress bar to stdout
@@ -23,108 +22,10 @@ void printProgress(const std::chrono::nanoseconds &beginTime, float progress) {
 
 /// Camera ///
 
-inline Vec4 Camera::cameraToWorld(const Vec4 &v) const {
-    // static to it doesn't construct the matrix more than once
-    static Mat4 cob(right, up, forward, origin);
-    return cob * v;
-}
-
-inline Vec4 Camera::getDoFDisplacement() const {
-    if (dofRadius == 0.0f) {
-        return Vec4();
-    } else {
-        float r = dofRadius * sqrtf(random01());
-        Mat4 rotZ = Mat4::rotationZ(random01() * 2.0f * M_PI);
-        return cameraToWorld(rotZ * Vec4(0.0f, r, 0.0f, 0.0f));
-    }
-}
-
-RGBColor Camera::tracePath(const Ray &cameraRay, const Scene &scene,
-                           const RGBColor &backgroundColor) const {
-    // Ray from camera's origin to pixel's center
-    RayHit hit;
-    if (scene.intersection(cameraRay, hit)) {
-        // Special case: hit a light
-        if (hit.material->emitsLight) {
-// Return the light emission
-#ifdef DEBUG_PATH
-            std::cout << "Light hit on point " << hit.point << " with normal "
-                      << hit.normal << std::endl;
-#endif
-            return hit.material->emission;
-        }
-
-        // Calculate russian roulette event
-        EventPtr event = hit.material->selectEvent();
-        // Only calculate direct light if event is not perfect refraction
-        Ray nextRay;
-        if (event != nullptr && event->nextRay(cameraRay, hit, nextRay)) {
-#ifdef DEBUG_PATH
-            std::cout << "Event on point " << hit.point << " with normal "
-                      << hit.normal << std::endl;
-#endif
-            RGBColor directLight =
-                scene.directLight(hit, nextRay.direction, event);
-            RGBColor nextEventLight = event->applyMonteCarlo(
-                tracePath(nextRay, scene, backgroundColor), hit,
-                cameraRay.direction, nextRay.direction);
-            return nextEventLight + directLight;
-#ifdef DEBUG_PATH
-        } else {
-            std::cout << "Path died :(" << std::endl;
-#endif
-        }
-
-        // Path died for one reason or another
-        return RGBColor::Black;
-    }
-#ifdef DEBUG_PATH
-    std::cout << "Ray didn't collide with anything" << std::endl;
-#endif
-    return backgroundColor;
-}
-
-RGBColor Camera::tracePixel(const Vec4 &d0, const Vec4 &deltaX,
-                            const Vec4 &deltaY, int ppp, const Scene &scene,
-                            const RGBColor &backgroundColor) const {
-    RGBColor pixelColor(backgroundColor);
-    for (int p = 0; p < ppp; ++p) {
-        float randX = random01();
-        float randY = random01();
-        Vec4 dof = this->getDoFDisplacement();
-        Vec4 direction = d0 + deltaX * randX + deltaY * randY;
-        // Trace ray and store mean in result
-        Ray ray(this->origin + dof, (direction - dof).normalize(), scene.air);
-#ifdef DEBUG_PATH
-        std::cout << std::endl << "> Ray begins" << std::endl;
-#endif
-        RGBColor rayColor = tracePath(ray, scene, backgroundColor);
-        if (rayColor.max() > scene.maxLightEmission) {
-            // std::cout << "El rayo devuelve " << rayColor << std::endl;
-            rayColor = rayColor * (scene.maxLightEmission / rayColor.max());
-            // std::cout << "Despues del check es " << rayColor << std::endl;
-        }
-        pixelColor = pixelColor + rayColor * (1.0f / ppp);
-    }
-    return pixelColor;
-}
-
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
-PPMImage Camera::render(int width, int height, int ppp, const Scene &scene,
-                        const RGBColor &backgroundColor) const {
-    // Initialize image with width/height and bg color
-    PPMImage result(width, height, std::numeric_limits<int>::max());
-    result.fillPixels(backgroundColor);
-
-    // Iterate through [-1, 1] * [-1, 1] (camera's local space)
-    // First point is at (-1, 1, 1) in local space (right, up, forward)
-    const Vec4 firstDirection = cameraToWorld(Vec4(-1.0f, 1.0f, 1.0f, 0.0f));
-    // Distance to next horizontal/vertical pixel
-    const Vec4 deltaX = cameraToWorld(Vec4(2.0f / width, 0, 0.0f, 0.0f));
-    const Vec4 deltaY = cameraToWorld(Vec4(0, -2.0f / height, 0.0f, 0.0f));
-
+void Camera::tracePixels(const Scene &scene) const {
     // Spawn one core per thread and make them consume work as they finish
-    int numPixels = width * height;
+    int numPixels = film.width * film.height;
     volatile std::atomic<int> nextPixel(0);
 #ifdef DEBUG_ONE_CORE
     int cores = 1;  // only one core, for debug purposes
@@ -141,14 +42,11 @@ PPMImage Camera::render(int width, int height, int ppp, const Scene &scene,
                     break;
                 }
                 // Get direction to center of pixel
-                int x = pixelIndex % width;
-                int y = pixelIndex / width;
-                Vec4 direction = firstDirection + deltaX * x + deltaY * y;
+                int x = pixelIndex % film.width;
+                int y = pixelIndex / film.width;
+                Vec4 direction = film.getPixelCenter(x, y);
                 // Generate ppp rays and store mean in result image
-                // std::cout << ">>> Pixel " << x << ", " << y << std::endl;
-                result.setPixel(x, y,
-                                tracePixel(direction, deltaX, deltaY, ppp,
-                                           scene, backgroundColor));
+                rayTracer->tracePixel(x, y, film, scene);
             }
         }));
     }
@@ -168,10 +66,8 @@ PPMImage Camera::render(int width, int height, int ppp, const Scene &scene,
             }
         }
     }
+}
 
-    // Set result's max value to the render's max value
-    result.setMax(result.calculateMax());
-
-    // Result is saved in PPM image's data
-    return result;
+void Camera::storeResult(const std::string &filename) const {
+    rayTracer->result().writeFile(filename.c_str());
 }

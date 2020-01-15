@@ -17,12 +17,16 @@ class Scene {
     std::vector<PointLight> lights;
     const MediumPtr air;
     float maxLightEmission;
+    const RGBColor backgroundColor;
 
-    Scene(const FigurePtr &_rootNode, const float _maxLightEmission = 0.0f)
+    Scene(const FigurePtr &_rootNode,
+          const RGBColor &_backgroundColor = RGBColor::Black,
+          const float _maxLightEmission = 0.0f)
         : root(_rootNode),
           lights(),
           air(Medium::air),
-          maxLightEmission(_maxLightEmission) {}
+          maxLightEmission(_maxLightEmission),
+          backgroundColor(_backgroundColor) {}
 
     // Add a new light to the scene
     void light(const Vec4 &point, const RGBColor &emission) {

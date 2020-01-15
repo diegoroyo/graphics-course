@@ -5,6 +5,8 @@
 #include <future>
 #include <memory>
 #include <string>
+#include "camera/film.h"
+#include "camera/raytracer.h"
 #include "io/ppmimage.h"
 #include "math/geometry.h"
 #include "math/random.h"
@@ -12,42 +14,19 @@
 #include "scene/scene.h"
 
 class Camera {
-    const Vec4 origin, forward, up, right;
-    float dofRadius;  // 0.0f makes a pinhole camera,
-                      // >0.0f defines a hole of given radius
-
-    // Convert camera's local space to world space
-    Vec4 cameraToWorld(const Vec4 &v) const;
-
-    // Get random DoF displacement (simulate bigger camera hole)
-    Vec4 getDoFDisplacement() const;
-
-    // Trace the path followed by the cameraRay (multiple hits etc)
-    RGBColor tracePath(const Ray &cameraRay, const Scene &scene,
-                       const RGBColor &backgroundColor) const;
-
-    // Trace multiple (ppp) rays to a pixel defined by box [p0, p1]
-    // and return mean color luminance that enters the pixel
-    RGBColor tracePixel(const Vec4 &d0, const Vec4 &deltaX, const Vec4 &deltaY,
-                        int ppp, const Scene &scene,
-                        const RGBColor &backgroundColor) const;
+    const Film film;
+    const RayTracerPtr rayTracer;
+    const float dofRadius;  // 0.0f makes a pinhole camera,
+                            // >0.0f defines a hole of given radius
 
    public:
-    Camera(Vec4 _origin, Vec4 _forward, Vec4 _up, Vec4 _right)
-        : origin(_origin),
-          forward(_forward),
-          up(_up),
-          right(_right),
-          dofRadius(0.0f) {}
+    Camera(const Film &_film, const RayTracerPtr &_rayTracer,
+           const float _dofRadius = 0.0f)
+        : film(_film), rayTracer(_rayTracer), dofRadius(_dofRadius) {}
 
-    Camera(Vec4 _origin, Vec4 _forward, Vec4 _up, float _aspectRatio)
-        : Camera(
-              _origin, _forward, _up,
-              cross(_forward, _up).normalize() * _up.module() * _aspectRatio) {}
+    // Trace ppp rays from all the pixels of the film
+    void tracePixels(const Scene &scene) const;
 
-    void setDepthOfField(const float radius) { this->dofRadius = radius; }
-
-    // Generate an image render (see implementation)
-    PPMImage render(int width, int height, int ppp, const Scene &scene,
-                    const RGBColor &backgroundColor) const;
+    // Store result in said filename
+    void storeResult(const std::string &filename) const;
 };

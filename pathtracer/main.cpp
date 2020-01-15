@@ -16,6 +16,7 @@
 #include "scene/material.h"
 #include "scene/scene.h"
 #include "scene/uvmaterial.h"
+#include "pathtracer.h"
 
 /// test purposes ///
 
@@ -100,9 +101,10 @@ int main(int argc, char **argv) {
         up(0.0f, 2.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 2.0f, 0.0f);
 #endif
 
-    // Camera camera(origin, forward, up, right);
-    Camera camera(origin, forward, up, width / (float)height);
-    // camera.setDepthOfField(0.015f);
+    Film film(width, height, origin, forward, up);
+    // film.setDepthOfField(0.015f);
+    RayTracerPtr pathTracer = RayTracerPtr(new PathTracer(ppp, film));
+    Camera camera(film, pathTracer);
 
 // shortcuts for getting figure pointers
 #define plane(normal, dist, material) \
@@ -322,7 +324,7 @@ int main(int argc, char **argv) {
 
     FigurePtr rootNode = FigurePtr(new Figures::BVNode(sceneElements));
 
-    Scene scene(rootNode, maxLight);
+    Scene scene(rootNode, RGBColor::Black, maxLight);
 
     // Add points lights to the scene
 
@@ -357,9 +359,8 @@ int main(int argc, char **argv) {
 #undef perfectRefraction
 
     // Generate render using argument options and save as PPM
-
-    PPMImage render = camera.render(width, height, ppp, scene, RGBColor::Black);
-    render.writeFile(filenameOut.c_str());
+    camera.tracePixels(scene);
+    pathTracer->result().writeFile(filenameOut.c_str());
 
     return 0;
 }
