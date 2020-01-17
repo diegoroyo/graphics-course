@@ -53,6 +53,7 @@ void Camera::tracePixels(const Scene &scene) const {
 
     bool finished = false;
     auto beginTime = std::chrono::system_clock::now().time_since_epoch();
+    printProgress(beginTime, 0.0f);
     while (!finished) {
         printProgress(beginTime, nextPixel / (float)numPixels);
         std::this_thread::sleep_for(std::chrono::seconds(1));
