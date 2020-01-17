@@ -79,9 +79,11 @@ RGBColor PhongSpecular::applyMonteCarlo(const RGBColor &lightIn,
                                         const Vec4 &wo) const {
     Vec4 wr = reflectDirection(wi, hit.normal);
     float outCos = dot(wr, hit.normal);
-    float outSin = sqrtf(1.0f - outCos * outCos);
+    // add epsilon to prevent negative sqrts
+    float outSin = sqrtf(1.0f + 1e-5f - outCos * outCos);
     float inCos = dot(wi, hit.normal) * -1.0f;
-    float inSin = sqrtf(1.0f - inCos * inCos);
+    // add epsilon to prevent negative sqrts
+    float inSin = sqrtf(1.0f + 1e-5f - inCos * inCos);
     return lightIn * (inCos * inSin * (this->alpha + 2.0f) *
                       (1.0f / ((this->alpha + 1) + outSin)));
 }
@@ -128,7 +130,8 @@ bool PerfectRefraction::nextRay(const Ray &inRay, const RayHit &hit,
                                 Ray &outRay) {
     // Incoming ray's cosine and sine with respect to hit.normal
     float incCos = dot(inRay.direction, hit.normal) * -1.0f;
-    float incSin = sqrtf(1.0f - incCos * incCos);
+    // add epsilon to prevent negative sqrts
+    float incSin = sqrtf(1.0f + 1e-5f - incCos * incCos);
     // Index of Refraction ratio (depends if ray enters medium or leaves)
     MediumPtr inMedium = hit.enters ? Medium::air : this->medium;
     MediumPtr outMedium = hit.enters ? this->medium : Medium::air;
@@ -147,7 +150,8 @@ bool PerfectRefraction::nextRay(const Ray &inRay, const RayHit &hit,
 
     // Calculate Kr, fresnel law says that light comes from two sources:
     // Kr comes from reflection, 1 - Kr comes from refraction
-    float outCos = sqrtf(1.0f - outSin * outSin);
+    // add epsilon to prevent negative sqrts
+    float outCos = sqrtf(1.0f + 1e-5f - outSin * outSin);
     // See reference for Kr calculation
     float rs = (n2 * incCos - n1 * outCos) / (n2 * incCos + n1 * outCos);
     float rp = (n2 * outCos - n1 * incCos) / (n2 * outCos + n1 * incCos);
