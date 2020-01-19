@@ -82,17 +82,16 @@ int main(int argc, char** argv) {
 
     // Convert HDR to LDR using said toneMapper
     PPMImage ldr;
-    if (reinhard) {
+    if (useLab) {
         // Reinhard operator
         PPMImage aux;
-        hdr.applyToneMap(aux, toneMapper, useLab);
+        hdr.applyToneMap(aux, toneMapper, true);
         aux.setMax(aux.calculateMax());
-        std::cout << aux.max << std::endl;
         // Equalize to set in range
         ToneMapper equalize = ToneMapper::EQUALIZE_CLAMP(aux.max);
         aux.applyToneMap(ldr, equalize, false);
     } else {
-        hdr.applyToneMap(ldr, toneMapper, useLab);
+        hdr.applyToneMap(ldr, toneMapper, false);
     }
 
     if (generatePng) {
