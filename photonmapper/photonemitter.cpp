@@ -10,6 +10,7 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
     if (event == nullptr || !event->nextRay(ray, hit, ray)) {
         return;
     }
+    flux = event->applyMonteCarlo(flux, hit, ray.direction, ray.direction);
 
     // Start storing photons on the second ray
     Ray nextRay;
@@ -21,12 +22,13 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
             photons.add(Photon(hit.point, ray.direction, flux));
             return;
         }
+        // Save INCOMING flux to the point
+        photons.add(Photon(hit.point, ray.direction, flux));
+        // Select event for next photon
         event = hit.material->selectEvent();
         if (event == nullptr || !event->nextRay(ray, hit, nextRay)) {
             return;
         }
-        // Save INCOMING flux to the point
-        photons.add(Photon(hit.point, ray.direction, flux));
         // Apply event and modify flux and ray
         flux =
             event->applyMonteCarlo(flux, hit, ray.direction, nextRay.direction);
@@ -36,6 +38,7 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
 
 void PhotonEmitter::emitPointLight(const Scene &scene,
                                    const PointLight &light) {
+    RGBColor emission = light.emission * (1.0f / ppa);
     for (int i = 0; i < ppa; i++) {
         // Inclination & azimuth for uniform cosine sampling
         float incl = acosf(1 - 2 * random01());
@@ -44,8 +47,7 @@ void PhotonEmitter::emitPointLight(const Scene &scene,
                               cosf(incl), 0.0f);
         // Generate photons for the point light
         // TODO compobar el medio
-        traceRay(Ray(light.point, direction, Medium::air), scene,
-                 light.emission);
+        traceRay(Ray(light.point, direction, Medium::air), scene, emission);
     }
 }
 
@@ -58,7 +60,8 @@ PPMImage PhotonEmitter::debugPhotonsImage(const Film &film) {
     FigurePtr plane = FigurePtr(new Figures::FlatPlane(
         film.forward.normalize(),
         film.forward.module() +
-            (film.origin.module() * dot(film.origin.normalize(), film.forward.normalize())),
+            (film.origin.module() *
+             dot(film.origin.normalize(), film.forward.normalize())),
         Material::none()));
 
     // Intersect photon origin -> film origin with plane

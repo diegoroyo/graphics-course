@@ -46,7 +46,6 @@ int main(int argc, char** argv) {
     Film film(width, height, origin, forward, up);
     // film.setDepthOfField(0.015f);
     PhotonEmitter emitter(ppa);
-    // emitter.emitPointLight
 
 // shortcuts for getting figure pointers
 #define plane(normal, dist, material) \
@@ -65,30 +64,20 @@ int main(int argc, char** argv) {
 
     float maxLight = 10000.0f;
 
-    MaterialPtr whiteLight =
-        Material::light(RGBColor(maxLight, maxLight, maxLight));
     MaterialPtr whiteDiffuse =
         Material::builder().add(phongDiffuse(RGBColor::White * 0.95f)).build();
-    MaterialPtr whiteMirror = Material::builder()
-                                  .add(phongDiffuse(RGBColor::White * 0.1f))
-                                  .add(phongSpecular(0.5f, 3.0f))
-                                  .add(perfectSpecular(0.35f))
-                                  .build();
     MaterialPtr greenDiffuse =
         Material::builder()
-            .add(phongDiffuse(RGBColor(0.0f, 0.95f, 0.0f)))
+            .add(phongDiffuse(RGBColor(0.1f, 0.95f, 0.1f)))
             .build();
     MaterialPtr redDiffuse = Material::builder()
-                                 .add(phongDiffuse(RGBColor(0.95f, 0.0f, 0.0f)))
+                                 .add(phongDiffuse(RGBColor(0.95f, 0.1f, 0.1f)))
                                  .build();
+    MaterialPtr mirror =
+        Material::builder().add(perfectSpecular(0.95f)).build();
     MediumPtr glass = Medium::create(1.5f);
     MaterialPtr transparent =
         Material::builder().add(perfectRefraction(0.95f, glass)).build();
-    MaterialPtr mirror = Material::builder()
-                             .add(phongSpecular(0.5f, 15.0f))
-                             .add(phongDiffuse(RGBColor::White * 0.45f))
-                             .build();
-    MaterialPtr pureBlack = Material::none();
 
     // build scene to BVH root node
     FigurePtrVector sceneElements = {
@@ -96,17 +85,19 @@ int main(int argc, char** argv) {
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
         plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
+        // plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, whiteDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
         // Cornell box content
-        sphere(whiteDiffuse, Vec4(1.0f, 0.5f, -1.0f, 1.0f), 0.75f),
-        sphere(whiteDiffuse, Vec4(0.5f, -0.5f, 1.0f, 1.0f), 0.75f)};
+        // sphere(whiteDiffuse, Vec4(1.0f, 0.5f, -1.0f, 1.0f), 0.75f),
+        // sphere(whiteDiffuse, Vec4(0.5f, -0.5f, 1.0f, 1.0f), 0.75f)
+    };
 
     FigurePtr rootNode = FigurePtr(new Figures::BVNode(sceneElements));
     Scene scene(rootNode, RGBColor::Black, maxLight);
 
     // Add points lights to the scene
-    scene.light(Vec4(0.0f, 1.3f, 0.0f, 1.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(0.0f, 1.5f, 0.0f, 1.0f), RGBColor::White * maxLight);
 
 #undef plane
 #undef sphere

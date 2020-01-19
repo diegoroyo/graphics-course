@@ -4,6 +4,11 @@ RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene) const {
     RayHit hit;
     Vec4 outDirection = ray.direction * -1.0f;
     if (scene.intersection(ray, hit)) {
+        // Light emitted by hit object
+        RGBColor emittedLight = RGBColor::Black;
+        if (hit.material->emitsLight) {
+            emittedLight = hit.material->emission;
+        }
         std::vector<const Photon *> nearest;
         float r = this->photons.searchNN(nearest, hit.point, this->kNeighbours);
         RGBColor sum(0.0f, 0.0f, 0.0f);
@@ -12,20 +17,22 @@ RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene) const {
         // dicen que con difuso o especular de phong va bien
         EventPtr event = hit.material->selectEvent();
         if (event == nullptr) {
-            return RGBColor::Black;
+            return emittedLight;
         }
+        RGBColor directLight = scene.directLight(hit, outDirection, event);
         for (const Photon *photon : nearest) {
             RGBColor contrib = event->applyNextEvent(
                 photon->flux, hit, photon->inDirection, outDirection);
-            float filter = 1.0f - ((photon->point - hit.point).module() /
-                                   (this->kNeighbours * r));
+            float filter = 1.0f; // TODO restaurar filtro de cono
+            // float filter = 1.0f - ((photon->point - hit.point).module() /
+            //                        (this->kNeighbours * r));
             sum = sum + contrib * filter;
         }
-        RGBColor directLight = scene.directLight(hit, outDirection, event);
-        float kTerm = (1.0f - (2.0f / (3.0f * this->kNeighbours)));
+        float kTerm = 1.0f; // TODO restaurar filtro de cono
+        // float kTerm = (1.0f - (2.0f / (3.0f * this->kNeighbours)));
         float denominator = kTerm * M_PI * r * r;
         RGBColor estimatedLight = sum * (1.0f / denominator);
-        return estimatedLight + directLight;
+        return emittedLight + estimatedLight + directLight;
     }
     return scene.backgroundColor;
 }
