@@ -1,8 +1,10 @@
 #pragma once
 
 #include "photonkdtree.h"
+#include "camera/film.h"
 #include "scene/figures.h"
 #include "scene/scene.h"
+#include "scene/figures.h"
 
 class PhotonEmitter {
     PhotonKdTreeBuilder photons;
@@ -20,4 +22,6 @@ class PhotonEmitter {
     PhotonKdTree getPhotonTree() {
         return photons.build();
     }
+    
+    PPMImage debugPhotonsImage(const Film &film);
 };

@@ -61,12 +61,12 @@ class PhotonKdTree {
 
 class PhotonKdTreeBuilder {
    private:
-    std::vector<Photon> photons;
-
     PhotonKdTree::NodePtr dividePhotons(std::vector<Photon>::iterator &vbegin,
                                         std::vector<Photon>::iterator &vend);
 
    public:
+    std::vector<Photon> photons;
+    
     PhotonKdTreeBuilder() : photons() {}
 
     PhotonKdTreeBuilder add(const Photon &photon) {
