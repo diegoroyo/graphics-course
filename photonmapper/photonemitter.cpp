@@ -20,12 +20,15 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
             photons.add(Photon(hit.point, ray.direction, flux));
             return;
         }
-        // Save INCOMING flux to the point
-        photons.add(Photon(hit.point, ray.direction, flux));
         // Select event for next photon
         event = hit.material->selectEvent();
+        // Save INCOMING flux to the point
         if (event == nullptr || !event->nextRay(ray, hit, nextRay)) {
+            photons.add(Photon(hit.point, ray.direction, flux));
             return;
+        }
+        if (!event->isDelta) {
+            photons.add(Photon(hit.point, ray.direction, flux));
         }
         // Apply event and modify flux and ray
         flux =

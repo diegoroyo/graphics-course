@@ -23,9 +23,10 @@ typedef std::shared_ptr<Material> MaterialPtr;
 
 class Event {
    protected:
-    Event(float _prob) : prob(_prob) {}
+    Event(float _prob, bool _isDelta) : prob(_prob), isDelta(_isDelta) {}
 
    public:
+    const bool isDelta;
     const float prob;
     virtual bool nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) = 0;
     virtual RGBColor applyMonteCarlo(const RGBColor &lightIn, const RayHit &hit,
@@ -38,7 +39,7 @@ class PhongDiffuse : public Event {
    public:
     const RGBColor kd;
 
-    PhongDiffuse(const RGBColor &_kd) : Event(_kd.max()), kd(_kd) {}
+    PhongDiffuse(const RGBColor &_kd) : Event(_kd.max(), false), kd(_kd) {}
     bool nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) override;
     RGBColor applyMonteCarlo(const RGBColor &lightIn, const RayHit &hit,
                              const Vec4 &wi, const Vec4 &wo) const override;
@@ -50,7 +51,7 @@ class PhongSpecular : public Event {
    public:
     const float alpha;
 
-    PhongSpecular(float _ks, float _alpha) : Event(_ks), alpha(_alpha) {}
+    PhongSpecular(float _ks, float _alpha) : Event(_ks, false), alpha(_alpha) {}
     bool nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) override;
     RGBColor applyMonteCarlo(const RGBColor &lightIn, const RayHit &hit,
                              const Vec4 &wi, const Vec4 &wo) const override;
@@ -60,7 +61,7 @@ class PhongSpecular : public Event {
 
 class PerfectSpecular : public Event {
    public:
-    PerfectSpecular(float _ksp) : Event(_ksp) {}
+    PerfectSpecular(float _ksp) : Event(_ksp, true) {}
     bool nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) override;
     RGBColor applyMonteCarlo(const RGBColor &lightIn, const RayHit &hit,
                              const Vec4 &wi, const Vec4 &wo) const override;
@@ -73,7 +74,7 @@ class PerfectRefraction : public Event {
 
    public:
     PerfectRefraction(float _krp, const MediumPtr &_medium)
-        : Event(_krp), medium(_medium) {}
+        : Event(_krp, true), medium(_medium) {}
     bool nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) override;
     RGBColor applyMonteCarlo(const RGBColor &lightIn, const RayHit &hit,
                              const Vec4 &wi, const Vec4 &wo) const override;
@@ -87,7 +88,7 @@ class Portal : public Event {
    public:
     Portal(float _kpp, const FigurePortalPtr &_inPortal,
            const FigurePortalPtr &_outPortal)
-        : Event(_kpp), inPortal(_inPortal), outPortal(_outPortal) {}
+        : Event(_kpp, true), inPortal(_inPortal), outPortal(_outPortal) {}
     bool nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) override;
     RGBColor applyMonteCarlo(const RGBColor &lightIn, const RayHit &hit,
                              const Vec4 &wi, const Vec4 &wo) const override;

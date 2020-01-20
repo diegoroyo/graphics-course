@@ -9,19 +9,23 @@ RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene) const {
         if (hit.material->emitsLight) {
             emittedLight = hit.material->emission;
         }
+        // Indirect light: get k-nearest photons on photon tree
         std::vector<const Photon *> nearest;
         float r = this->photons.searchNN(nearest, hit.point, this->kNeighbours);
-        RGBColor sum(0.0f, 0.0f, 0.0f);
+        // Select random event on surface hit
         // TODO se elige evento aleatorio con varios ppp (?)
         EventPtr event = hit.material->selectEvent();
-        if (event == nullptr) {
+        // Check for delta surfaces
+        Ray nextRay;
+        if (event == nullptr ||
+            (event->isDelta && !event->nextRay(ray, hit, nextRay))) {
             return emittedLight;
+        } else if (event->isDelta) {
+            // Delta event, emitted light doesn't matter
+            return traceRay(nextRay, scene);
         }
-        // Direct light on point using scene
-        // TODO luz directa usando el primer rebote de los fotones (?)
-        RGBColor directLight = scene.directLight(hit, outDirection, event);
-        directLight = directLight * (1.0f / (4.0f *  M_PI)); // for sphere area
         // Indirect light using saved photons w/cone filter
+        RGBColor sum(0.0f, 0.0f, 0.0f);
         for (const Photon *photon : nearest) {
             RGBColor contrib = event->applyNextEvent(
                 photon->flux, hit, photon->inDirection, outDirection);
@@ -32,6 +36,10 @@ RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene) const {
         float kTerm = (1.0f - (2.0f / (3.0f * this->kNeighbours)));
         float denominator = kTerm * M_PI * r * r;
         RGBColor indirectLight = sum * (1.0f / denominator);
+        // Direct light on point using scene
+        // TODO luz directa usando el primer rebote de los fotones (?)
+        RGBColor directLight = scene.directLight(hit, outDirection, event);
+        directLight = directLight * (1.0f / (4.0f * M_PI));  // normalization
         return emittedLight + indirectLight + directLight;
     }
     // Didn't hit with anything on the scene

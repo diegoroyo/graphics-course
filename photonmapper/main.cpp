@@ -89,8 +89,8 @@ int main(int argc, char** argv) {
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
         // Cornell box content
-        sphere(whiteDiffuse, Vec4(1.0f, 0.5f, -1.0f, 1.0f), 0.75f),
-        sphere(whiteDiffuse, Vec4(0.5f, -0.5f, 1.0f, 1.0f), 0.75f)
+        sphere(mirror, Vec4(1.0f, 0.5f, -1.0f, 1.0f), 0.75f),
+        sphere(transparent, Vec4(0.5f, -0.5f, 1.0f, 1.0f), 0.75f)
     };
 
     FigurePtr rootNode = FigurePtr(new Figures::BVNode(sceneElements));
@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
 
     PhotonKdTree tree = emitter.getPhotonTree();
 
-    RayTracerPtr mapper = RayTracerPtr(new PhotonMapper(16, film, 250, tree));
+    RayTracerPtr mapper = RayTracerPtr(new PhotonMapper(16, film, 150, tree));
     Camera camera(film, mapper);
     camera.tracePixels(scene);
     camera.storeResult("out/map.ppm");
