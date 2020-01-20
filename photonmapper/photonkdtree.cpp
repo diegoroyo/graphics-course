@@ -65,7 +65,7 @@ PhotonKdTree PhotonKdTreeBuilder::build() {
 void PhotonKdTree::searchNode(std::vector<const Photon *> &best,
                               const Vec4 &point, int k, const NodePtr &node,
                               float &worstDistance) const {
-    static const auto compare = [&point](const Photon *lhs, const Photon *rhs) {
+    const auto compare = [&point](const Photon *lhs, const Photon *rhs) {
         return (lhs->point - point).module() < (rhs->point - point).module();
     };
 

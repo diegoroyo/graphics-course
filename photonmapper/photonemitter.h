@@ -7,14 +7,17 @@
 #include "scene/figures.h"
 
 class PhotonEmitter {
+    // Stop photons that have whose current energy / original energy
+    // ratio is less than CUT_PCT
+    const float CUT_PCT = 0.1f;
+    // Luminance per photon
+    const float lpp;
     PhotonKdTreeBuilder photons;
-    const int ppa;
 
     void traceRay(Ray ray, const Scene &scene, RGBColor flux);
 
    public:
-    // photons per area
-    PhotonEmitter(int _ppa) : ppa(_ppa) {}
+    PhotonEmitter(float _lpp = 1.0f) : lpp(_lpp) {}
 
     void emitPointLight(const Scene& scene, const PointLight& light);
     void emitAreaLight(const Scene& scene, const FigurePtr& light);

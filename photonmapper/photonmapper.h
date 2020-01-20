@@ -13,7 +13,8 @@ class PhotonMapper : public RayTracer {
     RGBColor traceRay(const Ray &ray, const Scene &scene) const;
 
    public:
-    PhotonMapper(int _ppp, const Film &film, int _kNeighbours, const PhotonKdTree &_photons)
+    PhotonMapper(int _ppp, const Film &film, int _kNeighbours,
+                 const PhotonKdTree &_photons)
         : ppp(_ppp),
           kNeighbours(_kNeighbours),
           render(film.width, film.height, std::numeric_limits<int>::max()),

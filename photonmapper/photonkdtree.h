@@ -9,15 +9,15 @@
 class PhotonKdTree {
    private:
     class Node;
-    typedef std::shared_ptr<PhotonKdTree::Node> NodePtr;
+    typedef std::shared_ptr<const PhotonKdTree::Node> NodePtr;
     friend class PhotonKdTreeBuilder;
 
     class Node {
        public:
-        Photon photon;
-        Vec4 axis;  // has 1.0f on axis of division
-        bool leaf;
-        PhotonKdTree::NodePtr left, right;
+        const Photon photon;
+        const Vec4 axis;  // has 1.0f on axis of division
+        const bool leaf;
+        const PhotonKdTree::NodePtr left, right;
         Node(const Photon &_photon)
             : photon(_photon),
               axis(0.0f),
@@ -37,7 +37,7 @@ class PhotonKdTree {
 
     /// Attributes ///
 
-    PhotonKdTree::NodePtr root;
+    const PhotonKdTree::NodePtr root;
     PhotonKdTree(const PhotonKdTree::NodePtr &_root) : root(_root) {}
     friend class PhotonKdTreeBuilder;
 
@@ -66,7 +66,7 @@ class PhotonKdTreeBuilder {
 
    public:
     std::vector<Photon> photons;
-    
+
     PhotonKdTreeBuilder() : photons() {}
 
     PhotonKdTreeBuilder add(const Photon &photon) {

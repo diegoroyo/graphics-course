@@ -14,10 +14,8 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
 
     // Start storing photons on the second ray
     Ray nextRay;
-    // TODO modifcar umbral de corte
-    while (scene.intersection(ray, hit) && flux.max() > 1e-5f) {
+    while (scene.intersection(ray, hit) && flux.max() > lpp * CUT_PCT) {
         if (hit.material->emitsLight) {
-            // TODO comprobar si esto esta bien
             // Save INCOMING flux and ignore light
             photons.add(Photon(hit.point, ray.direction, flux));
             return;
@@ -38,16 +36,17 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
 
 void PhotonEmitter::emitPointLight(const Scene &scene,
                                    const PointLight &light) {
-    RGBColor emission = light.emission * (1.0f / ppa);
-    for (int i = 0; i < ppa; i++) {
+    // Brighter lights emit more photons, but all should be of same energy
+    int numPhotons = light.emission.max() * (1.0f / lpp);
+    RGBColor emission = light.emission * (lpp / numPhotons);
+    for (int i = 0; i < numPhotons; i++) {
         // Inclination & azimuth for uniform cosine sampling
-        float incl = acosf(1 - 2 * random01());
-        float azim = 2 * M_PI * random01();
+        float incl = acosf(1.0f - 2.0f * random01());
+        float azim = 2.0f * M_PI * random01();
         Vec4 direction = Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
                               cosf(incl), 0.0f);
         // Generate photons for the point light
-        // TODO compobar el medio
-        traceRay(Ray(light.point, direction, Medium::air), scene, emission);
+        traceRay(Ray(light.point, direction, light.medium), scene, emission);
     }
 }
 

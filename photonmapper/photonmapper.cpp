@@ -12,28 +12,29 @@ RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene) const {
         std::vector<const Photon *> nearest;
         float r = this->photons.searchNN(nearest, hit.point, this->kNeighbours);
         RGBColor sum(0.0f, 0.0f, 0.0f);
-        // TODO no se qué clase de evento hay que coger para la BRDF,
-        // habra que cambiar esto, por ahora lo dejo como evento random
-        // dicen que con difuso o especular de phong va bien
+        // TODO se elige evento aleatorio con varios ppp (?)
         EventPtr event = hit.material->selectEvent();
         if (event == nullptr) {
             return emittedLight;
         }
+        // Direct light on point using scene
+        // TODO luz directa usando el primer rebote de los fotones (?)
         RGBColor directLight = scene.directLight(hit, outDirection, event);
+        directLight = directLight * (1.0f / (4.0f *  M_PI)); // for sphere area
+        // Indirect light using saved photons w/cone filter
         for (const Photon *photon : nearest) {
             RGBColor contrib = event->applyNextEvent(
                 photon->flux, hit, photon->inDirection, outDirection);
-            float filter = 1.0f; // TODO restaurar filtro de cono
-            // float filter = 1.0f - ((photon->point - hit.point).module() /
-            //                        (this->kNeighbours * r));
+            float filter = 1.0f - ((photon->point - hit.point).module() /
+                                   (this->kNeighbours * r));
             sum = sum + contrib * filter;
         }
-        float kTerm = 1.0f; // TODO restaurar filtro de cono
-        // float kTerm = (1.0f - (2.0f / (3.0f * this->kNeighbours)));
+        float kTerm = (1.0f - (2.0f / (3.0f * this->kNeighbours)));
         float denominator = kTerm * M_PI * r * r;
-        RGBColor estimatedLight = sum * (1.0f / denominator);
-        return emittedLight + estimatedLight + directLight;
+        RGBColor indirectLight = sum * (1.0f / denominator);
+        return emittedLight + indirectLight + directLight;
     }
+    // Didn't hit with anything on the scene
     return scene.backgroundColor;
 }
 

@@ -30,7 +30,7 @@ void testKdTreeKNN() {
     // Perform kNN search and show results
     std::vector<const Photon*> photonsNN;
     tree.searchNN(photonsNN, point, 3);
-    for (const auto* photon : photonsNN) {
+    for (const Photon* photon : photonsNN) {
         std::cout << photon->point << std::endl;
     }
 }
@@ -38,14 +38,14 @@ void testKdTreeKNN() {
 int main(int argc, char** argv) {
     int width = 600;
     int height = 600;
-    int ppa = 10000;
+    float lpp = 1.0f;
 
     Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 
     Film film(width, height, origin, forward, up);
     // film.setDepthOfField(0.015f);
-    PhotonEmitter emitter(ppa);
+    PhotonEmitter emitter(lpp);
 
 // shortcuts for getting figure pointers
 #define plane(normal, dist, material) \
@@ -89,8 +89,8 @@ int main(int argc, char** argv) {
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
         // Cornell box content
-        // sphere(whiteDiffuse, Vec4(1.0f, 0.5f, -1.0f, 1.0f), 0.75f),
-        // sphere(whiteDiffuse, Vec4(0.5f, -0.5f, 1.0f, 1.0f), 0.75f)
+        sphere(whiteDiffuse, Vec4(1.0f, 0.5f, -1.0f, 1.0f), 0.75f),
+        sphere(whiteDiffuse, Vec4(0.5f, -0.5f, 1.0f, 1.0f), 0.75f)
     };
 
     FigurePtr rootNode = FigurePtr(new Figures::BVNode(sceneElements));
@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
 
     PhotonKdTree tree = emitter.getPhotonTree();
 
-    RayTracerPtr mapper = RayTracerPtr(new PhotonMapper(16, film, 100, tree));
+    RayTracerPtr mapper = RayTracerPtr(new PhotonMapper(16, film, 250, tree));
     Camera camera(film, mapper);
     camera.tracePixels(scene);
     camera.storeResult("out/map.ppm");
