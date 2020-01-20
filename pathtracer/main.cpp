@@ -1,10 +1,10 @@
 // Scene descriptions:
 // Scene 0: (final) Cornell box with basic event tests
-// Scene 1: (may vary) Cornell box (different contents, using model)
+// Scene 1: (final) Cornell box with PLY bunnies
 // Scene 2: (don't change) UVMaterial properties test (diamond ore wall)
 // Scene 3: (don't change) Portal scene
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 0
+#define SCENE_NUMBER 1
 #endif
 
 #include <iostream>
@@ -123,20 +123,34 @@ int main(int argc, char **argv) {
 
 #if SCENE_NUMBER == 1
     // load & transform spaceship model, get scene kdtree node
-    MediumPtr glass = Medium::create(1.5f);
-    UVMaterialPtr texture = UVMaterial::builder()
-                                // UVMaterial::builder(512, 512)
-                                // .addPhongDiffuse("ply/spaceship_diffuse.ppm")
-                                .addPerfectSpecular(0.15f)
-                                .addPerfectRefraction(0.8f, glass)
-                                .build();
-
-    PLYModel spaceshipModel("ply/spaceship.ply", texture);
-    spaceshipModel.transform(Mat4::translation(1.0f, -0.5f, 0.0f) *
-                             Mat4::rotationX(-0.7f) * Mat4::rotationY(0.5f) *
-                             Mat4::rotationZ(-1.85f) *
-                             Mat4::scale(2.0f, 2.0f, 2.0f));
-    FigurePtr spaceship = spaceshipModel.getFigure(4);
+    UVMaterialPtr yellowUvTexture =
+        UVMaterial::builder(1, 1)
+            .addPhongDiffuse(RGBColor(0.5f, 0.5f, 0.1f))
+            .addPhongSpecular(0.45f, 100.0f)
+            .build();
+    UVMaterialPtr magentaUvTexture =
+        UVMaterial::builder(1, 1)
+            .addPhongDiffuse(RGBColor(0.5f, 0.1f, 0.5f))
+            .addPhongSpecular(0.45f, 10.0f)
+            .build();
+    UVMaterialPtr cyanUvTexture =
+        UVMaterial::builder(1, 1)
+            .addPhongDiffuse(RGBColor(0.1f, 0.5f, 0.5f))
+            .addPhongSpecular(0.45f, 1000.0f)
+            .build();
+    PLYModel yellowBunnyModel("ply/bunny_low.ply", yellowUvTexture);
+    yellowBunnyModel.transform(
+        Mat4::translation(0.8f, -2.0f, 0.0f) * Mat4::rotationY(M_PI_2 * -1.0f) *
+        Mat4::rotationX(M_PI_2 * -1.0f) * Mat4::scale(2.0f, 2.0f, 2.0f));
+    PLYModel magentaBunnyModel("ply/bunny_low.ply", magentaUvTexture);
+    magentaBunnyModel.transform(Mat4::translation(1.0f, 1.0f, -2.0f));
+    PLYModel cyanBunnyModel("ply/bunny_low.ply", cyanUvTexture);
+    cyanBunnyModel.transform(Mat4::translation(1.0f, 0.5f, 2.0f) *
+                             Mat4::rotationZ(M_PI) * Mat4::rotationY(M_PI) *
+                             Mat4::scale(1.5f, 1.5f, 1.5f));
+    FigurePtr yellowBunny = yellowBunnyModel.getFigure(5);
+    FigurePtr magentaBunny = magentaBunnyModel.getFigure(4);
+    FigurePtr cyanBunny = cyanBunnyModel.getFigure(3);
 #endif
 
     float maxLight = 10000.0f;
@@ -285,14 +299,14 @@ int main(int argc, char **argv) {
         sphere(transparent, Vec4(0.5f, -0.3f, 0.0f, 1.0f), 0.5f)
 #elif SCENE_NUMBER == 1
         // Cornell box walls
-        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
-        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
-        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
-        // plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, pureBlack),
-        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
-        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
-        spaceship,
-        sphere(transparent, Vec4(-0.5f, -1.0f, 1.0f, 1.0f), 0.5f)
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whitePhong),
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whitePhong),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whitePhong),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redPhong),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenPhong),
+        yellowBunny,
+        magentaBunny,
+        cyanBunny
 #elif SCENE_NUMBER == 2
         FigurePtr(new Figures::TexturedPlane(
             Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, stoneTexture,
