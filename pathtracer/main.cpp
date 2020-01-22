@@ -1,7 +1,7 @@
 // Scene descriptions:
 // Scene 0: (final) Cornell box with basic event tests
 // Scene 1: (final) Cornell box with PLY bunnies
-// Scene 2: (don't change) UVMaterial properties test (diamond ore wall)
+// Scene 2: (final) Diamond ore wall (UVMaterial test)
 // Scene 3: (don't change) Portal scene
 #ifndef SCENE_NUMBER
 #define SCENE_NUMBER 1
@@ -123,40 +123,39 @@ int main(int argc, char **argv) {
 
 #if SCENE_NUMBER == 1
     // load & transform spaceship model, get scene kdtree node
-    UVMaterialPtr yellowUvTexture =
+    UVMaterialPtr cyanUvTexture =
         UVMaterial::builder(1, 1)
-            .addPhongDiffuse(RGBColor(0.5f, 0.5f, 0.1f))
-            .addPhongSpecular(0.45f, 100.0f)
+            .addPhongDiffuse(RGBColor(0.1f, 0.6f, 0.6f))
+            .addPhongSpecular(0.35f, 75.0f)
             .build();
     UVMaterialPtr magentaUvTexture =
         UVMaterial::builder(1, 1)
-            .addPhongDiffuse(RGBColor(0.5f, 0.1f, 0.5f))
-            .addPhongSpecular(0.45f, 10.0f)
+            .addPhongDiffuse(RGBColor(0.6f, 0.1f, 0.6f))
+            .addPhongSpecular(0.35f, 5.0f)
             .build();
-    UVMaterialPtr cyanUvTexture =
+    UVMaterialPtr yellowUvTexture =
         UVMaterial::builder(1, 1)
-            .addPhongDiffuse(RGBColor(0.1f, 0.5f, 0.5f))
-            .addPhongSpecular(0.45f, 1000.0f)
+            .addPhongDiffuse(RGBColor(0.6f, 0.6f, 0.1f))
+            .addPhongSpecular(0.35f, 1000.0f)
             .build();
-    PLYModel yellowBunnyModel("ply/bunny_low.ply", yellowUvTexture);
-    yellowBunnyModel.transform(
+    PLYModel cyanBunnyModel("ply/bunny_low.ply", cyanUvTexture);
+    cyanBunnyModel.transform(
         Mat4::translation(0.8f, -2.0f, 0.0f) * Mat4::rotationY(M_PI_2 * -1.0f) *
         Mat4::rotationX(M_PI_2 * -1.0f) * Mat4::scale(2.0f, 2.0f, 2.0f));
     PLYModel magentaBunnyModel("ply/bunny_low.ply", magentaUvTexture);
     magentaBunnyModel.transform(Mat4::translation(1.0f, 1.0f, -2.0f));
-    PLYModel cyanBunnyModel("ply/bunny_low.ply", cyanUvTexture);
-    cyanBunnyModel.transform(Mat4::translation(1.0f, 0.5f, 2.0f) *
-                             Mat4::rotationZ(M_PI) * Mat4::rotationY(M_PI) *
-                             Mat4::scale(1.5f, 1.5f, 1.5f));
-    FigurePtr yellowBunny = yellowBunnyModel.getFigure(5);
+    PLYModel yellowBunnyModel("ply/bunny_low.ply", yellowUvTexture);
+    yellowBunnyModel.transform(Mat4::translation(1.0f, 0.5f, 2.0f) *
+                               Mat4::rotationZ(M_PI) * Mat4::rotationY(M_PI) *
+                               Mat4::scale(1.5f, 1.5f, 1.5f));
+    FigurePtr cyanBunny = cyanBunnyModel.getFigure(5);
     FigurePtr magentaBunny = magentaBunnyModel.getFigure(4);
-    FigurePtr cyanBunny = cyanBunnyModel.getFigure(3);
+    FigurePtr yellowBunny = yellowBunnyModel.getFigure(3);
 #endif
 
     float maxLight = 10000.0f;
 
-#if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
-
+#if SCENE_NUMBER == 0 || SCENE_NUMBER == 2
     MaterialPtr whiteLight =
         Material::light(RGBColor(maxLight, maxLight, maxLight));
     MaterialPtr whitePhong = Material::builder()
@@ -197,13 +196,26 @@ int main(int argc, char **argv) {
     MaterialPtr mirror =
         Material::builder().add(perfectSpecular(0.97f)).build();
     MaterialPtr pureBlack = Material::none();
-
-#elif SCENE_NUMBER == 2
+#elif SCENE_NUMBER == 1
+    MaterialPtr whitePhong = Material::builder()
+                                 .add(phongDiffuse(RGBColor::White * 0.50f))
+                                 .add(phongSpecular(0.3f, 3.0f))
+                                 .build();
+    MaterialPtr greenPhong = Material::builder()
+                                 .add(phongDiffuse(RGBColor(0.1f, 0.50f, 0.1f)))
+                                 .add(phongSpecular(0.3f, 3.0f))
+                                 .build();
+    MaterialPtr redPhong = Material::builder()
+                               .add(phongDiffuse(RGBColor(0.50f, 0.1f, 0.1f)))
+                               .add(phongSpecular(0.3f, 3.0f))
+                               .build();
+#endif
+#if SCENE_NUMBER == 2
     UVMaterialPtr diamondTexture =
         UVMaterial::builder(16, 16)
             .addPhongDiffuse("ply/diamondore_diffuse.ppm")
             .addPhongDiffuse("ply/diamondore_emission.ppm")
-            .addPerfectSpecular("ply/diamondore_emission.ppm")
+            .addPhongSpecular("ply/diamondore_emission.ppm", 15.0f)
             .build();
     UVMaterialPtr stoneTexture = UVMaterial::builder(16, 16)
                                      .addPhongDiffuse("ply/stone_diffuse.ppm")
@@ -216,11 +228,11 @@ int main(int argc, char **argv) {
         UVMaterial::builder(16, 16)
             .addPhongDiffuse("ply/redwool_diffuse.ppm")
             .build();
-    MediumPtr glass = Medium::create(1.5f);
-    MaterialPtr transparent =
-        Material::builder().add(perfectRefraction(0.98f, glass)).build();
-    MaterialPtr mirror =
-        Material::builder().add(perfectSpecular(0.98f)).build();
+    UVMaterialPtr lavaTexture =
+        UVMaterial::builder(32, 32)
+            .addPerfectSpecular(0.1f)  // add whatever (override lights)
+            .build();
+    lavaTexture->overrideLights("ply/lava_emission.ppm", maxLight);
 #elif SCENE_NUMBER == 3
 
     MaterialPtr whiteLight =
@@ -304,9 +316,9 @@ int main(int argc, char **argv) {
         plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whitePhong),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redPhong),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenPhong),
-        yellowBunny,
+        cyanBunny,
         magentaBunny,
-        cyanBunny
+        yellowBunny
 #elif SCENE_NUMBER == 2
         FigurePtr(new Figures::TexturedPlane(
             Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, stoneTexture,
@@ -316,6 +328,10 @@ int main(int argc, char **argv) {
             Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, stoneTexture,
             Vec4(0.0f, -2.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, -1.0f, 0.0f),
             Vec4(-1.0f, 0.0f, 0.0f, 0.0f))),
+        FigurePtr(new Figures::TexturedPlane(
+            Vec4(0.0f, 1.0f, 0.0f, 0.0f), -1.99f, lavaTexture,
+            Vec4(2.0f, -1.99f, 1.0f, 1.0f), Vec4(0.0f, 0.0f, -2.0f, 0.0f),
+            Vec4(-2.0f, 0.0f, 0.0f, 0.0f), false)),
         // diamond ore wall
         FigurePtr(new Figures::TexturedPlane(
             Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, diamondTexture,
@@ -329,8 +345,10 @@ int main(int argc, char **argv) {
             Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, redWoolTexture,
             Vec4(0.0f, 0.0f, -2.0f, 1.0f), Vec4(-1.0f, 0.0f, 0.0f, 0.0f),
             Vec4(0.0f, -1.0f, 0.0f, 0.0f))),
-        sphere(mirror, Vec4(1.0f, -1.05f, -1.0f, 1.0f), 0.75f),
-        sphere(transparent, Vec4(0.5f, 0.0f, 1.0f, 1.0f), 0.75f)
+        sphere(magentaPhong, Vec4(1.5f, -1.55f, -1.5f, 1.0f), 0.45f),
+        sphere(yellowPhong, Vec4(1.1f, -1.6f, 1.5f, 1.0f), 0.4f),
+        sphere(mirror, Vec4(0.5f, -1.6f, -1.3f, 1.0f), 0.4f),
+        sphere(cyanPhong, Vec4(-0.5f, -1.65f, 1.4f, 1.0f), 0.35f)
 #elif SCENE_NUMBER == 3
         // Cornell box walls
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
@@ -364,16 +382,8 @@ int main(int argc, char **argv) {
 #if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
     scene.light(Vec4(0.0f, 1.7f, 0.0f, 1.0f), RGBColor::White * maxLight);
 #elif SCENE_NUMBER == 2
-    scene.light(Vec4(0.0f, 1.5f, -1.5f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight));
-    scene.light(Vec4(0.0f, 1.5f, 1.5f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight));
-    scene.light(Vec4(1.5f, 1.5f, 0.0f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight));
-    scene.light(Vec4(1.5f, 1.5f, -1.5f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight));
-    scene.light(Vec4(1.5f, 1.5f, 1.5f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight));
+    scene.light(Vec4(0.0f, 1.4f, -1.0f, 1.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(0.0f, 1.4f, 1.0f, 1.0f), RGBColor::White * maxLight);
 #elif SCENE_NUMBER == 3
     // scene.light(Vec4(-1.0f, 1.4f, -1.8f, 1.0f),
     //             RGBColor(maxLight, maxLight, maxLight));

@@ -72,6 +72,20 @@ UVMaterialBuilder UVMaterialBuilder::addPhongDiffuse(
     return *this;
 }
 
+UVMaterialBuilder UVMaterialBuilder::addPhongSpecular(
+    const char *specularFilename, const float alpha) {
+    PPMImage specular;
+    specular.readFile(specularFilename);
+    specular.flipVertically();
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            float ks = specular.getPixel(x, y).max() * 0.99f;
+            (*builderPtr)[y][x].add(EventPtr(new PhongSpecular(ks, alpha)));
+        }
+    }
+    return *this;
+}
+
 UVMaterialBuilder UVMaterialBuilder::addPerfectSpecular(
     const char *specularFilename) {
     // TODO this is hardcoded for the diamond texture

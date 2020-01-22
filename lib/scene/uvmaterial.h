@@ -48,6 +48,8 @@ class UVMaterialBuilder {
                                            const float mediumRefractiveIndex);
     // UV mapped for the model
     UVMaterialBuilder addPhongDiffuse(const char *diffuseFilename);
+    UVMaterialBuilder addPhongSpecular(const char *specularFilename,
+                                       const float alpha);
     UVMaterialBuilder addPerfectSpecular(const char *specularFilename);
     UVMaterialBuilder addPortal(const char *portalFilename,
                                 const FigurePortalPtr &inPortal,
