@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include "camera/film.h"
+#include "camera/progress.h"
 #include "camera/raytracer.h"
 #include "io/ppmimage.h"
 #include "math/geometry.h"
