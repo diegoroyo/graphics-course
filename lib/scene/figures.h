@@ -17,6 +17,7 @@ typedef std::vector<FigurePtr> FigurePtrVector;
 #include "camera/rayhit.h"
 #include "io/plymodel.h"
 #include "math/geometry.h"
+#include "math/random.h"
 #include "math/rgbcolor.h"
 #include "scene/material.h"
 #include "scene/uvmaterial.h"
@@ -34,12 +35,20 @@ class Figure {
         return this->intersection(ray, hit);
     }
 
-    // // Random point chosen in the figure's area
-    // virtual Vec4 randomPoint() const;
-    // // Random direction for a given point in the figure
-    // virtual Vec4 randomDirecion(const Vec4 &point) const;
-    // // Total area of the figure
-    // virtual float getTotalArea() const;
+    // Random point chosen in the figure's area
+    virtual Vec4 randomPoint() const {
+        throw std::domain_error(
+            "Random point isn't implemented for this figure");
+    }
+    // Random direction for a given point in the figure
+    virtual Vec4 randomDirection(const Vec4 &point) const {
+        throw std::domain_error(
+            "Random direction isn't implemented for this figure");
+    }
+    // Total area of the figure
+    virtual float getTotalArea() const {
+        throw std::domain_error("Total area isn't implemented for this figure");
+    }
 };
 
 /// Plane ///
@@ -98,6 +107,9 @@ class TexturedPlane : public Plane {
     // special method for portals (material depends on objects)
     void setUVMaterial(const UVMaterialPtr &_uvMaterial, const Vec4 &_uvOrigin,
                        const Vec4 &_uvX, const Vec4 &_uvY);
+    Vec4 randomPoint() const override;
+    Vec4 randomDirection(const Vec4 &point) const override;
+    float getTotalArea() const override;
 };
 
 /// Sphere ///
@@ -111,6 +123,9 @@ class Sphere : public Figure {
     Sphere(const MaterialPtr _material, const Vec4 &_center, float _radius)
         : material(_material), center(_center), radius(_radius) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
+    Vec4 randomPoint() const override;
+    Vec4 randomDirection(const Vec4 &point) const override;
+    float getTotalArea() const override;
 };
 
 /// Triangle ///

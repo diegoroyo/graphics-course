@@ -59,6 +59,29 @@ void TexturedPlane::setUVMaterial(const UVMaterialPtr &_uvMaterial,
     this->uvY = _uvY;
 }
 
+Vec4 TexturedPlane::randomPoint() const {
+    float px = random01();
+    float py = random01();
+    return this->uvOrigin + this->uvX * px + this->uvY * py;
+}
+
+Vec4 TexturedPlane::randomDirection(const Vec4 &point) const {
+    Vec4 z = this->normal;
+    Vec4 x = this->uvX.normalize();
+    Vec4 y = this->uvY.normalize();
+    Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4(0.0f));
+    float incl = acosf(sqrtf(random01()));
+    float azim = 2 * M_PI * random01();
+    return cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
+                      cosf(incl), 0.0f);
+}
+
+float TexturedPlane::getTotalArea() const {
+    return this->uvX.module() * this->uvY.module();
+}
+
+/// Sphere ///
+
 // Ray-sphere intersection algorithm source:
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 bool Sphere::intersection(const Ray &ray, RayHit &hit) const {
@@ -99,6 +122,36 @@ bool Sphere::intersection(const Ray &ray, RayHit &hit) const {
         return true;
     }
 }
+
+Vec4 Sphere::randomPoint() const {
+    float incl = acosf(1.0f - 2.0f * random01());
+    float azim = 2 * M_PI * random01();
+    Vec4 direction = Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
+                          cosf(incl), 0.0f);
+    return direction * this->radius;
+}
+
+Vec4 Sphere::randomDirection(const Vec4 &point) const {
+    Vec4 z = (point - this->center).normalize();
+    Vec4 x;
+    if (std::fabs(z.x) > std::fabs(z.y)) {
+        x = Vec4(z.z, 0.0f, z.x * -1.0f, 0.0f).normalize();
+    } else {
+        x = Vec4(0.0f, z.z * -1.0f, z.y, 0.0f).normalize();
+    }
+    Vec4 y = cross(x, z);
+    Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4(0.0f));
+    float incl = acosf(sqrtf(random01()));
+    float azim = 2 * M_PI * random01();
+    return cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
+                      cosf(incl), 0.0f);
+}
+
+float Sphere::getTotalArea() const {
+    return 4.0f * M_PI * this->radius * this->radius;
+}
+
+/// Triangle ///
 
 Triangle::Triangle(const PLYModel *_model, int _v0i, int _v1i, int _v2i)
     : model(_model),
@@ -185,6 +238,8 @@ bool Triangle::intersection(const Ray &ray, RayHit &hit) const {
     return true;
 }
 
+/// Box ///
+
 // https://tavianator.com/fast-branchless-raybounding-box-intersections-part-2-nans/
 bool Box::intersection(const Ray &ray, RayHit &hit) const {
     // find intersection point for each of the 6 planes that define the box
@@ -212,6 +267,8 @@ bool Box::intersection(const Ray &ray, RayHit &hit) const {
     }
 }
 
+/// BVNode ///
+
 bool BVNode::intersection(const Ray &ray, RayHit &hit) const {
     // Check if ray doesn't hit box
     if (!this->alwaysHits && !this->bbox->intersection(ray, hit)) {
@@ -230,6 +287,8 @@ bool BVNode::intersection(const Ray &ray, RayHit &hit) const {
     }
     return minDistance != std::numeric_limits<float>::max();
 }
+
+/// KdTreeNode ///
 
 bool KdTreeNode::intersection(const Ray &ray, RayHit &hit) const {
     // Check if it only intersects with one box

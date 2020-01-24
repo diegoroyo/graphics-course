@@ -62,7 +62,16 @@ int main(int argc, char** argv) {
 
     // Add elements to scene
 
-    float maxLight = 10000.0f;
+    MediumPtr glass = Medium::create(1.5f);
+    UVMaterialPtr transparentTexture =
+        UVMaterial::builder(1, 1).addPerfectRefraction(0.99f, glass).build();
+    PLYModel teapotModel("ply/teapot.ply", transparentTexture);
+    teapotModel.transform(
+        Mat4::translation(0.0f, -0.5f, 0.0f) * Mat4::rotationX(M_PI_2 * -1.0f) *
+        Mat4::rotationZ(M_PI_2) * Mat4::scale(0.4f, 0.4f, 0.4f));
+    FigurePtr teapot = teapotModel.getFigure(3);
+
+    float maxLight = 50000.0f;
 
     MaterialPtr whiteDiffuse =
         Material::builder().add(phongDiffuse(RGBColor::White * 0.95f)).build();
@@ -75,7 +84,6 @@ int main(int argc, char** argv) {
                                  .build();
     MaterialPtr mirror =
         Material::builder().add(perfectSpecular(0.95f)).build();
-    MediumPtr glass = Medium::create(1.5f);
     MaterialPtr transparent =
         Material::builder().add(perfectRefraction(0.95f, glass)).build();
 
@@ -89,15 +97,16 @@ int main(int argc, char** argv) {
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
         // Cornell box content
-        sphere(mirror, Vec4(1.0f, 0.5f, -1.0f, 1.0f), 0.75f),
-        sphere(transparent, Vec4(0.5f, -0.5f, 1.0f, 1.0f), 0.75f)
+        teapot
+        // sphere(mirror, Vec4(1.0f, 0.5f, -1.0f, 1.0f), 0.75f),
+        // sphere(transparent, Vec4(0.5f, -0.5f, 1.0f, 1.0f), 0.75f)
     };
 
     FigurePtr rootNode = FigurePtr(new Figures::BVNode(sceneElements));
     Scene scene(rootNode, RGBColor::Black, maxLight);
 
     // Add points lights to the scene
-    scene.light(Vec4(0.0f, 1.5f, 0.0f, 1.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(0.0f, 0.0f, 0.0f, 1.0f), RGBColor::White * maxLight);
 
 #undef plane
 #undef sphere
@@ -113,7 +122,7 @@ int main(int argc, char** argv) {
 
     PhotonKdTree tree = emitter.getPhotonTree();
 
-    RayTracerPtr mapper = RayTracerPtr(new PhotonMapper(16, film, 150, tree));
+    RayTracerPtr mapper = RayTracerPtr(new PhotonMapper(4, film, 300, tree));
     Camera camera(film, mapper);
     camera.tracePixels(scene);
     camera.storeResult("out/map.ppm");

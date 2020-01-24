@@ -1,5 +1,8 @@
 #include "photonemitter.h"
 
+// Debug settings
+#define DEBUG_ONE_CORE  // don't use multithreading
+
 void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
     // Ignore first ray
     RayHit hit;
@@ -37,20 +40,80 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
     }
 }
 
+void PhotonEmitter::traceRays(
+    const int totalPhotons, const RGBColor &emission,
+    const std::function<Vec4()> &fOrigin,
+    const std::function<Vec4(const Vec4 &)> &fDirection,
+    const MediumPtr &medium, const Scene &scene) {
+    // Spawn one core per thread and make them consume work as they finish
+    volatile std::atomic<int> photonsEmitted(0);
+#ifdef DEBUG_ONE_CORE
+    int cores = 1;  // only one core, for debug purposes
+#else
+    int cores = std::thread::hardware_concurrency();  // max no. of threads
+#endif
+    std::vector<std::future<void>> threadFutures;  // waits for them to finish
+    for (int core = 0; core < cores; core++) {
+        threadFutures.emplace_back(std::async([&]() {
+            while (true) {
+                // Get next job ID (or stop if there aren't any)
+                int currentRay = photonsEmitted++;
+                if (currentRay >= totalPhotons) {
+                    break;
+                }
+                Vec4 origin = fOrigin();
+                Vec4 direction = fDirection(origin);
+                // Generate photons for the point light
+                traceRay(Ray(origin, direction, medium), scene, emission);
+            }
+        }));
+    }
+
+    bool finished = false;
+    auto beginTime = std::chrono::system_clock::now().time_since_epoch();
+    printProgress(beginTime, 0.0f);
+    while (!finished) {
+        printProgress(beginTime, photonsEmitted / (float)totalPhotons);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        for (auto &future : threadFutures) {
+            if (future.wait_for(std::chrono::seconds(0)) ==
+                std::future_status::ready) {
+                finished = true;
+                printProgress(beginTime, 1.0f);
+                break;
+            }
+        }
+    }
+    std::cout << std::endl; // space for more progress bars
+}
+
 void PhotonEmitter::emitPointLight(const Scene &scene,
                                    const PointLight &light) {
-    // Brighter lights emit more photons, but all should be of same energy
-    int numPhotons = light.emission.max() * (1.0f / lpp);
-    RGBColor emission = light.emission * (lpp / numPhotons);
-    for (int i = 0; i < numPhotons; i++) {
+    int totalPhotons = light.emission.max() * (1.0f / lpp);
+    RGBColor emission = light.emission * (lpp / totalPhotons);
+    const auto fOrigin = [&light]() { return light.point; };
+    const auto fDirection = [](const Vec4 &point) {
         // Inclination & azimuth for uniform cosine sampling
         float incl = acosf(1.0f - 2.0f * random01());
         float azim = 2.0f * M_PI * random01();
-        Vec4 direction = Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
-                              cosf(incl), 0.0f);
-        // Generate photons for the point light
-        traceRay(Ray(light.point, direction, light.medium), scene, emission);
-    }
+        return Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
+                    cosf(incl), 0.0f);
+    };
+    traceRays(totalPhotons, emission, fOrigin, fDirection, light.medium, scene);
+}
+
+void PhotonEmitter::emitAreaLight(const Scene &scene, const FigurePtr &figure,
+                                  const RGBColor &emission,
+                                  const MediumPtr &medium) {
+    float area = figure->getTotalArea();
+    int totalPhotons = emission.max() * (area / lpp);
+    RGBColor photonEmission = emission * (lpp / totalPhotons);
+    const auto fOrigin = [&figure]() { return figure->randomPoint(); };
+    const auto fDirection = [&figure](const Vec4 &point) {
+        return figure->randomDirection(point);
+    };
+    traceRays(totalPhotons, photonEmission, fOrigin, fDirection, medium, scene);
 }
 
 PPMImage PhotonEmitter::debugPhotonsImage(const Film &film) {
