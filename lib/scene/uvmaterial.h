@@ -45,7 +45,7 @@ class UVMaterialBuilder {
     UVMaterialBuilder addPhongSpecular(const float ks, const float alpha);
     UVMaterialBuilder addPerfectSpecular(const float ksp);
     UVMaterialBuilder addPerfectRefraction(const float krp,
-                                           const float mediumRefractiveIndex);
+                                           const MediumPtr medium);
     // UV mapped for the model
     UVMaterialBuilder addPhongDiffuse(const char *diffuseFilename);
     UVMaterialBuilder addPhongSpecular(const char *specularFilename,

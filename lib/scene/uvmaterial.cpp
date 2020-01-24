@@ -50,8 +50,7 @@ UVMaterialBuilder UVMaterialBuilder::addPerfectSpecular(const float ksp) {
 }
 
 UVMaterialBuilder UVMaterialBuilder::addPerfectRefraction(
-    const float krp, const float mediumRefractiveIndex) {
-    MediumPtr medium = Medium::create(mediumRefractiveIndex);
+    const float krp, const MediumPtr medium) {
     addEvent(EventPtr(new PerfectRefraction(krp, medium)));
     return *this;
 }
