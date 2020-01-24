@@ -14,9 +14,11 @@ class PhotonEmitter {
     const float CUT_PCT = 0.1f;
     // Luminance per photon
     const float lpp;
-    PhotonKdTreeBuilder photons;
+    PhotonKdTreeBuilder photons, caustics;
 
-    void traceRay(Ray ray, const Scene& scene, RGBColor flux);
+    void savePhoton(const Photon &photon, const bool isCaustic);
+    void traceRay(Ray ray, const Scene& scene, RGBColor flux,
+                  const bool isCaustic = false);
     void traceRays(const int totalPhotons, const RGBColor& emission,
                    const std::function<Vec4()>& funOrigin,
                    const std::function<Vec4(const Vec4&)>& funDirection,
@@ -29,7 +31,8 @@ class PhotonEmitter {
     void emitAreaLight(const Scene& scene, const FigurePtr& light,
                        const RGBColor& emission, const MediumPtr& medium);
 
-    PhotonKdTree getPhotonTree() { return photons.build(); }
+    PhotonKdTree getPhotonsTree() { return photons.build(); }
+    PhotonKdTree getCausticsTree() { return caustics.build(); }
 
     PPMImage debugPhotonsImage(const Film& film);
 };

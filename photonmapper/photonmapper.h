@@ -5,8 +5,8 @@
 #include "photonkdtree.h"
 
 class PhotonMapper : public RayTracer {
-    const int ppp, kNeighbours;
-    const PhotonKdTree photons;
+    const int ppp, kNeighbours, kcNeighbours;
+    const PhotonKdTree photons, caustics;
     PPMImage render;
 
     // Trace the path followed by the cameraRay (multiple hits etc)
@@ -14,11 +14,14 @@ class PhotonMapper : public RayTracer {
 
    public:
     PhotonMapper(int _ppp, const Film &film, int _kNeighbours,
-                 const PhotonKdTree &_photons)
+                 int _kcNeighbours, const PhotonKdTree &_photons,
+                 const PhotonKdTree &_caustics)
         : ppp(_ppp),
+          kcNeighbours(_kcNeighbours),
           kNeighbours(_kNeighbours),
           render(film.width, film.height, std::numeric_limits<int>::max()),
-          photons(_photons) {}
+          photons(_photons),
+          caustics(_caustics) {}
 
     void tracePixel(const int px, const int py, const Film &film,
                     const Scene &scene) override;

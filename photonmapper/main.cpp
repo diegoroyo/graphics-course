@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
         Mat4::rotationZ(M_PI_2) * Mat4::scale(0.4f, 0.4f, 0.4f));
     FigurePtr teapot = teapotModel.getFigure(3);
 
-    float maxLight = 50000.0f;
+    float maxLight = 200000.0f;
 
     MaterialPtr whiteDiffuse =
         Material::builder().add(phongDiffuse(RGBColor::White * 0.95f)).build();
@@ -120,9 +120,11 @@ int main(int argc, char** argv) {
         emitter.emitPointLight(scene, light);
     }
 
-    PhotonKdTree tree = emitter.getPhotonTree();
+    PhotonKdTree photons = emitter.getPhotonsTree();
+    PhotonKdTree caustics = emitter.getCausticsTree();
 
-    RayTracerPtr mapper = RayTracerPtr(new PhotonMapper(4, film, 300, tree));
+    RayTracerPtr mapper =
+        RayTracerPtr(new PhotonMapper(8, film, 100, 50, photons, caustics));
     Camera camera(film, mapper);
     camera.tracePixels(scene);
     camera.storeResult("out/map.ppm");

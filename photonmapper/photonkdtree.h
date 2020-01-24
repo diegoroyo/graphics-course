@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iterator>
 #include <memory>
+#include <mutex>
 #include "math/geometry.h"
 #include "scene/light.h"
 
@@ -69,9 +70,11 @@ class PhotonKdTreeBuilder {
 
     PhotonKdTreeBuilder() : photons() {}
 
-    PhotonKdTreeBuilder add(const Photon &photon) {
+    void add(const Photon &photon) {
+        static std::mutex mutex;
+        mutex.lock();
         photons.push_back(photon);
-        return *this;
+        mutex.unlock();
     }
 
     // clears photons vector and returns new vector

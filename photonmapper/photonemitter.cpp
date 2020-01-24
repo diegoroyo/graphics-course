@@ -1,9 +1,18 @@
 #include "photonemitter.h"
 
 // Debug settings
-#define DEBUG_ONE_CORE  // don't use multithreading
+// #define DEBUG_ONE_CORE  // don't use multithreading
 
-void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
+void PhotonEmitter::savePhoton(const Photon &photon, const bool isCaustic) {
+    if (isCaustic) {
+        this->caustics.add(photon);
+    } else {
+        this->photons.add(photon);
+    }
+}
+
+void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux,
+                             const bool isCaustic) {
     // Ignore first ray
     RayHit hit;
     if (!scene.intersection(ray, hit)) {
@@ -20,18 +29,18 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
     while (scene.intersection(ray, hit) && flux.max() > lpp * CUT_PCT) {
         if (hit.material->emitsLight) {
             // Save INCOMING flux and ignore light
-            photons.add(Photon(hit.point, ray.direction, flux));
+            this->savePhoton(Photon(hit.point, ray.direction, flux), isCaustic);
             return;
         }
         // Select event for next photon
         event = hit.material->selectEvent();
         // Save INCOMING flux to the point
         if (event == nullptr || !event->nextRay(ray, hit, nextRay)) {
-            photons.add(Photon(hit.point, ray.direction, flux));
+            this->savePhoton(Photon(hit.point, ray.direction, flux), isCaustic);
             return;
         }
         if (!event->isDelta) {
-            photons.add(Photon(hit.point, ray.direction, flux));
+            this->savePhoton(Photon(hit.point, ray.direction, flux), isCaustic);
         }
         // Apply event and modify flux and ray
         flux =
@@ -85,7 +94,7 @@ void PhotonEmitter::traceRays(
             }
         }
     }
-    std::cout << std::endl; // space for more progress bars
+    std::cout << std::endl;  // space for more progress bars
 }
 
 void PhotonEmitter::emitPointLight(const Scene &scene,
