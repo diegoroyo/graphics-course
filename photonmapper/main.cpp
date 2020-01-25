@@ -1,5 +1,6 @@
 #include "camera/camera.h"
 #include "camera/film.h"
+#include "filter.h"
 #include "math/geometry.h"
 #include "photonemitter.h"
 #include "photonmapper.h"
@@ -71,7 +72,8 @@ int main(int argc, char** argv) {
         Mat4::rotationZ(M_PI_2) * Mat4::scale(0.4f, 0.4f, 0.4f));
     FigurePtr teapot = teapotModel.getFigure(3);
 
-    float maxLight = 200000.0f;
+    // TODO comprobar por que falla con valores maxLight < 100.0f o lpp < 1.0f
+    float maxLight = 100000.0f;
 
     MaterialPtr whiteDiffuse =
         Material::builder().add(phongDiffuse(RGBColor::White * 0.95f)).build();
@@ -98,8 +100,8 @@ int main(int argc, char** argv) {
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
         // Cornell box content
         teapot
-        // sphere(mirror, Vec4(1.0f, 0.5f, -1.0f, 1.0f), 0.75f),
-        // sphere(transparent, Vec4(0.5f, -0.5f, 1.0f, 1.0f), 0.75f)
+        // sphere(mirror, Vec4(1.0f, -1.25f, -1.0f, 1.0f), 0.75f),
+        // sphere(transparent, Vec4(0.5f, -1.25f, 1.0f, 1.0f), 0.75f)
     };
 
     FigurePtr rootNode = FigurePtr(new Figures::BVNode(sceneElements));
@@ -120,11 +122,16 @@ int main(int argc, char** argv) {
         emitter.emitPointLight(scene, light);
     }
 
+    // Generate debug image
+    // PPMImage debug = emitter.debugPhotonsImage(film);
+    // debug.writeFile("out/map.ppm");
+
     PhotonKdTree photons = emitter.getPhotonsTree();
     PhotonKdTree caustics = emitter.getCausticsTree();
 
-    RayTracerPtr mapper =
-        RayTracerPtr(new PhotonMapper(8, film, 100, 50, photons, caustics));
+    FilterPtr filter = FilterPtr(new ConeFilter());
+    RayTracerPtr mapper = RayTracerPtr(
+        new PhotonMapper(32, film, 400, 50, photons, caustics, filter));
     Camera camera(film, mapper);
     camera.tracePixels(scene);
     camera.storeResult("out/map.ppm");

@@ -11,8 +11,7 @@ void PhotonEmitter::savePhoton(const Photon &photon, const bool isCaustic) {
     }
 }
 
-void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux,
-                             const bool isCaustic) {
+void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
     // Ignore first ray
     RayHit hit;
     if (!scene.intersection(ray, hit)) {
@@ -26,26 +25,31 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux,
 
     // Start storing photons on the second ray
     Ray nextRay;
+    bool wasLastCaustic = false;
     while (scene.intersection(ray, hit) && flux.max() > lpp * CUT_PCT) {
         if (hit.material->emitsLight) {
             // Save INCOMING flux and ignore light
-            this->savePhoton(Photon(hit.point, ray.direction, flux), isCaustic);
+            this->savePhoton(Photon(hit.point, ray.direction, flux),
+                             wasLastCaustic);
             return;
         }
         // Select event for next photon
         event = hit.material->selectEvent();
         // Save INCOMING flux to the point
         if (event == nullptr || !event->nextRay(ray, hit, nextRay)) {
-            this->savePhoton(Photon(hit.point, ray.direction, flux), isCaustic);
+            this->savePhoton(Photon(hit.point, ray.direction, flux),
+                             wasLastCaustic);
             return;
         }
         if (!event->isDelta) {
-            this->savePhoton(Photon(hit.point, ray.direction, flux), isCaustic);
+            this->savePhoton(Photon(hit.point, ray.direction, flux),
+                             wasLastCaustic);
         }
         // Apply event and modify flux and ray
         flux =
             event->applyMonteCarlo(flux, hit, ray.direction, nextRay.direction);
         ray = nextRay;
+        wasLastCaustic = event->isDelta;
     }
 }
 
@@ -125,26 +129,20 @@ void PhotonEmitter::emitAreaLight(const Scene &scene, const FigurePtr &figure,
     traceRays(totalPhotons, photonEmission, fOrigin, fDirection, medium, scene);
 }
 
-PPMImage PhotonEmitter::debugPhotonsImage(const Film &film) {
-    // Black image
-    PPMImage image(film.width, film.height, std::numeric_limits<int>::max());
-    image.fillPixels(RGBColor::Black);
+/// Debug image ///
 
-    // Film plane
-    FigurePtr plane = FigurePtr(new Figures::FlatPlane(
-        film.forward.normalize(),
-        film.forward.module() +
-            (film.origin.module() *
-             dot(film.origin.normalize(), film.forward.normalize())),
-        Material::none()));
-
+void debugPhotons(const PhotonKdTreeBuilder &tree, const Film &film,
+                  const FigurePtr &filmPlane, RGBColor color, PPMImage &image) {
     // Intersect photon origin -> film origin with plane
-    for (const Photon &photon : photons.photons) {
-        Ray ray(photon.point, film.origin - photon.point, Medium::air);
+    for (const Photon &photon : tree.photons) {
+        Ray ray(photon.point, (film.origin - photon.point).normalize(),
+                Medium::air);
         RayHit hit;
-        Vec4 uvOrigin = film.getPixelCenter(0, 0);
-        Vec4 uvX = film.right, uvY = film.up;
-        if (plane->intersection(ray, hit)) {
+        // Map filmPlane's coordinates (0.0-1.0 for XY axis)
+        Vec4 uvOrigin = film.origin + film.getPixelCenter(0, 0);
+        // Up vector should be upside down
+        Vec4 uvX = film.right * 2.0f, uvY = film.up * -2.0f;
+        if (filmPlane->intersection(ray, hit)) {
             Vec4 d = hit.point - uvOrigin;
             // Get UV coordinates (check intersected pixel)
             float uvx = dot(d, uvX.normalize()) / uvX.module();
@@ -154,12 +152,30 @@ PPMImage PhotonEmitter::debugPhotonsImage(const Film &film) {
                 int pixelX = std::min(film.width - 1, (int)(uvx * film.width));
                 int pixelY =
                     std::min(film.height - 1, (int)(uvy * film.height));
-                RGBColor color = image.getPixel(pixelX, pixelY);
+                RGBColor pixelColor = image.getPixel(pixelX, pixelY);
+                // color = photon.flux; // override color
                 // Add flux to pixel color
-                image.setPixel(pixelX, pixelY, color + photon.flux);
+                image.setPixel(pixelX, pixelY, pixelColor + color);
             }
         }
     }
+}
+
+PPMImage PhotonEmitter::debugPhotonsImage(const Film &film) {
+    // Black image
+    PPMImage image(film.width, film.height, std::numeric_limits<int>::max());
+    image.fillPixels(RGBColor::Black);
+
+    // Film plane
+    FigurePtr filmPlane = FigurePtr(new Figures::FlatPlane(
+        film.forward.normalize(),
+        film.forward.module() +
+            (film.origin.module() *
+             dot(film.origin.normalize(), film.forward.normalize())),
+        Material::none()));
+
+    // debugPhotons(photons, film, filmPlane, RGBColor::Cyan, image);
+    debugPhotons(caustics, film, filmPlane, RGBColor::White, image);
 
     image.setMax(image.calculateMax());
     return image;

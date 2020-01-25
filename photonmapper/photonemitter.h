@@ -17,8 +17,7 @@ class PhotonEmitter {
     PhotonKdTreeBuilder photons, caustics;
 
     void savePhoton(const Photon &photon, const bool isCaustic);
-    void traceRay(Ray ray, const Scene& scene, RGBColor flux,
-                  const bool isCaustic = false);
+    void traceRay(Ray ray, const Scene& scene, RGBColor flux);
     void traceRays(const int totalPhotons, const RGBColor& emission,
                    const std::function<Vec4()>& funOrigin,
                    const std::function<Vec4(const Vec4&)>& funDirection,
