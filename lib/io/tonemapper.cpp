@@ -9,8 +9,8 @@ float ToneMapper::FClampGamma::map(float in) const {
         // clamp
         return 1.0f;
     } else {
-        // equalize and put in gamma curve (x^gamma)
-        return std::pow(in / max, gamma);
+        // equalize and put in gamma curve (x^(1/gamma))
+        return std::pow(in / max, 1.0f / gamma);
     }
 }
 
