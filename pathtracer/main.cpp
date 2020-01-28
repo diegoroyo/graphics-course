@@ -4,7 +4,7 @@
 // Scene 2: (final) Diamond ore wall (UVMaterial test)
 // Scene 3: (don't change) Portal scene
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 4
+#define SCENE_NUMBER 1
 #endif
 
 #include <iostream>
@@ -128,20 +128,20 @@ int main(int argc, char **argv) {
     // load & transform spaceship model, get scene kdtree node
     UVMaterialPtr cyanUvTexture =
         UVMaterial::builder(1, 1)
-            .addPhongDiffuse(RGBColor(0.1f, 0.6f, 0.6f))
-            .addPhongSpecular(0.35f, 75.0f)
+            .addPhongDiffuse(RGBColor(0.1f, 0.45f, 0.45f))
+            .addPhongSpecular(0.3f, 75.0f)
             .build();
     UVMaterialPtr magentaUvTexture =
         UVMaterial::builder(1, 1)
-            .addPhongDiffuse(RGBColor(0.6f, 0.1f, 0.6f))
-            .addPhongSpecular(0.35f, 5.0f)
+            .addPhongDiffuse(RGBColor(0.45f, 0.1f, 0.45f))
+            .addPhongSpecular(0.3f, 5.0f)
             .build();
     UVMaterialPtr yellowUvTexture =
         UVMaterial::builder(1, 1)
-            .addPhongDiffuse(RGBColor(0.6f, 0.6f, 0.1f))
-            .addPhongSpecular(0.35f, 1000.0f)
+            .addPhongDiffuse(RGBColor(0.45f, 0.45f, 0.1f))
+            .addPhongSpecular(0.3f, 1000.0f)
             .build();
-    PLYModel cyanBunnyModel("ply/bunny_low.ply", cyanUvTexture);
+    PLYModel cyanBunnyModel("ply/bunny.ply", cyanUvTexture);
     cyanBunnyModel.transform(
         Mat4::translation(0.8f, -2.0f, 0.0f) * Mat4::rotationY(M_PI_2 * -1.0f) *
         Mat4::rotationX(M_PI_2 * -1.0f) * Mat4::scale(2.0f, 2.0f, 2.0f));
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
     yellowBunnyModel.transform(Mat4::translation(1.0f, 0.5f, 2.0f) *
                                Mat4::rotationZ(M_PI) * Mat4::rotationY(M_PI) *
                                Mat4::scale(1.5f, 1.5f, 1.5f));
-    FigurePtr cyanBunny = cyanBunnyModel.getFigure(5);
+    FigurePtr cyanBunny = cyanBunnyModel.getFigure(6);
     FigurePtr magentaBunny = magentaBunnyModel.getFigure(4);
     FigurePtr yellowBunny = yellowBunnyModel.getFigure(3);
 #elif SCENE_NUMBER == 4
@@ -216,15 +216,15 @@ int main(int argc, char **argv) {
     MaterialPtr pureBlack = Material::none();
 #elif SCENE_NUMBER == 1
     MaterialPtr whitePhong = Material::builder()
-                                 .add(phongDiffuse(RGBColor::White * 0.50f))
+                                 .add(phongDiffuse(RGBColor::White * 0.40f))
                                  .add(phongSpecular(0.3f, 3.0f))
                                  .build();
     MaterialPtr greenPhong = Material::builder()
-                                 .add(phongDiffuse(RGBColor(0.1f, 0.50f, 0.1f)))
+                                 .add(phongDiffuse(RGBColor(0.1f, 0.40f, 0.1f)))
                                  .add(phongSpecular(0.3f, 3.0f))
                                  .build();
     MaterialPtr redPhong = Material::builder()
-                               .add(phongDiffuse(RGBColor(0.50f, 0.1f, 0.1f)))
+                               .add(phongDiffuse(RGBColor(0.40f, 0.1f, 0.1f)))
                                .add(phongSpecular(0.3f, 3.0f))
                                .build();
 #elif SCENE_NUMBER == 4
@@ -411,10 +411,12 @@ int main(int argc, char **argv) {
 
     // Add points lights to the scene
 
-#if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
+#if SCENE_NUMBER == 0
     scene.light(Vec4(1.0f, 1.7f, 0.0f, 1.0f), RGBColor::White * maxLight);
     scene.light(Vec4(0.0f, 1.7f, 1.0f, 1.0f), RGBColor::White * maxLight);
     scene.light(Vec4(0.0f, 1.7f, -1.0f, 1.0f), RGBColor::White * maxLight);
+#elif SCENE_NUMBER == 1
+    scene.light(Vec4(0.0f, 1.7f, 0.0f, 1.0f), RGBColor::White * maxLight);
 #elif SCENE_NUMBER == 2
     scene.light(Vec4(0.0f, 1.4f, -1.0f, 1.0f), RGBColor::White * maxLight);
     scene.light(Vec4(0.0f, 1.4f, 1.0f, 1.0f), RGBColor::White * maxLight);
