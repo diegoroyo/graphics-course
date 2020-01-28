@@ -4,7 +4,7 @@
 // Scene 2: (final) Diamond ore wall (UVMaterial test)
 // Scene 3: (don't change) Portal scene
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 0
+#define SCENE_NUMBER 4
 #endif
 
 #include <iostream>
@@ -99,6 +99,9 @@ int main(int argc, char **argv) {
 #elif SCENE_NUMBER == 3
     Vec4 origin(-2.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 2.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 2.0f, 0.0f);
+#elif SCENE_NUMBER == 4
+    Vec4 origin(-6.5f, 0.0f, 0.0f, 1.0f), forward(4.0f, 0.0f, 0.0f, 0.0f),
+        up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #endif
 
     Film film(width, height, origin, forward, up);
@@ -151,6 +154,23 @@ int main(int argc, char **argv) {
     FigurePtr cyanBunny = cyanBunnyModel.getFigure(5);
     FigurePtr magentaBunny = magentaBunnyModel.getFigure(4);
     FigurePtr yellowBunny = yellowBunnyModel.getFigure(3);
+#elif SCENE_NUMBER == 4
+    UVMaterialPtr spaceshipTexture =
+        UVMaterial::builder(512, 512)
+            .addPerfectSpecular("ply/spaceship_v2_specular.ppm")
+            .addPhongDiffuse("ply/spaceship_v2_diffuse.ppm")
+            .build();
+    PLYModel spaceshipModel("ply/spaceship.ply", spaceshipTexture);
+    spaceshipModel.transform(Mat4::translation(3.5f, -0.7f, -0.5f) *
+                             Mat4::rotationZ(M_PI_4 * -3.2f) *
+                             Mat4::scale(2.0f, 2.0f, 2.0f));
+    PLYModel spaceshipModel2("ply/spaceship.ply", spaceshipTexture);
+    spaceshipModel2.transform(Mat4::translation(7.0f, 1.5f, 1.25f) *
+                             Mat4::rotationY(M_PI_4 * -0.6f) *
+                             Mat4::rotationZ(M_PI_4 * -1.75f) *
+                             Mat4::scale(2.0f, 2.0f, 2.0f));
+    FigurePtr spaceship = spaceshipModel.getFigure(4);
+    FigurePtr spaceship2 = spaceshipModel2.getFigure(4);
 #endif
 
     float maxLight = 10000.0f;
@@ -170,11 +190,10 @@ int main(int argc, char **argv) {
                                .add(phongDiffuse(RGBColor(0.5f, 0.1f, 0.1f)))
                                .add(phongSpecular(0.3f, 3.0f))
                                .build();
-    MaterialPtr bluePhong =
-        Material::builder()
-            .add(phongSpecular(0.5f, 1.0f))
-            .add(phongDiffuse(RGBColor(0.05f, 0.05f, 0.4f)))
-            .build();
+    MaterialPtr bluePhong = Material::builder()
+                                .add(phongSpecular(0.5f, 1.0f))
+                                .add(phongDiffuse(RGBColor(0.05f, 0.05f, 0.4f)))
+                                .build();
     MaterialPtr magentaPhong =
         Material::builder()
             .add(phongSpecular(0.5f, 10.0f))
@@ -185,11 +204,10 @@ int main(int argc, char **argv) {
             .add(phongSpecular(0.5f, 100.0f))
             .add(phongDiffuse(RGBColor(0.4f, 0.4f, 0.05f)))
             .build();
-    MaterialPtr cyanPhong =
-        Material::builder()
-            .add(phongSpecular(0.5f, 1000.0f))
-            .add(phongDiffuse(RGBColor(0.05f, 0.4f, 0.4f)))
-            .build();
+    MaterialPtr cyanPhong = Material::builder()
+                                .add(phongSpecular(0.5f, 1000.0f))
+                                .add(phongDiffuse(RGBColor(0.05f, 0.4f, 0.4f)))
+                                .build();
     MediumPtr glass = Medium::create(1.5f);
     MaterialPtr transparent =
         Material::builder().add(perfectRefraction(0.97f, glass)).build();
@@ -209,6 +227,14 @@ int main(int argc, char **argv) {
                                .add(phongDiffuse(RGBColor(0.50f, 0.1f, 0.1f)))
                                .add(phongSpecular(0.3f, 3.0f))
                                .build();
+#elif SCENE_NUMBER == 4
+    MaterialPtr base = Material::builder()
+                                 .add(phongDiffuse(RGBColor::White * 0.9f))
+                                 .build();
+    MaterialPtr planet = Material::builder()
+                        .add(phongDiffuse(RGBColor(0.1f, 0.3f, 0.3f)))
+                        .add(phongSpecular(0.6f, 100.0f))
+                        .build();
 #endif
 #if SCENE_NUMBER == 2
     UVMaterialPtr diamondTexture =
@@ -364,6 +390,11 @@ int main(int argc, char **argv) {
         sphere(mirror, Vec4(1.0f, 0.0f, 0.0f, 1.0f), 1.0f),
         sphere(mirror, Vec4(0.5f, 0.0f, 2.0f, 1.0f), 0.5f),
         sphere(mirror, Vec4(0.5f, 0.0f, -2.0f, 1.0f), 0.5f)
+#elif SCENE_NUMBER == 4
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, base),
+        sphere(planet, Vec4(-1.0f, 1.8f, -1.3f, 0.0f), 1.25f),
+        spaceship,
+        spaceship2
 #endif
     };
 
@@ -376,7 +407,7 @@ int main(int argc, char **argv) {
 
     FigurePtr rootNode = FigurePtr(new Figures::BVNode(sceneElements));
 
-    Scene scene(rootNode, RGBColor::Black, maxLight);
+    Scene scene(rootNode, RGBColor::White * 0.01f * maxLight, maxLight);
 
     // Add points lights to the scene
 
@@ -394,6 +425,10 @@ int main(int argc, char **argv) {
     //             RGBColor(maxLight, maxLight, maxLight));
     scene.light(Vec4(1.0f, 1.4f, 0.0f, 1.0f),
                 RGBColor(maxLight, maxLight, maxLight));
+#elif SCENE_NUMBER == 4
+    scene.light(Vec4(1.0f, 4.0f, 0.0f, 1.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(0.0f, 4.0f, 1.0f, 1.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(0.0f, 4.0f, -1.0f, 1.0f), RGBColor::White * maxLight);
 #endif
 
 #undef plane
