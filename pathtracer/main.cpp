@@ -3,8 +3,9 @@
 // Scene 1: (final) Cornell box with PLY bunnies
 // Scene 2: (final) Diamond ore wall (UVMaterial test)
 // Scene 3: (don't change) Portal scene
+// Scene 4: (final) Spaceships (UVMaterial test 2)
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 1
+#define SCENE_NUMBER 4
 #endif
 
 #include <iostream>
@@ -161,13 +162,16 @@ int main(int argc, char **argv) {
             .addPhongDiffuse("ply/spaceship_v2_diffuse.ppm")
             .build();
     PLYModel spaceshipModel("ply/spaceship.ply", spaceshipTexture);
-    spaceshipModel.transform(Mat4::translation(3.5f, -0.7f, -0.5f) *
-                             Mat4::rotationZ(M_PI_4 * -3.2f) *
+    spaceshipModel.transform(Mat4::translation(3.5f, -0.6f, -0.5f) *
+                             Mat4::rotationX(-0.07f) *
+                             Mat4::rotationY(M_PI_4 * 0.22f) *
+                             Mat4::rotationZ(M_PI_4 * -2.9f) *
                              Mat4::scale(2.0f, 2.0f, 2.0f));
     PLYModel spaceshipModel2("ply/spaceship.ply", spaceshipTexture);
     spaceshipModel2.transform(Mat4::translation(7.0f, 1.5f, 1.25f) *
-                             Mat4::rotationY(M_PI_4 * -0.6f) *
-                             Mat4::rotationZ(M_PI_4 * -1.75f) *
+                             Mat4::rotationX(0.05f) *
+                             Mat4::rotationY(M_PI_4 * 0.25f) *
+                             Mat4::rotationZ(M_PI_4 * -1.8f) *
                              Mat4::scale(2.0f, 2.0f, 2.0f));
     FigurePtr spaceship = spaceshipModel.getFigure(4);
     FigurePtr spaceship2 = spaceshipModel2.getFigure(4);
@@ -429,8 +433,6 @@ int main(int argc, char **argv) {
                 RGBColor(maxLight, maxLight, maxLight));
 #elif SCENE_NUMBER == 4
     scene.light(Vec4(1.0f, 4.0f, 0.0f, 1.0f), RGBColor::White * maxLight);
-    scene.light(Vec4(0.0f, 4.0f, 1.0f, 1.0f), RGBColor::White * maxLight);
-    scene.light(Vec4(0.0f, 4.0f, -1.0f, 1.0f), RGBColor::White * maxLight);
 #endif
 
 #undef plane
