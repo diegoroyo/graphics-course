@@ -17,13 +17,10 @@
 class Camera {
     const Film film;
     const RayTracerPtr rayTracer;
-    const float dofRadius;  // 0.0f makes a pinhole camera,
-                            // >0.0f defines a hole of given radius
 
    public:
-    Camera(const Film &_film, const RayTracerPtr &_rayTracer,
-           const float _dofRadius = 0.0f)
-        : film(_film), rayTracer(_rayTracer), dofRadius(_dofRadius) {}
+    Camera(const Film &_film, const RayTracerPtr &_rayTracer)
+        : film(_film), rayTracer(_rayTracer) {}
 
     // Trace ppp rays from all the pixels of the film
     void tracePixels(const Scene &scene) const;

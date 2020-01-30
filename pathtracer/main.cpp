@@ -2,10 +2,11 @@
 // Scene 0: (final) Cornell box with basic event tests
 // Scene 1: (final) Cornell box with PLY bunnies
 // Scene 2: (final) Diamond ore wall (UVMaterial test)
-// Scene 3: (don't change) Portal scene
+// Scene 3: (final) Portal scene 1
 // Scene 4: (final) Spaceships (UVMaterial test 2)
+// Scene 5: (final) Portal loop
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 4
+#define SCENE_NUMBER 5
 #endif
 
 #include <iostream>
@@ -98,15 +99,18 @@ int main(int argc, char **argv) {
     Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #elif SCENE_NUMBER == 3
-    Vec4 origin(-2.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
-        up(0.0f, 2.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 2.0f, 0.0f);
+    Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(1.5f, 0.0f, 0.0f, 0.0f),
+        up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #elif SCENE_NUMBER == 4
     Vec4 origin(-6.5f, 0.0f, 0.0f, 1.0f), forward(4.0f, 0.0f, 0.0f, 0.0f),
+        up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
+#elif SCENE_NUMBER == 5
+    Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.25f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #endif
 
     Film film(width, height, origin, forward, up);
-    // film.setDepthOfField(0.015f);
+    film.setDoFRadius(0.015f);
     RayTracerPtr pathTracer = RayTracerPtr(new PathTracer(ppp, film));
     Camera camera(film, pathTracer);
 
@@ -177,7 +181,8 @@ int main(int argc, char **argv) {
 
     float maxLight = 10000.0f;
 
-#if SCENE_NUMBER == 0 || SCENE_NUMBER == 2
+#if SCENE_NUMBER == 0 || SCENE_NUMBER == 2 || SCENE_NUMBER == 3 || \
+    SCENE_NUMBER == 5
     MaterialPtr whiteLight =
         Material::light(RGBColor(maxLight, maxLight, maxLight));
     MaterialPtr whitePhong = Material::builder()
@@ -261,39 +266,19 @@ int main(int argc, char **argv) {
             .build();
     lavaTexture->overrideLights("ply/lava_emission.ppm", maxLight);
 #elif SCENE_NUMBER == 3
-
-    MaterialPtr whiteLight =
-        Material::light(RGBColor(maxLight, maxLight, maxLight));
-    MaterialPtr whiteDiffuse =
-        Material::builder().add(phongDiffuse(RGBColor::White * 0.9f)).build();
-    MaterialPtr greenDiffuse =
-        Material::builder()
-            .add(phongDiffuse(RGBColor(0.1f, 0.9f, 0.1f)))
-            .build();
-    MaterialPtr redDiffuse = Material::builder()
-                                 .add(phongDiffuse(RGBColor(0.9f, 0.1f, 0.1f)))
+    MaterialPtr yellowWall = Material::builder()
+                                 .add(phongSpecular(0.3f, 3.0f))
+                                 .add(phongDiffuse(RGBColor(0.5f, 0.5f, 0.1f)))
                                  .build();
+    MaterialPtr cyanWall = Material::builder()
+                               .add(phongSpecular(0.3f, 3.0f))
+                               .add(phongDiffuse(RGBColor(0.1f, 0.5f, 0.5f)))
+                               .build();
 
-    // TODO remove
-    MaterialPtr yellow = Material::builder()
-                             .add(phongDiffuse(RGBColor(0.9f, 0.9f, 0.1f)))
-                             .build();
-    MaterialPtr purple = Material::builder()
-                             .add(phongDiffuse(RGBColor(0.9f, 0.1f, 0.9f)))
-                             .build();
-
-    MediumPtr glass = Medium::create(1.5f);
-    MaterialPtr transparent =
-        Material::builder().add(perfectRefraction(0.9f, glass)).build();
-    MaterialPtr mirror = Material::builder()
-                             .add(phongSpecular(0.3f, 3.0f))
-                             .add(perfectSpecular(0.6f))
-                             .build();
-
-    FigurePortalPtr bluePortal = FigurePortalPtr(new Figures::TexturedPlane(
-        Vec4(0.0f, 0.0f, -1.0f, 0.0f), -1.99f, false));
+    FigurePortalPtr bluePortal = FigurePortalPtr(
+        new Figures::TexturedPlane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 1.99f, false));
     FigurePortalPtr orangePortal = FigurePortalPtr(new Figures::TexturedPlane(
-        Vec4(0.0f, 0.0f, 1.0f, 0.0f), -1.99f, false));
+        Vec4(0.0f, 1.0f, 0.0f, 0.0f), -1.99f, false));
 
     UVMaterialPtr bluePortalTexture =
         UVMaterial::builder(512, 512)
@@ -312,12 +297,41 @@ int main(int argc, char **argv) {
                                         maxLight, 0.3f);
     orangePortalTexture->override("ply/portal_any_mask2.ppm", nullptr);
 
-    bluePortal->setUVMaterial(bluePortalTexture, Vec4(1.5f, -2.0f, 1.99f, 1.0f),
-                              Vec4(-2.0f, 0.0f, 0.0f, 0.0f),
-                              Vec4(0.0f, 4.0f, 0.0f, 0.0f));
+    bluePortal->setUVMaterial(
+        bluePortalTexture, Vec4(1.99f, -2.0f, -2.0f, 1.0f),
+        Vec4(0.0f, 0.0f, 2.5f, 0.0f), Vec4(0.0f, 4.0f, 0.0f, 0.0f));
     orangePortal->setUVMaterial(
-        orangePortalTexture, Vec4(-0.5f, -2.0f, -1.99f, 1.0f),
-        Vec4(2.0f, 0.0f, 0.0f, 0.0f), Vec4(0.0f, 4.0f, 0.0f, 0.0f));
+        orangePortalTexture, Vec4(-2.0f, -1.99f, -0.5f, 1.0f),
+        Vec4(0.0f, 0.0f, 2.5f, 0.0f), Vec4(4.0f, 0.0f, 0.0f, 0.0f));
+#elif SCENE_NUMBER == 5
+    FigurePortalPtr bluePortal = FigurePortalPtr(
+        new Figures::TexturedPlane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 1.99f, false));
+    FigurePortalPtr orangePortal = FigurePortalPtr(new Figures::TexturedPlane(
+        Vec4(1.0f, 0.0f, 0.0f, 0.0f), -4.99f, false));
+
+    UVMaterialPtr bluePortalTexture =
+        UVMaterial::builder(512, 512)
+            // .addPhongDiffuse("ply/portal_blue_diffuse2.ppm")
+            .addPortal("ply/portal_any_portal2.ppm", bluePortal, orangePortal)
+            .build();
+    bluePortalTexture->overrideLights("ply/portal_blue_diffuse2.ppm", maxLight,
+                                      0.3f);
+    bluePortalTexture->override("ply/portal_any_mask2.ppm", nullptr);
+    UVMaterialPtr orangePortalTexture =
+        UVMaterial::builder(512, 512)
+            // .addPhongDiffuse("ply/portal_orange_diffuse2.ppm")
+            .addPortal("ply/portal_any_portal2.ppm", orangePortal, bluePortal)
+            .build();
+    orangePortalTexture->overrideLights("ply/portal_orange_diffuse2.ppm",
+                                        maxLight, 0.3f);
+    orangePortalTexture->override("ply/portal_any_mask2.ppm", nullptr);
+
+    bluePortal->setUVMaterial(
+        bluePortalTexture, Vec4(1.99f, -1.75f, -1.25f, 1.0f),
+        Vec4(0.0f, 0.0f, 2.5f, 0.0f), Vec4(0.0f, 3.5f, 0.0f, 0.0f));
+    orangePortal->setUVMaterial(
+        orangePortalTexture, Vec4(-4.99f, -1.75f, 1.25f, 1.0f),
+        Vec4(0.0f, 0.0f, -2.5f, 0.0f), Vec4(0.0f, 3.5f, 0.0f, 0.0f));
 #endif
 
     // build scene to BVH root node
@@ -379,23 +393,37 @@ int main(int argc, char **argv) {
         sphere(cyanPhong, Vec4(-0.5f, -1.65f, 1.4f, 1.0f), 0.35f)
 #elif SCENE_NUMBER == 3
         // Cornell box walls
-        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
-        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
-        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
-        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, whiteDiffuse),
-        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, greenDiffuse),
-        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, redDiffuse),
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, yellowWall),
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whitePhong),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, cyanWall),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, whitePhong),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, greenPhong),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, redPhong),
         // Cornell box content
         bluePortal,
         orangePortal,
-        sphere(mirror, Vec4(1.0f, 0.0f, 0.0f, 1.0f), 1.0f),
-        sphere(mirror, Vec4(0.5f, 0.0f, 2.0f, 1.0f), 0.5f),
-        sphere(mirror, Vec4(0.5f, 0.0f, -2.0f, 1.0f), 0.5f)
+        sphere(magentaPhong, Vec4(-1.0f, -1.25f, -1.0f, 1.0f), 0.5f),
+        sphere(mirror, Vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.8f)
+    // TODO simular objetos entrando-saliendo de portales
 #elif SCENE_NUMBER == 4
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, base),
         sphere(planet, Vec4(-1.0f, 1.8f, -1.3f, 0.0f), 1.25f),
         spaceship,
         spaceship2
+#elif SCENE_NUMBER == 5
+        // Cornell box walls
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whitePhong),
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whitePhong),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whitePhong),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, whitePhong),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, greenPhong),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, redPhong),
+        // Cornell box content
+        bluePortal,
+        orangePortal,
+        sphere(whitePhong, Vec4(-1.7f, -0.8f, 0.0f, 1.0f), 0.3f),
+        sphere(mirror, Vec4(1.1f, -1.3f, -1.1f, 1.0f), 0.7f),
+        sphere(transparent, Vec4(0.9f, 0.0f, 0.9f, 1.0f), 0.5f)
 #endif
     };
 
@@ -426,14 +454,11 @@ int main(int argc, char **argv) {
     scene.light(Vec4(0.0f, 1.4f, -1.0f, 1.0f), RGBColor::White * maxLight);
     scene.light(Vec4(0.0f, 1.4f, 1.0f, 1.0f), RGBColor::White * maxLight);
 #elif SCENE_NUMBER == 3
-    // scene.light(Vec4(-1.0f, 1.4f, -1.8f, 1.0f),
-    //             RGBColor(maxLight, maxLight, maxLight));
-    // scene.light(Vec4(-1.0f, 1.4f, 1.8f, 1.0f),
-    //             RGBColor(maxLight, maxLight, maxLight));
-    scene.light(Vec4(1.0f, 1.4f, 0.0f, 1.0f),
-                RGBColor(maxLight, maxLight, maxLight));
+    scene.light(Vec4(0.0f, 1.7f, 0.0f, 1.0f), RGBColor::White * maxLight);
 #elif SCENE_NUMBER == 4
     scene.light(Vec4(1.0f, 4.0f, 0.0f, 1.0f), RGBColor::White * maxLight);
+#elif SCENE_NUMBER == 5
+    scene.light(Vec4(0.0f, 1.7f, 0.0f, 1.0f), RGBColor::White * maxLight);
 #endif
 
 #undef plane
