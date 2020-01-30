@@ -162,17 +162,15 @@ int main(int argc, char **argv) {
             .addPhongDiffuse("ply/spaceship_v2_diffuse.ppm")
             .build();
     PLYModel spaceshipModel("ply/spaceship.ply", spaceshipTexture);
-    spaceshipModel.transform(Mat4::translation(3.5f, -0.6f, -0.5f) *
-                             Mat4::rotationX(-0.07f) *
-                             Mat4::rotationY(M_PI_4 * 0.22f) *
-                             Mat4::rotationZ(M_PI_4 * -2.9f) *
-                             Mat4::scale(2.0f, 2.0f, 2.0f));
+    spaceshipModel.transform(
+        Mat4::translation(3.5f, -0.6f, -0.5f) * Mat4::rotationX(-0.07f) *
+        Mat4::rotationY(M_PI_4 * 0.22f) * Mat4::rotationZ(M_PI_4 * -2.9f) *
+        Mat4::scale(2.0f, 2.0f, 2.0f));
     PLYModel spaceshipModel2("ply/spaceship.ply", spaceshipTexture);
-    spaceshipModel2.transform(Mat4::translation(7.0f, 1.5f, 1.25f) *
-                             Mat4::rotationX(0.05f) *
-                             Mat4::rotationY(M_PI_4 * 0.25f) *
-                             Mat4::rotationZ(M_PI_4 * -1.8f) *
-                             Mat4::scale(2.0f, 2.0f, 2.0f));
+    spaceshipModel2.transform(
+        Mat4::translation(7.0f, 1.5f, 1.25f) * Mat4::rotationX(0.05f) *
+        Mat4::rotationY(M_PI_4 * 0.25f) * Mat4::rotationZ(M_PI_4 * -1.8f) *
+        Mat4::scale(2.0f, 2.0f, 2.0f));
     FigurePtr spaceship = spaceshipModel.getFigure(4);
     FigurePtr spaceship2 = spaceshipModel2.getFigure(4);
 #endif
@@ -232,13 +230,12 @@ int main(int argc, char **argv) {
                                .add(phongSpecular(0.3f, 3.0f))
                                .build();
 #elif SCENE_NUMBER == 4
-    MaterialPtr base = Material::builder()
-                                 .add(phongDiffuse(RGBColor::White * 0.9f))
-                                 .build();
+    MaterialPtr base =
+        Material::builder().add(phongDiffuse(RGBColor::White * 0.9f)).build();
     MaterialPtr planet = Material::builder()
-                        .add(phongDiffuse(RGBColor(0.1f, 0.3f, 0.3f)))
-                        .add(phongSpecular(0.6f, 100.0f))
-                        .build();
+                             .add(phongDiffuse(RGBColor(0.1f, 0.3f, 0.3f)))
+                             .add(phongSpecular(0.6f, 100.0f))
+                             .build();
 #endif
 #if SCENE_NUMBER == 2
     UVMaterialPtr diamondTexture =
@@ -411,7 +408,11 @@ int main(int argc, char **argv) {
 
     FigurePtr rootNode = FigurePtr(new Figures::BVNode(sceneElements));
 
+#if SCENE_NUMBER == 4
     Scene scene(rootNode, RGBColor::White * 0.01f * maxLight, maxLight);
+#else
+    Scene scene(rootNode, RGBColor::Black, maxLight);
+#endif
 
     // Add points lights to the scene
 
