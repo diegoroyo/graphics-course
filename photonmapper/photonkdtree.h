@@ -69,14 +69,17 @@ class PhotonKdTreeBuilder {
                                         std::vector<Photon>::iterator &vend);
 
    public:
+    const int max;
     std::vector<Photon> photons;
 
-    PhotonKdTreeBuilder() : photons() {}
+    PhotonKdTreeBuilder(int _max = -1) : max(_max), photons() {}
 
     void add(const Photon &photon) {
         static std::mutex mutex;
         mutex.lock();
-        photons.push_back(photon);
+        if (max == -1 || photons.size() < max) {
+            photons.push_back(photon);
+        }
         mutex.unlock();
     }
 

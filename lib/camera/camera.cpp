@@ -1,7 +1,7 @@
 #include "camera.h"
 
 // Debug settings
-// #define DEBUG_ONE_CORE  // don't use multithreading
+#define DEBUG_ONE_CORE  // don't use multithreading
 
 /// Camera ///
 

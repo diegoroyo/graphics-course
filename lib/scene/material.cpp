@@ -155,7 +155,7 @@ bool PerfectRefraction::nextRay(const Ray &inRay, const RayHit &hit,
     // See reference for Kr calculation
     float rs = (n2 * incCos - n1 * outCos) / (n2 * incCos + n1 * outCos);
     float rp = (n2 * outCos - n1 * incCos) / (n2 * outCos + n1 * incCos);
-    float kr = (rs * rs + rp * rp) / 2;  // mean of squares
+    float kr = 0.0f; // TODO(rs * rs + rp * rp) / 2;  // mean of squares
     // select a random event (like roussian roulette)
     // perfect specular has probability kr, perfect refraction 1 - kr
     if (random01() < kr) {

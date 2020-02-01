@@ -7,8 +7,10 @@
 #include "photonkdtree.h"
 
 class PhotonMapper : public RayTracer {
+    const float epp;
     const int ppp, kNeighbours, kcNeighbours;
     const PhotonKdTree photons, caustics;
+    const bool directShadowRays;
     PPMImage render;
     FilterPtr filter;
 
@@ -22,7 +24,9 @@ class PhotonMapper : public RayTracer {
    public:
     PhotonMapper(int _ppp, const Film &film, PhotonEmitter &_emitter,
                  int _kNeighbours, int _kcNeighbours, const FilterPtr &_filter)
-        : ppp(_ppp),
+        : epp(_emitter.energyPerPhoton()),
+          ppp(_ppp),
+          directShadowRays(!_emitter.hasDirectLight()),
           kcNeighbours(_kcNeighbours),
           kNeighbours(_kNeighbours),
           render(film.width, film.height, std::numeric_limits<int>::max()),

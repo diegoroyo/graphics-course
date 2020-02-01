@@ -1,7 +1,7 @@
 #include "photonemitter.h"
 
 // Debug settings
-#define DEBUG_ONE_CORE  // don't use multithreading
+// #define DEBUG_ONE_CORE  // don't use multithreading
 
 void PhotonEmitter::savePhoton(const Photon &photon, const bool isCaustic) {
     if (isCaustic) {
@@ -20,6 +20,9 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
     EventPtr event = hit.material->selectEvent();
     if (event == nullptr || !event->nextRay(ray, hit, ray)) {
         return;
+    }
+    if (storeDirectLight) {
+        this->savePhoton(Photon(hit.point, ray.direction, flux), false);
     }
     flux = event->applyMonteCarlo(flux, hit, ray.direction, ray.direction);
 
@@ -110,7 +113,7 @@ void PhotonEmitter::emitPointLight(const Scene &scene,
     const auto fOrigin = [&light]() { return light.point; };
     const auto fDirection = [](const Vec4 &point) {
         // Inclination & azimuth for uniform cosine sampling
-        float incl = asinf(1.0f - 2.0f * random01());
+        float incl = acosf(1.0f - 2.0f * random01());
         float azim = 2.0f * M_PI * random01();
         return Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
                     cosf(incl), 0.0f);
@@ -156,7 +159,7 @@ void debugPhotons(const PhotonKdTreeBuilder &tree, const Film &film,
                 int pixelY =
                     std::min(film.height - 1, (int)(uvy * film.height));
                 RGBColor pixelColor = image.getPixel(pixelX, pixelY);
-                // color = photon.flux; // override color
+                // color = photon.flux;  // override color
                 // Add flux to pixel color
                 image.setPixel(pixelX, pixelY, pixelColor + color);
             }
@@ -177,7 +180,7 @@ PPMImage PhotonEmitter::debugPhotonsImage(const Film &film) {
              dot(film.origin.normalize(), film.forward.normalize())),
         Material::none()));
 
-    // debugPhotons(photons, film, filmPlane, RGBColor::Cyan, image);
+    debugPhotons(photons, film, filmPlane, RGBColor::Cyan, image);
     debugPhotons(caustics, film, filmPlane, RGBColor::White, image);
 
     image.setMax(image.calculateMax());

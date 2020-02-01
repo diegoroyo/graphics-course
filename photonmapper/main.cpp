@@ -39,14 +39,14 @@ void testKdTreeKNN() {
 int main(int argc, char** argv) {
     int width = 600;
     int height = 600;
-    float epp = 1.0f;
+    float epp = 2.0f;
 
-    Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
+    Vec4 origin(-4.5f, 0.0f, 0.0, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 
     Film film(width, height, origin, forward, up);
     // film.setDepthOfField(0.015f);
-    PhotonEmitter emitter(epp);
+    PhotonEmitter emitter(5000, 5000, -1, false, epp);
 
 // shortcuts for getting figure pointers
 #define plane(normal, dist, material) \
@@ -72,7 +72,6 @@ int main(int argc, char** argv) {
         Mat4::rotationZ(M_PI_2) * Mat4::scale(0.4f, 0.4f, 0.4f));
     FigurePtr teapot = teapotModel.getFigure(3);
 
-    // TODO comprobar por que falla con valores maxLight < 100.0f o lpp < 1.0f
     float maxLight = 10000.0f;
 
     MaterialPtr whiteDiffuse =
@@ -95,20 +94,20 @@ int main(int argc, char** argv) {
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whiteDiffuse),
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
         plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whiteDiffuse),
-        // plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, whiteDiffuse),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), -5.0f, whiteDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
         // Cornell box content
         // teapot
-        // sphere(mirror, Vec4(1.0f, -1.25f, -1.0f, 1.0f), 0.75f),
-        // sphere(transparent, Vec4(0.5f, -1.25f, 1.0f, 1.0f), 0.75f)
+        sphere(mirror, Vec4(1.0f, -1.25f, -1.0f, 1.0f), 0.75f),
+        sphere(transparent, Vec4(0.0f, -1.4f, 1.0f, 1.0f), 0.6f)
     };
 
     FigurePtr rootNode = FigurePtr(new Figures::BVNode(sceneElements));
     Scene scene(rootNode, RGBColor::Black, maxLight);
 
     // Add points lights to the scene
-    scene.light(Vec4(0.0f, 0.0f, 0.0f, 1.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(1.0f, 1.5f, 0.0f, 1.0f), RGBColor::White * maxLight);
 
 #undef plane
 #undef sphere
@@ -126,9 +125,9 @@ int main(int argc, char** argv) {
     // PPMImage debug = emitter.debugPhotonsImage(film);
     // debug.writeFile("out/map.ppm");
 
-    FilterPtr filter = FilterPtr(new Filter());
+    FilterPtr filter = FilterPtr(new ConeFilter());
     RayTracerPtr mapper = RayTracerPtr(
-        new PhotonMapper(4, film, emitter, 50, 0, filter));
+        new PhotonMapper(4, film, emitter, 100, 40, filter));
     Camera camera(film, mapper);
     camera.tracePixels(scene);
     camera.storeResult("out/map.ppm");

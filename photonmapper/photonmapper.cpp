@@ -29,12 +29,15 @@ RGBColor PhotonMapper::treeSearch(const PhotonKdTree &tree, const int kNN,
     return sum * (1.0f / denominator);
 }
 
+RGBColor totalDirect(0.0f, 0.0f, 0.0f), totalIndirect(0.0f, 0.0f, 0.0f);
+int total = 0;
+
 RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene) const {
     RayHit hit;
     Vec4 outDirection = ray.direction * -1.0f;
     if (scene.intersection(ray, hit)) {
         // Light emitted by hit object
-        RGBColor emittedLight = RGBColor::Black;
+        RGBColor emittedLight(0.0f, 0.0f, 0.0f);
         if (hit.material->emitsLight) {
             emittedLight = hit.material->emission;
         }
@@ -51,9 +54,14 @@ RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene) const {
         RGBColor causticLight =
             treeSearch(caustics, kcNeighbours, hit, outDirection);
         // Direct light on point using scene
-        // TODO luz directa usando el primer rebote de los fotones (?)
-        RGBColor directLight = scene.directLight(hit, outDirection);
-        directLight = directLight * (1.0f / (4.0f * M_PI));  // normalization
+        RGBColor directLight(0.0f, 0.0f, 0.0f);
+        if (directShadowRays) {
+            directLight = scene.directLight(hit, outDirection);
+            directLight = directLight * (1.0f / (4.0f * M_PI));
+        }
+        totalDirect = totalDirect + directLight;
+        totalIndirect = totalIndirect + indirectLight;
+        total = total + 1;
         return emittedLight + indirectLight + causticLight + directLight;
     }
     // Didn't hit with anything on the scene
@@ -82,6 +90,11 @@ void PhotonMapper::tracePixel(const int px, const int py, const Film &film,
 
 PPMImage &PhotonMapper::result() {
     // Set result's max value to the render's max value
+    std::cout << "total directo: " << totalDirect * (1.0f / total)
+              << "\ntotal indirecto: " << totalIndirect * (1.0f / total)
+              << "\nratios: " << totalDirect.r / totalIndirect.r << ", "
+              << totalDirect.g / totalIndirect.g << ", "
+              << totalDirect.b / totalIndirect.b << std::endl;
     render.setMax(render.calculateMax());
     return render;
 }

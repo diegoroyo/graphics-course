@@ -12,11 +12,12 @@ class PhotonEmitter {
     // Stop photons that have whose current energy / original energy
     // ratio is less than CUT_PCT
     const float CUT_PCT = 0.1f;
-    // Luminance per photon
+    // Energy per photon
     const float epp;
-    PhotonKdTreeBuilder photons, caustics;
+    const bool storeDirectLight;
+    PhotonKdTreeBuilder photons, caustics, volume;
 
-    void savePhoton(const Photon &photon, const bool isCaustic);
+    void savePhoton(const Photon& photon, const bool isCaustic);
     void traceRay(Ray ray, const Scene& scene, RGBColor flux);
     void traceRays(const int totalPhotons, const RGBColor& emission,
                    const std::function<Vec4()>& funOrigin,
@@ -24,12 +25,20 @@ class PhotonEmitter {
                    const MediumPtr& medium, const Scene& scene);
 
    public:
-    PhotonEmitter(float _epp = 1.0f) : epp(_epp) {}
+    PhotonEmitter(int nPhotons, int nCaustics, int nVolume,
+                  bool _storeDirectLight, float _epp = 1.0f)
+        : photons(nPhotons),
+          caustics(nCaustics),
+          volume(nVolume),
+          storeDirectLight(_storeDirectLight),
+          epp(_epp) {}
 
     void emitPointLight(const Scene& scene, const PointLight& light);
     void emitAreaLight(const Scene& scene, const FigurePtr& light,
                        const RGBColor& emission, const MediumPtr& medium);
 
+    float energyPerPhoton() const { return epp; }
+    bool hasDirectLight() const { return storeDirectLight; }
     PhotonKdTree getPhotonsTree() { return photons.build(); }
     PhotonKdTree getCausticsTree() { return caustics.build(); }
 

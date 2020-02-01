@@ -40,4 +40,5 @@ class Scene {
     bool intersection(const Ray &ray, RayHit &hit) const;
     // Calculate direct light incoming from point lights
     RGBColor directLight(const RayHit &hit, const Vec4 &wo) const;
+    RGBColor directPhoton(const RayHit &hit, const Vec4 &wo, const float epp) const;
 };
