@@ -237,17 +237,25 @@ RGBColor Portal::applyNextEvent(const RGBColor &lightIn, const RayHit &hit,
 /// Material ///
 
 MaterialBuilder MaterialBuilder::add(const EventPtr &event) {
+    // Ignore zero-probability events (maybe from textures)
+    if (event->prob == 0.0f) {
+        return *this;
+    }
+    // Add event & update accum probability
     ptr->events.push_back(event);
     accumProb += event->prob;
     ptr->probs.push_back(accumProb);
     if (accumProb >= 1.0f) {
         std::cout << "Warning: material has event probabilities"
-                  << " that sum higher than 1" << std::endl;
+                  << " that sum higher than 1 (reescaling...)" << std::endl;
         std::cout << "Accum. probabilities are: ";
         for (float p : ptr->probs) {
             std::cout << p << " ";
         }
         std::cout << std::endl;
+        for (float &p : ptr->probs) {
+            p = p / accumProb;
+        }
     }
     return *this;
 }
@@ -260,4 +268,24 @@ EventPtr Material::selectEvent() {
         }
     }
     return nullptr;
+}
+
+EventPtr Material::getFirstDelta() const {
+    for (const EventPtr &event : this->events) {
+        if (event->isDelta) {
+            return event;
+        }
+    }
+    return nullptr;
+}
+
+RGBColor Material::evaluate(const RGBColor &lightIn, const RayHit &hit,
+                            const Vec4 &wi, const Vec4 &wo) const {
+    RGBColor result(0.0f, 0.0f, 0.0f);
+    for (int i = 0; i < events.size(); i++) {
+        RGBColor factor(1.0f, 1.0f, 1.0f);
+        factor = this->events[i]->applyNextEvent(factor, hit, wi, wo);
+        result = result + lightIn * factor * (1.0f / this->probs[i]);
+    }
+    return result;
 }

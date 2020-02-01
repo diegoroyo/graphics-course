@@ -1,21 +1,30 @@
 #include "photonmapper.h"
 
 RGBColor PhotonMapper::treeSearch(const PhotonKdTree &tree, const int kNN,
-                                  const RayHit &hit, const Vec4 &outDirection,
-                                  const EventPtr &event) const {
+                                  const RayHit &hit,
+                                  const Vec4 &outDirection) const {
+    if (tree.empty()) {
+        return RGBColor::Black;  // map is empty (e.g. caustics)
+    }
     // Indirect light: get k-nearest photons on photon tree
     std::vector<const Photon *> nearest;
     float r = tree.searchNN(nearest, hit.point, kNN);
     // Indirect light using saved photons w/cone filter
     RGBColor sum(0.0f, 0.0f, 0.0f);
+    int kNNCounted = kNN;
     for (const Photon *photon : nearest) {
-        RGBColor contrib = event->applyNextEvent(
-            photon->flux, hit, photon->inDirection, outDirection);
-        float filterTerm =
-            this->filter->photonTerm(hit.point, photon->point, r, kNN);
-        sum = sum + contrib * filterTerm;
+        if (dot(hit.normal, photon->inDirection) > -1e-5f) {
+            // Positive cosine (hitting the back of a plane, sphere, etc.)
+            kNNCounted--;
+        } else {
+            // Photon contributes to light
+            RGBColor contrib = hit.material->evaluate(
+                photon->flux, hit, photon->inDirection, outDirection);
+            float filterTerm = this->filter->photonTerm(hit, *photon, r, kNN);
+            sum = sum + contrib * filterTerm;
+        }
     }
-    float kTerm = this->filter->kTerm(kNN);
+    float kTerm = this->filter->kTerm(kNNCounted);
     float denominator = kTerm * M_PI * r * r;
     return sum * (1.0f / denominator);
 }
@@ -29,30 +38,21 @@ RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene) const {
         if (hit.material->emitsLight) {
             emittedLight = hit.material->emission;
         }
-        // Select random event on surface hit
-        // TODO se elige evento aleatorio con varios ppp (?)
-        // TODO se puede elegir evento de absorcion?
-        EventPtr event = nullptr;
-        while (event == nullptr) {
-            event = hit.material->selectEvent();
-        }
         // Check for delta surfaces
+        EventPtr delta = hit.material->getFirstDelta();
         Ray nextRay;
-        if (event == nullptr ||
-            (event->isDelta && !event->nextRay(ray, hit, nextRay))) {
-            return emittedLight;
-        } else if (event->isDelta) {
+        if (delta != nullptr && delta->nextRay(ray, hit, nextRay)) {
             // Delta event, emitted light doesn't matter
-            return traceRay(nextRay, scene);
+            return traceRay(nextRay, scene) * delta->prob;
         }
         // Indirect light (normal + caustic)
         RGBColor indirectLight =
-            treeSearch(photons, kNeighbours, hit, outDirection, event);
+            treeSearch(photons, kNeighbours, hit, outDirection);
         RGBColor causticLight =
-            treeSearch(caustics, kcNeighbours, hit, outDirection, event);
+            treeSearch(caustics, kcNeighbours, hit, outDirection);
         // Direct light on point using scene
         // TODO luz directa usando el primer rebote de los fotones (?)
-        RGBColor directLight = scene.directLight(hit, outDirection, event);
+        RGBColor directLight = scene.directLight(hit, outDirection);
         directLight = directLight * (1.0f / (4.0f * M_PI));  // normalization
         return emittedLight + indirectLight + causticLight + directLight;
     }

@@ -1,7 +1,7 @@
 #include "photonemitter.h"
 
 // Debug settings
-// #define DEBUG_ONE_CORE  // don't use multithreading
+#define DEBUG_ONE_CORE  // don't use multithreading
 
 void PhotonEmitter::savePhoton(const Photon &photon, const bool isCaustic) {
     if (isCaustic) {
@@ -26,7 +26,7 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
     // Start storing photons on the second ray
     Ray nextRay;
     bool wasLastCaustic = false;
-    while (scene.intersection(ray, hit) && flux.max() > lpp * CUT_PCT) {
+    while (scene.intersection(ray, hit) && flux.max() > epp * CUT_PCT) {
         if (hit.material->emitsLight) {
             // Save INCOMING flux and ignore light
             this->savePhoton(Photon(hit.point, ray.direction, flux),
@@ -86,7 +86,8 @@ void PhotonEmitter::traceRays(
     auto beginTime = std::chrono::system_clock::now().time_since_epoch();
     printProgress(beginTime, 0.0f);
     while (!finished) {
-        printProgress(beginTime, photonsEmitted / (float)totalPhotons);
+        float progress = photonsEmitted / (float)totalPhotons;
+        printProgress(beginTime, std::fminf(1.0f, progress));
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
         for (auto &future : threadFutures) {
@@ -103,12 +104,13 @@ void PhotonEmitter::traceRays(
 
 void PhotonEmitter::emitPointLight(const Scene &scene,
                                    const PointLight &light) {
-    int totalPhotons = light.emission.max() * (1.0f / lpp);
-    RGBColor emission = light.emission * (lpp / totalPhotons);
+    float max = light.emission.max();
+    int totalPhotons = max * (1.0f / epp);
+    RGBColor emission = light.emission * (epp / max);
     const auto fOrigin = [&light]() { return light.point; };
     const auto fDirection = [](const Vec4 &point) {
         // Inclination & azimuth for uniform cosine sampling
-        float incl = acosf(1.0f - 2.0f * random01());
+        float incl = asinf(1.0f - 2.0f * random01());
         float azim = 2.0f * M_PI * random01();
         return Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
                     cosf(incl), 0.0f);
@@ -120,8 +122,9 @@ void PhotonEmitter::emitAreaLight(const Scene &scene, const FigurePtr &figure,
                                   const RGBColor &emission,
                                   const MediumPtr &medium) {
     float area = figure->getTotalArea();
-    int totalPhotons = emission.max() * (area / lpp);
-    RGBColor photonEmission = emission * (lpp / totalPhotons);
+    float max = emission.max();
+    int totalPhotons = max * (area / epp);
+    RGBColor photonEmission = emission * (epp / max);
     const auto fOrigin = [&figure]() { return figure->randomPoint(); };
     const auto fDirection = [&figure](const Vec4 &point) {
         return figure->randomDirection(point);

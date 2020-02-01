@@ -52,6 +52,9 @@ class PhotonKdTree {
                     float &worstDistance) const;
 
    public:
+    // true if tree has no components (e.g. caustic map)
+    bool empty() const { return root == nullptr; }
+
     // k Nearest Neighbours search
     float searchNN(std::vector<const Photon *> &photons, const Vec4 &point,
                    int k = 1) const;

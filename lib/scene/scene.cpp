@@ -5,8 +5,7 @@ bool Scene::intersection(const Ray& ray, RayHit& hit) const {
     return this->root->intersection(ray, hit);
 }
 
-RGBColor Scene::directLight(const RayHit& hit, const Vec4& wo,
-                            const EventPtr& event) const {
+RGBColor Scene::directLight(const RayHit& hit, const Vec4& wo) const {
     RGBColor result = RGBColor::Black;
     // Check all lights in the scene
     for (auto light : lights) {
@@ -21,7 +20,7 @@ RGBColor Scene::directLight(const RayHit& hit, const Vec4& wo,
             // Add light's emission to the result
             RGBColor inEmission =
                 light.emission * (1.0f / (norm * norm)) * dot(hit.normal, wi);
-            result = result + event->applyNextEvent(inEmission, hit, wi, wo);
+            result = result + hit.material->evaluate(inEmission, hit, wi, wo);
         }
     }
     return result;

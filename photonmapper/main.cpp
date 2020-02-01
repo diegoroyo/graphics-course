@@ -39,14 +39,14 @@ void testKdTreeKNN() {
 int main(int argc, char** argv) {
     int width = 600;
     int height = 600;
-    float lpp = 1.0f;
+    float epp = 1.0f;
 
     Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 
     Film film(width, height, origin, forward, up);
     // film.setDepthOfField(0.015f);
-    PhotonEmitter emitter(lpp);
+    PhotonEmitter emitter(epp);
 
 // shortcuts for getting figure pointers
 #define plane(normal, dist, material) \
@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
     FigurePtr teapot = teapotModel.getFigure(3);
 
     // TODO comprobar por que falla con valores maxLight < 100.0f o lpp < 1.0f
-    float maxLight = 100000.0f;
+    float maxLight = 10000.0f;
 
     MaterialPtr whiteDiffuse =
         Material::builder().add(phongDiffuse(RGBColor::White * 0.95f)).build();
@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, redDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, greenDiffuse),
         // Cornell box content
-        teapot
+        // teapot
         // sphere(mirror, Vec4(1.0f, -1.25f, -1.0f, 1.0f), 0.75f),
         // sphere(transparent, Vec4(0.5f, -1.25f, 1.0f, 1.0f), 0.75f)
     };
@@ -126,12 +126,9 @@ int main(int argc, char** argv) {
     // PPMImage debug = emitter.debugPhotonsImage(film);
     // debug.writeFile("out/map.ppm");
 
-    PhotonKdTree photons = emitter.getPhotonsTree();
-    PhotonKdTree caustics = emitter.getCausticsTree();
-
-    FilterPtr filter = FilterPtr(new ConeFilter());
+    FilterPtr filter = FilterPtr(new Filter());
     RayTracerPtr mapper = RayTracerPtr(
-        new PhotonMapper(32, film, 400, 50, photons, caustics, filter));
+        new PhotonMapper(4, film, emitter, 50, 0, filter));
     Camera camera(film, mapper);
     camera.tracePixels(scene);
     camera.storeResult("out/map.ppm");

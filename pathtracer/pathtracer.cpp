@@ -26,8 +26,7 @@ RGBColor PathTracer::traceRay(const Ray &ray, const Scene &scene) const {
             std::cout << "Event on point " << hit.point << " with normal "
                       << hit.normal << std::endl;
 #endif
-            RGBColor directLight =
-                scene.directLight(hit, nextRay.direction, event);
+            RGBColor directLight = scene.directLight(hit, nextRay.direction);
             RGBColor nextEventLight =
                 event->applyMonteCarlo(traceRay(nextRay, scene), hit,
                                        ray.direction, nextRay.direction);

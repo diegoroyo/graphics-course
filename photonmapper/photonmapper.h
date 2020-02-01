@@ -3,6 +3,7 @@
 #include "camera/raytracer.h"
 #include "filter.h"
 #include "io/ppmimage.h"
+#include "photonemitter.h"
 #include "photonkdtree.h"
 
 class PhotonMapper : public RayTracer {
@@ -13,22 +14,20 @@ class PhotonMapper : public RayTracer {
 
     // Search kNN photons on given tree and return radiance estimate
     RGBColor treeSearch(const PhotonKdTree &tree, const int kNN,
-                        const RayHit &hit, const Vec4 &outDirection,
-                        const EventPtr &event) const;
+                        const RayHit &hit, const Vec4 &outDirection) const;
 
     // Trace the path followed by the cameraRay (multiple hits etc)
     RGBColor traceRay(const Ray &ray, const Scene &scene) const;
 
    public:
-    PhotonMapper(int _ppp, const Film &film, int _kNeighbours,
-                 int _kcNeighbours, const PhotonKdTree &_photons,
-                 const PhotonKdTree &_caustics, const FilterPtr &_filter)
+    PhotonMapper(int _ppp, const Film &film, PhotonEmitter &_emitter,
+                 int _kNeighbours, int _kcNeighbours, const FilterPtr &_filter)
         : ppp(_ppp),
           kcNeighbours(_kcNeighbours),
           kNeighbours(_kNeighbours),
           render(film.width, film.height, std::numeric_limits<int>::max()),
-          photons(_photons),
-          caustics(_caustics),
+          photons(_emitter.getPhotonsTree()),
+          caustics(_emitter.getCausticsTree()),
           filter(_filter) {}
 
     void tracePixel(const int px, const int py, const Film &film,

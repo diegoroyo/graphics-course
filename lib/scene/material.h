@@ -141,4 +141,11 @@ class Material {
 
     // Roussian roulette event selector
     EventPtr selectEvent();
+
+    // Get first delta material
+    EventPtr getFirstDelta() const;
+
+    // Evaluate whole BRDF/material
+    RGBColor evaluate(const RGBColor &lightIn, const RayHit &hit,
+                      const Vec4 &wi, const Vec4 &wo) const;
 };

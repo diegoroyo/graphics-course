@@ -13,7 +13,7 @@ class PhotonEmitter {
     // ratio is less than CUT_PCT
     const float CUT_PCT = 0.1f;
     // Luminance per photon
-    const float lpp;
+    const float epp;
     PhotonKdTreeBuilder photons, caustics;
 
     void savePhoton(const Photon &photon, const bool isCaustic);
@@ -24,7 +24,7 @@ class PhotonEmitter {
                    const MediumPtr& medium, const Scene& scene);
 
    public:
-    PhotonEmitter(float _lpp = 1.0f) : lpp(_lpp) {}
+    PhotonEmitter(float _epp = 1.0f) : epp(_epp) {}
 
     void emitPointLight(const Scene& scene, const PointLight& light);
     void emitAreaLight(const Scene& scene, const FigurePtr& light,
