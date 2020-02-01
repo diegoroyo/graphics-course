@@ -131,8 +131,8 @@ MaterialPtr PLYModel::material(const float uvx, const float uvy) const {
 void PLYModel::getBoundingBox(const std::vector<int> &findex, Vec4 &bb0,
                               Vec4 &bb1) const {
     // Initialise with first vertex of first face
-    bb0 = Vec4(this->face(findex[0])[0]);
-    bb1 = Vec4(this->face(findex[0])[0]);
+    bb0 = Vec4(this->vert(this->face(findex[0])[0]));
+    bb1 = Vec4(this->vert(this->face(findex[0])[0]));
     // Check against all vertices of all faces
     for (int fi : findex) {
         std::array<int, 3> vi = this->face(fi);

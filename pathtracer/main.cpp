@@ -6,7 +6,7 @@
 // Scene 4: (final) Spaceships (UVMaterial test 2)
 // Scene 5: (final) Portal loop
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 5
+#define SCENE_NUMBER 1
 #endif
 
 #include <iostream>
@@ -156,9 +156,9 @@ int main(int argc, char **argv) {
     yellowBunnyModel.transform(Mat4::translation(1.0f, 0.5f, 2.0f) *
                                Mat4::rotationZ(M_PI) * Mat4::rotationY(M_PI) *
                                Mat4::scale(1.5f, 1.5f, 1.5f));
-    FigurePtr cyanBunny = cyanBunnyModel.getFigure(6);
-    FigurePtr magentaBunny = magentaBunnyModel.getFigure(4);
-    FigurePtr yellowBunny = yellowBunnyModel.getFigure(3);
+    FigurePtr cyanBunny = cyanBunnyModel.getFigure(12);
+    FigurePtr magentaBunny = magentaBunnyModel.getFigure(12);
+    FigurePtr yellowBunny = yellowBunnyModel.getFigure(12);
 #elif SCENE_NUMBER == 4
     UVMaterialPtr spaceshipTexture =
         UVMaterial::builder(512, 512)

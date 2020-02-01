@@ -269,6 +269,11 @@ bool Box::intersection(const Ray &ray, RayHit &hit) const {
 
 /// BVNode ///
 
+bool BVNode::peek(const Ray &ray, RayHit &hit) const {
+    // shouldn't be called if alwaysHits = true
+    return bbox->intersection(ray, hit);
+}
+
 bool BVNode::intersection(const Ray &ray, RayHit &hit) const {
     // Check if ray doesn't hit box
     if (!this->alwaysHits && !this->bbox->intersection(ray, hit)) {
@@ -289,6 +294,10 @@ bool BVNode::intersection(const Ray &ray, RayHit &hit) const {
 }
 
 /// KdTreeNode ///
+
+bool KdTreeNode::peek(const Ray &ray, RayHit &hit) const {
+    return bbox->intersection(ray, hit);
+}
 
 bool KdTreeNode::intersection(const Ray &ray, RayHit &hit) const {
     // Check if it only intersects with one box

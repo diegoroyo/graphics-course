@@ -49,6 +49,10 @@ class Figure {
     virtual float getTotalArea() const {
         throw std::domain_error("Total area isn't implemented for this figure");
     }
+
+    // Info. about figure
+    virtual void print(std::ostream &os,
+                       const std::string &padding = "") const = 0;
 };
 
 /// Plane ///
@@ -79,6 +83,11 @@ class FlatPlane : public Plane {
         materialPtr = material;
         return true;
     }
+
+    void print(std::ostream &os, const std::string &padding) const override {
+        os << padding << "| Flat plane | n: " << this->normal
+           << ", d: " << this->distToOrigin << std::endl;
+    }
 };
 
 class TexturedPlane : public Plane {
@@ -107,9 +116,16 @@ class TexturedPlane : public Plane {
     // special method for portals (material depends on objects)
     void setUVMaterial(const UVMaterialPtr &_uvMaterial, const Vec4 &_uvOrigin,
                        const Vec4 &_uvX, const Vec4 &_uvY);
+
+    // Point & direction sampling
     Vec4 randomPoint() const override;
     Vec4 randomDirection(const Vec4 &point) const override;
     float getTotalArea() const override;
+
+    void print(std::ostream &os, const std::string &padding) const override {
+        os << padding << "| Textured plane | n: " << this->normal
+           << ", d: " << this->distToOrigin << std::endl;
+    }
 };
 
 /// Sphere ///
@@ -123,9 +139,16 @@ class Sphere : public Figure {
     Sphere(const MaterialPtr _material, const Vec4 &_center, float _radius)
         : material(_material), center(_center), radius(_radius) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
+
+    // Point & direction sampling
     Vec4 randomPoint() const override;
     Vec4 randomDirection(const Vec4 &point) const override;
     float getTotalArea() const override;
+
+    void print(std::ostream &os, const std::string &padding) const override {
+        os << padding << "| Sphere | c: " << this->center
+           << ", r: " << this->radius << std::endl;
+    }
 };
 
 /// Triangle ///
@@ -143,6 +166,11 @@ class Triangle : public Figure {
    public:
     Triangle(const PLYModel *_model, int _v0i, int _v1i, int _v2i);
     bool intersection(const Ray &ray, RayHit &hit) const override;
+
+    void print(std::ostream &os, const std::string &padding) const override {
+        os << padding << "| Triangle | v0: " << this->v0 << ", v1: " << this->v1
+           << ", v2: " << this->v2 << std::endl;
+    }
 };
 
 /// Box ///
@@ -156,6 +184,11 @@ class Box : public Figure {
    public:
     Box(const Vec4 &_bb0, const Vec4 &_bb1) : bb0(_bb0), bb1(_bb1) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
+
+    void print(std::ostream &os, const std::string &padding) const override {
+        os << padding << "| Box | bb0: " << this->bb0 << ", bb1: " << this->bb1
+           << std::endl;
+    }
 };
 
 /// BVNode / KdTreeNode ///
@@ -174,9 +207,15 @@ class BVNode : public Figure {
     BVNode(const FigurePtrVector &_children, const FigurePtr &_bbox)
         : alwaysHits(false), bbox(_bbox), children(_children) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
-    bool peek(const Ray &ray, RayHit &hit) const override {
-        // shouldn't be called if alwaysHits = true
-        return bbox->intersection(ray, hit);
+    bool peek(const Ray &ray, RayHit &hit) const override;
+
+    void print(std::ostream &os, const std::string &padding) const override {
+        os << padding << "| BVNode |" << std::endl;
+        bbox->print(os, padding + " ");
+        os << padding << "> Children:" << std::endl;
+        for (const FigurePtr &f : children) {
+            f->print(os, padding + " ");
+        }
     }
 };
 
@@ -191,8 +230,15 @@ class KdTreeNode : public Figure {
                const FigurePtr &_bbox)
         : bbox(_bbox), leftChild(_leftChild), rightChild(_rightChild) {}
     bool intersection(const Ray &ray, RayHit &hit) const override;
-    bool peek(const Ray &ray, RayHit &hit) const override {
-        return bbox->intersection(ray, hit);
+    bool peek(const Ray &ray, RayHit &hit) const override;
+
+    void print(std::ostream &os, const std::string &padding) const override {
+        os << padding << "| KdTreeNode |" << std::endl;
+        bbox->print(os, padding + " ");
+        os << padding << "> Left child:" << std::endl;
+        leftChild->print(os, padding + " ");
+        os << padding << "> Right child:" << std::endl;
+        rightChild->print(os, padding + " ");
     }
 };
 
