@@ -6,7 +6,7 @@
 // Scene 4: (final) Spaceships (UVMaterial test 2)
 // Scene 5: (final) Portal loop
 #ifndef SCENE_NUMBER
-#define SCENE_NUMBER 1
+#define SCENE_NUMBER 0
 #endif
 
 #include <iostream>
@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
         Material::light(RGBColor(maxLight, maxLight, maxLight));
     MaterialPtr whitePhong = Material::builder()
                                  .add(phongDiffuse(RGBColor::White * 0.5f))
-                                 .add(phongSpecular(0.3f, 3.0f))
+                                 .add(phongSpecular(0.3f, 1000.0f))
                                  .build();
     MaterialPtr greenPhong = Material::builder()
                                  .add(phongDiffuse(RGBColor(0.1f, 0.5f, 0.1f)))

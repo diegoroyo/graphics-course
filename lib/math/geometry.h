@@ -36,7 +36,7 @@ struct Vec4 {
         return Vec4(x * f, y * f, z * f, w * f);
     }
     constexpr float module() const { return sqrtf(x * x + y * y + z * z); }
-    constexpr Vec4 normalize(float l = 1) {
+    constexpr Vec4 normalize(float l = 1) const {
         return Vec4(*this) * (l / module());
     }
 

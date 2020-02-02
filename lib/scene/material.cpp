@@ -70,7 +70,7 @@ RGBColor PhongSpecular::applyMonteCarlo(const RGBColor &lightIn,
                                         const RayHit &hit, const Vec4 &wi,
                                         const Vec4 &wo) const {
     Vec4 wr = reflectDirection(wi, hit.normal);
-    float outCos = dot(wr, hit.normal);
+    float outCos = dot(wr, wo);
     // add epsilon to prevent negative sqrts
     float outSin = sqrtf(1.0f + 1e-5f - outCos * outCos);
     float inCos = dot(wi, hit.normal) * -1.0f;
@@ -83,11 +83,9 @@ RGBColor PhongSpecular::applyMonteCarlo(const RGBColor &lightIn,
 RGBColor PhongSpecular::applyNextEvent(const RGBColor &lightIn,
                                        const RayHit &hit, const Vec4 &wi,
                                        const Vec4 &wo) const {
-    // cosine should be between light out direction (wo = inDirection * -1.0f)
-    // which is saved in nextRay and light refraction direction (wr)
-    Vec4 wr = reflectDirection(wi.normalize() * -1.0f, hit.normal);
-    float cosInclR = dot(wr, wo);
-    return lightIn * this->prob * fabs(powf(cosInclR, this->alpha)) *
+    Vec4 wr = reflectDirection(wi, hit.normal);
+    float outCos = dot(wr, wo);
+    return lightIn * this->prob * fabs(powf(outCos, this->alpha)) *
            ((this->alpha + 2.0f) / (2.0f * M_PI));
 }
 
@@ -279,10 +277,8 @@ EventPtr Material::getFirstDelta() const {
 RGBColor Material::evaluate(const RGBColor &lightIn, const RayHit &hit,
                             const Vec4 &wi, const Vec4 &wo) const {
     RGBColor result(0.0f, 0.0f, 0.0f);
-    for (int i = 0; i < events.size(); i++) {
-        RGBColor factor(1.0f, 1.0f, 1.0f);
-        factor = this->events[i]->applyNextEvent(factor, hit, wi, wo);
-        result = result + lightIn * factor * (1.0f / this->probs[i]);
+    for (const EventPtr& event : this->events) {
+        result = result + event->applyNextEvent(lightIn, hit, wi, wo);
     }
     return result;
 }
