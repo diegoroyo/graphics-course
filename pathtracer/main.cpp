@@ -92,7 +92,10 @@ int main(int argc, char **argv) {
 
     // Set up camera & scene
 
-#if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
+#if SCENE_NUMBER == 0
+    Vec4 origin(-4.5f, -1.1f, 0.0f, 1.0f), forward(2.0f, -0.2f, 0.0f, 0.0f),
+        right(0.0f, 0.0f, 1.0f, 0.0f), up(cross(right, forward).normalize(0.4f));
+#elif SCENE_NUMBER == 1
     Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #elif SCENE_NUMBER == 2
@@ -189,8 +192,8 @@ int main(int argc, char **argv) {
     MaterialPtr whiteLight =
         Material::light(RGBColor(maxLight, maxLight, maxLight));
     MaterialPtr whitePhong = Material::builder()
-                                 .add(phongDiffuse(RGBColor::White * 0.5f))
-                                 .add(phongSpecular(0.3f, 3.0f))
+                                 .add(phongDiffuse(RGBColor::White * 0.3f))
+                                 .add(phongSpecular(0.5f, 10.0f))
                                  .build();
     MaterialPtr greenPhong = Material::builder()
                                  .add(phongDiffuse(RGBColor(0.1f, 0.5f, 0.1f)))
@@ -201,22 +204,22 @@ int main(int argc, char **argv) {
                                .add(phongSpecular(0.3f, 3.0f))
                                .build();
     MaterialPtr bluePhong = Material::builder()
-                                .add(phongSpecular(0.5f, 1.0f))
-                                .add(phongDiffuse(RGBColor(0.05f, 0.05f, 0.4f)))
+                                .add(phongSpecular(0.3f, 1.0f))
+                                .add(phongDiffuse(RGBColor(0.05f, 0.05f, 0.6f)))
                                 .build();
     MaterialPtr magentaPhong =
         Material::builder()
-            .add(phongSpecular(0.5f, 10.0f))
-            .add(phongDiffuse(RGBColor(0.4f, 0.05f, 0.4f)))
+            .add(phongSpecular(0.3f, 10.0f))
+            .add(phongDiffuse(RGBColor(0.6f, 0.05f, 0.6f)))
             .build();
     MaterialPtr yellowPhong =
         Material::builder()
-            .add(phongSpecular(0.5f, 100.0f))
-            .add(phongDiffuse(RGBColor(0.4f, 0.4f, 0.05f)))
+            .add(phongSpecular(0.3f, 100.0f))
+            .add(phongDiffuse(RGBColor(0.6f, 0.6f, 0.05f)))
             .build();
     MaterialPtr cyanPhong = Material::builder()
-                                .add(phongSpecular(0.5f, 1000.0f))
-                                .add(phongDiffuse(RGBColor(0.05f, 0.4f, 0.4f)))
+                                .add(phongSpecular(0.3f, 1000.0f))
+                                .add(phongDiffuse(RGBColor(0.05f, 0.6f, 0.6f)))
                                 .build();
     MediumPtr glass = Medium::create(1.5f);
     MaterialPtr transparent =
@@ -342,18 +345,14 @@ int main(int argc, char **argv) {
 #if SCENE_NUMBER == 0
         // Cornell box walls
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whitePhong),
-        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whitePhong),
         plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whitePhong),
-        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, greenPhong),
-        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, redPhong),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 5.0f, greenPhong),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -5.0f, redPhong),
         // Cornell box content
-        sphere(bluePhong, Vec4(1.5f, 0.75f, -1.5f, 1.0f), 0.45f),
-        sphere(magentaPhong, Vec4(1.5f, 0.75f, -0.5f, 1.0f), 0.45f),
-        sphere(yellowPhong, Vec4(1.5f, 0.75f, 0.5f, 1.0f), 0.45f),
-        sphere(cyanPhong, Vec4(1.5f, 0.75f, 1.5f, 1.0f), 0.45f),
-        sphere(mirror, Vec4(1.0f, -1.25f, -1.0f, 1.0f), 0.75f),
-        sphere(mirror, Vec4(1.0f, -1.25f, 1.0f, 1.0f), 0.75f),
-        sphere(transparent, Vec4(0.5f, 0.5f, 0.0f, 1.0f), 0.5f)
+        sphere(bluePhong, Vec4(0.0f, -1.5f, -1.65f, 1.0f), 0.5f),
+        sphere(magentaPhong, Vec4(0.0f, -1.5f, -0.55f, 1.0f), 0.5f),
+        sphere(yellowPhong, Vec4(0.0f, -1.5f, 0.55f, 1.0f), 0.5f),
+        sphere(cyanPhong, Vec4(0.0f, -1.5f, 1.65f, 1.0f), 0.5f)
 #elif SCENE_NUMBER == 1
         // Cornell box walls
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whitePhong),
@@ -448,9 +447,9 @@ int main(int argc, char **argv) {
     // Add points lights to the scene
 
 #if SCENE_NUMBER == 0
-    scene.light(Vec4(1.0f, 1.7f, 0.0f, 1.0f), RGBColor::White * maxLight);
-    scene.light(Vec4(0.0f, 1.7f, 1.0f, 1.0f), RGBColor::White * maxLight);
-    scene.light(Vec4(0.0f, 1.7f, -1.0f, 1.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(1.0f, 1.0f, 0.0f, 1.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(0.0f, 1.0f, 1.0f, 1.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(0.0f, 1.0f, -1.0f, 1.0f), RGBColor::White * maxLight);
 #elif SCENE_NUMBER == 1
     scene.light(Vec4(0.0f, 1.7f, 0.0f, 1.0f), RGBColor::White * maxLight);
 #elif SCENE_NUMBER == 2
