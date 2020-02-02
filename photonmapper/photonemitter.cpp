@@ -12,16 +12,21 @@ void PhotonEmitter::savePhoton(const Photon &photon, const bool isCaustic) {
 }
 
 void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
+    // Save original flux
+    float initialFlux = flux.max();
     // Ignore first ray
     RayHit hit;
     if (!scene.intersection(ray, hit)) {
         return;
     }
+    // Absorption event
     EventPtr event = hit.material->selectEvent();
     if (event == nullptr || !event->nextRay(ray, hit, ray)) {
         return;
     }
-    if (storeDirectLight) {
+    HomAmbMedium::applyLight(flux, ray, hit);
+    // Arrived at destination: store & apply BSDF
+    if (storeDirectLight && !event->isDelta) {
         this->savePhoton(Photon(hit.point, ray.direction, flux), false);
     }
     flux = event->applyMonteCarlo(flux, hit, ray.direction, ray.direction);
@@ -29,7 +34,9 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
     // Start storing photons on the second ray
     Ray nextRay;
     bool wasLastCaustic = false;
-    while (scene.intersection(ray, hit) && flux.max() > epp * CUT_PCT) {
+    while (scene.intersection(ray, hit) && flux.max() > initialFlux * CUT_PCT) {
+        // Participative media
+        HomAmbMedium::applyLight(flux, ray, hit);
         if (hit.material->emitsLight) {
             // Save INCOMING flux and ignore light
             this->savePhoton(Photon(hit.point, ray.direction, flux),
@@ -57,12 +64,10 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
 }
 
 void PhotonEmitter::traceRays(
-    const int totalPhotons, const RGBColor &emission,
-    const std::function<Vec4()> &fOrigin,
-    const std::function<Vec4(const Vec4 &)> &fDirection,
-    const MediumPtr &medium, const Scene &scene) {
+    const Scene &scene, const RGBColor &emission, const MediumPtr &medium,
+    const std::function<void(Vec4 &, Vec4 &)> &fGetSample) {
     // Spawn one core per thread and make them consume work as they finish
-    volatile std::atomic<int> photonsEmitted(0);
+    volatile std::atomic<int> photonsEmitted(0), generalShots(0);
 #ifdef DEBUG_ONE_CORE
     int cores = 1;  // only one core, for debug purposes
 #else
@@ -74,22 +79,26 @@ void PhotonEmitter::traceRays(
             while (true) {
                 // Get next job ID (or stop if there aren't any)
                 int currentRay = photonsEmitted++;
-                if (currentRay >= totalPhotons) {
+                if (currentRay >= totalRays || this->isFull()) {
                     break;
                 }
-                Vec4 origin = fOrigin();
-                Vec4 direction = fDirection(origin);
+                if (!this->photons.isFull()) {
+                    generalShots++;
+                }
+                Vec4 origin, direction;
+                fGetSample(origin, direction);
                 // Generate photons for the point light
                 traceRay(Ray(origin, direction, medium), scene, emission);
             }
         }));
     }
 
+    // Wait for tasks to finish
     bool finished = false;
     auto beginTime = std::chrono::system_clock::now().time_since_epoch();
     printProgress(beginTime, 0.0f);
     while (!finished) {
-        float progress = photonsEmitted / (float)totalPhotons;
+        float progress = photonsEmitted / (float)totalRays;
         printProgress(beginTime, std::fminf(1.0f, progress));
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -103,36 +112,55 @@ void PhotonEmitter::traceRays(
         }
     }
     std::cout << std::endl;  // space for more progress bars
+
+    // Save shot rays for later normalization
+    this->shotRays = generalShots;  // every core adds one
 }
 
-void PhotonEmitter::emitPointLight(const Scene &scene,
-                                   const PointLight &light) {
-    float max = light.emission.max();
-    int totalPhotons = max * (1.0f / epp);
-    RGBColor emission = light.emission * (epp / max);
-    const auto fOrigin = [&light]() { return light.point; };
-    const auto fDirection = [](const Vec4 &point) {
-        // Inclination & azimuth for uniform cosine sampling
+void PhotonEmitter::emitPointLights(const Scene &scene,
+                                    const MediumPtr &medium) {
+    // Determine how many rays should be shot from each source
+    float totalWeight = 0.0f;
+    RGBColor totalEmission(0.0f, 0.0f, 0.0f);
+    for (const PointLight &light : scene.lights) {
+        float weight = light.emission.max();
+        totalWeight += weight;
+        totalEmission = totalEmission + light.emission;
+    }
+    std::vector<float> weights;
+    float accumWeight = 0.0f;
+    for (const PointLight &light : scene.lights) {
+        float weight = light.emission.max();
+        accumWeight += weight / totalWeight;
+        weights.push_back(accumWeight);
+    }
+    // Origin & direction sampling
+    const auto fGetSample = [&scene, &weights](Vec4 &point, Vec4 &direction) {
+        // Shoot photons from point lights using importance weighting
+        float random = random01();
+        for (int i = 0; i < weights.size(); i++) {
+            if (random < weights[i]) {
+                point = scene.lights[i].point;
+            }
+        }
+        // Direction uniform sampling on unit sphere
         float incl = acosf(1.0f - 2.0f * random01());
         float azim = 2.0f * M_PI * random01();
-        return Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
-                    cosf(incl), 0.0f);
+        direction = Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
+                         cosf(incl), 0.0f);
     };
-    traceRays(totalPhotons, emission, fOrigin, fDirection, light.medium, scene);
+    // Shoot random photons
+    traceRays(scene, totalEmission, medium, fGetSample);
 }
 
 void PhotonEmitter::emitAreaLight(const Scene &scene, const FigurePtr &figure,
-                                  const RGBColor &emission,
+                                  const RGBColor &areaEmission,
                                   const MediumPtr &medium) {
-    float area = figure->getTotalArea();
-    float max = emission.max();
-    int totalPhotons = max * (area / epp);
-    RGBColor photonEmission = emission * (epp / max);
-    const auto fOrigin = [&figure]() { return figure->randomPoint(); };
-    const auto fDirection = [&figure](const Vec4 &point) {
-        return figure->randomDirection(point);
+    const auto fGetSample = [&figure](Vec4 &point, Vec4 &direction) {
+        point = figure->randomPoint();
+        direction = figure->randomDirection(point);
     };
-    traceRays(totalPhotons, photonEmission, fOrigin, fDirection, medium, scene);
+    traceRays(scene, areaEmission, medium, fGetSample);
 }
 
 /// Debug image ///
@@ -167,7 +195,10 @@ void debugPhotons(const PhotonKdTreeBuilder &tree, const Film &film,
     }
 }
 
-PPMImage PhotonEmitter::debugPhotonsImage(const Film &film) {
+PPMImage PhotonEmitter::debugPhotonsImage(const Film &film,
+                                          const bool doPhotons,
+                                          const bool doCaustics,
+                                          const bool doVolume) {
     // Black image
     PPMImage image(film.width, film.height, std::numeric_limits<int>::max());
     image.fillPixels(RGBColor::Black);
@@ -180,8 +211,15 @@ PPMImage PhotonEmitter::debugPhotonsImage(const Film &film) {
              dot(film.origin.normalize(), film.forward.normalize())),
         Material::none()));
 
-    debugPhotons(photons, film, filmPlane, RGBColor::Cyan, image);
-    debugPhotons(caustics, film, filmPlane, RGBColor::White, image);
+    if (doPhotons) {
+        debugPhotons(photons, film, filmPlane, RGBColor::Cyan, image);
+    }
+    if (doCaustics) {
+        debugPhotons(caustics, film, filmPlane, RGBColor::White, image);
+    }
+    if (doVolume) {
+        debugPhotons(volume, film, filmPlane, RGBColor::Red, image);
+    }
 
     image.setMax(image.calculateMax());
     return image;

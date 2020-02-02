@@ -1,5 +1,7 @@
 #pragma once
 
+class Ray;
+
 #include "camera/medium.h"
 #include "math/geometry.h"
 

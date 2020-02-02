@@ -52,10 +52,12 @@ PhotonKdTree::NodePtr PhotonKdTreeBuilder::dividePhotons(
         new PhotonKdTree::Node(*vmedian, axis, left, right));
 }
 
-PhotonKdTree PhotonKdTreeBuilder::build() {
+PhotonKdTree PhotonKdTreeBuilder::build(const int shotRays) {
+    for (Photon &photon : photons) {
+        photon.flux = photon.flux * (1.0f / shotRays);
+    }
     std::vector<Photon>::iterator begin = photons.begin();
     std::vector<Photon>::iterator end = photons.end();
-    std::cout << "El mapa contiene " << photons.size() << " fotones" << std::endl;
     PhotonKdTree::NodePtr root = dividePhotons(begin, end);
     photons.clear();
     return PhotonKdTree(root);

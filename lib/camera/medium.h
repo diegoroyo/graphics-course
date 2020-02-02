@@ -8,13 +8,13 @@ typedef std::shared_ptr<Medium> MediumPtr;
 // about the medium
 struct Medium {
     const float refractiveIndex;
-    const bool participative;
 
    protected:
-    constexpr Medium(float _refractiveIndex, bool _participative = false)
-        : refractiveIndex(_refractiveIndex), participative(_participative) {}
+    constexpr Medium(float _refractiveIndex)
+        : refractiveIndex(_refractiveIndex) {}
 
    public:
+    virtual ~Medium() = default;
     static MediumPtr air;
     static MediumPtr create(float _refractiveIndex) {
         return MediumPtr(new Medium(_refractiveIndex));

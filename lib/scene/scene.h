@@ -39,5 +39,5 @@ class Scene {
     // TODO maybe add medium events here
     bool intersection(const Ray &ray, RayHit &hit) const;
     // Calculate direct light incoming from point lights
-    RGBColor directLight(const RayHit &hit, const Vec4 &wo) const;
+    virtual RGBColor directLight(const RayHit &hit, const Vec4 &wo) const;
 };

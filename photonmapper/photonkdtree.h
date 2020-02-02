@@ -69,10 +69,10 @@ class PhotonKdTreeBuilder {
                                         std::vector<Photon>::iterator &vend);
 
    public:
-    const int max;
+    int max;
     std::vector<Photon> photons;
 
-    PhotonKdTreeBuilder(int _max = -1) : max(_max), photons() {}
+    PhotonKdTreeBuilder(const int _max = -1) : max(_max), photons() {}
 
     void add(const Photon &photon) {
         static std::mutex mutex;
@@ -82,7 +82,9 @@ class PhotonKdTreeBuilder {
         }
         mutex.unlock();
     }
+    void setMax(const int _max) { this->max = _max; }
+    bool isFull() const { return this->photons.size() == max; }
 
     // clears photons vector and returns new vector
-    PhotonKdTree build();
+    PhotonKdTree build(const int shotRays = 1);
 };

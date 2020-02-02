@@ -71,6 +71,7 @@ class PerfectSpecular : public Event {
 
 class PerfectRefraction : public Event {
     const MediumPtr medium;
+    static bool isFresnelDisabled;
 
    public:
     PerfectRefraction(float _krp, const MediumPtr &_medium)
@@ -80,6 +81,11 @@ class PerfectRefraction : public Event {
                              const Vec4 &wi, const Vec4 &wo) const override;
     RGBColor applyNextEvent(const RGBColor &lightIn, const RayHit &hit,
                             const Vec4 &wi, const Vec4 &wo) const override;
+
+    // Disable fresnel events (critical angle still applies)
+    static void disableFresnel() {
+        PerfectRefraction::isFresnelDisabled = true;
+    }
 };
 
 class Portal : public Event {

@@ -1,9 +1,33 @@
 #include "photonmapper.h"
 
+RGBColor PhotonMapper::directLightMedium(const Scene &scene, const RayHit &hit,
+                                         const Vec4 &wo) const {
+    RGBColor result(0.0f, 0.0f, 0.0f);
+    // Check all lights in the scene
+    for (auto &light : scene.lights) {
+        Vec4 wi = light.point - hit.point;
+        float norm = wi.module();
+        wi = wi * (1.0f / norm);
+        RayHit hit;
+        Ray ray(light.point, wi * -1.0f, scene.air);
+        // Check if theres direct view from light to point
+        if (scene.intersection(ray, hit) &&
+            std::abs(hit.distance - norm) < 1e-5f &&
+            dot(hit.normal, ray.direction) < 1e-5f) {
+            // Add light's emission to the result
+            RGBColor inEmission = light.emission * (1.0f / (norm * norm));
+            HomAmbMedium::applyLight(inEmission, ray, hit);
+            result = result + hit.material->evaluate(inEmission, hit, wi, wo) *
+                                  dot(hit.normal, wi);
+        }
+    }
+    return result * (1.0f / (4.0f * M_PI));
+}
+
 RGBColor PhotonMapper::treeSearch(const PhotonKdTree &tree, const int kNN,
                                   const RayHit &hit,
                                   const Vec4 &outDirection) const {
-    if (tree.empty()) {
+    if (tree.empty() || kNN == 0) {
         return RGBColor::Black;  // map is empty (e.g. caustics)
     }
     // Indirect light: get k-nearest photons on photon tree
@@ -29,6 +53,7 @@ RGBColor PhotonMapper::treeSearch(const PhotonKdTree &tree, const int kNN,
     return sum * (1.0f / denominator);
 }
 
+// TODO quitar cuando este seguro de que se calcula bien la energia
 RGBColor totalDirect(0.0f, 0.0f, 0.0f), totalIndirect(0.0f, 0.0f, 0.0f);
 int total = 0;
 
@@ -37,16 +62,18 @@ RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene) const {
     Vec4 outDirection = ray.direction * -1.0f;
     if (scene.intersection(ray, hit)) {
         // Light emitted by hit object
-        RGBColor emittedLight(0.0f, 0.0f, 0.0f);
+        RGBColor emitLight(0.0f, 0.0f, 0.0f);
         if (hit.material->emitsLight) {
-            emittedLight = hit.material->emission;
+            emitLight = hit.material->emission;
         }
         // Check for delta surfaces
         EventPtr delta = hit.material->getFirstDelta();
         Ray nextRay;
         if (delta != nullptr && delta->nextRay(ray, hit, nextRay)) {
             // Delta event, emitted light doesn't matter
-            return traceRay(nextRay, scene) * delta->prob;
+            RGBColor next = traceRay(nextRay, scene) * delta->prob;
+            HomAmbMedium::applyLight(next, ray, hit);
+            return next;
         }
         // Indirect light (normal + caustic)
         RGBColor indirectLight =
@@ -56,13 +83,15 @@ RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene) const {
         // Direct light on point using scene
         RGBColor directLight(0.0f, 0.0f, 0.0f);
         if (directShadowRays) {
-            directLight = scene.directLight(hit, outDirection);
-            directLight = directLight * (1.0f / (4.0f * M_PI));
+            directLight = directLightMedium(scene, hit, outDirection);
         }
+        // TODO quitar cuando este seguro de que se calcula bien
         totalDirect = totalDirect + directLight;
         totalIndirect = totalIndirect + indirectLight;
         total = total + 1;
-        return emittedLight + indirectLight + causticLight + directLight;
+        RGBColor res = emitLight + indirectLight + causticLight + directLight;
+        HomAmbMedium::applyLight(res, ray, hit);
+        return res;
     }
     // Didn't hit with anything on the scene
     return scene.backgroundColor;
