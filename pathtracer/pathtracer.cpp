@@ -26,10 +26,14 @@ RGBColor PathTracer::traceRay(const Ray &ray, const Scene &scene) const {
             std::cout << "Event on point " << hit.point << " with normal "
                       << hit.normal << std::endl;
 #endif
-            RGBColor directLight = scene.directLight(hit, nextRay.direction);
-            RGBColor nextEventLight =
-                event->applyMonteCarlo(traceRay(nextRay, scene), hit,
-                                       ray.direction, nextRay.direction);
+            // Wo, direction where light is going out
+            Vec4 backDir = ray.direction * -1.0f;
+            // Wi, direction where light is coming in next iteration
+            Vec4 nextDir = nextRay.direction * -1.0f;
+            // Get direct light & next event contributions
+            RGBColor directLight = scene.directLight(hit, backDir);
+            RGBColor nextEventLight = event->applyMonteCarlo(
+                traceRay(nextRay, scene), hit, nextDir, backDir);
             return nextEventLight + directLight;
 #ifdef DEBUG_PATH
         } else {

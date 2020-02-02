@@ -54,7 +54,7 @@ bool PhongSpecular::nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) {
     // Local base to hit point
     Vec4 reflectNormal = reflectDirection(inRay.direction, hit.normal);
     Vec4 x, y, z;
-    baseFromNormal(hit.normal, x, y, z);
+    baseFromNormal(reflectNormal, x, y, z);
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
     Vec4 outDirection = cob * Vec4(sinf(incl) * cosf(azim),
                                    sinf(incl) * sinf(azim), cosf(incl), 0.0f);
@@ -85,7 +85,7 @@ RGBColor PhongSpecular::applyNextEvent(const RGBColor &lightIn,
                                        const Vec4 &wo) const {
     Vec4 wr = reflectDirection(wi, hit.normal);
     float outCos = dot(wr, wo);
-    return lightIn * this->prob * fabs(powf(outCos, this->alpha)) *
+    return lightIn * this->prob * fabsf(powf(outCos, this->alpha)) *
            ((this->alpha + 2.0f) / (2.0f * M_PI));
 }
 
@@ -277,7 +277,7 @@ EventPtr Material::getFirstDelta() const {
 RGBColor Material::evaluate(const RGBColor &lightIn, const RayHit &hit,
                             const Vec4 &wi, const Vec4 &wo) const {
     RGBColor result(0.0f, 0.0f, 0.0f);
-    for (const EventPtr& event : this->events) {
+    for (const EventPtr &event : this->events) {
         result = result + event->applyNextEvent(lightIn, hit, wi, wo);
     }
     return result;
