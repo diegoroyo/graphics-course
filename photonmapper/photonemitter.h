@@ -6,6 +6,7 @@
 #include "camera/film.h"
 #include "camera/homambmedium.h"
 #include "camera/progress.h"
+#include "homisomedium.h"
 #include "photonkdtree.h"
 #include "scene/figures.h"
 #include "scene/scene.h"

@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
 #endif
 
     Film film(width, height, origin, forward, up);
-    film.setDoFRadius(0.015f);
+    // film.setDoFRadius(0.015f);
     RayTracerPtr pathTracer = RayTracerPtr(new PathTracer(ppp, film));
     Camera camera(film, pathTracer);
 
@@ -135,16 +135,19 @@ int main(int argc, char **argv) {
         UVMaterial::builder(1, 1)
             .addPhongDiffuse(RGBColor(0.1f, 0.45f, 0.45f))
             .addPhongSpecular(0.3f, 75.0f)
+            // .addPerfectSpecular(0.9f)
             .build();
     UVMaterialPtr magentaUvTexture =
         UVMaterial::builder(1, 1)
             .addPhongDiffuse(RGBColor(0.45f, 0.1f, 0.45f))
             .addPhongSpecular(0.3f, 5.0f)
+            // .addPerfectSpecular(0.9f)
             .build();
     UVMaterialPtr yellowUvTexture =
         UVMaterial::builder(1, 1)
             .addPhongDiffuse(RGBColor(0.45f, 0.45f, 0.1f))
             .addPhongSpecular(0.3f, 1000.0f)
+            // .addPerfectSpecular(0.9f)
             .build();
     PLYModel cyanBunnyModel("ply/bunny.ply", cyanUvTexture);
     cyanBunnyModel.transform(

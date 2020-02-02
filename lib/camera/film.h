@@ -45,8 +45,8 @@ struct Film {
         if (dofRadius == 0.0f) {
             return Vec4();
         } else {
-            float r = dofRadius * sqrtf(random01());
-            Mat4 rotZ = Mat4::rotationZ(random01() * 2.0f * M_PI);
+            float r = dofRadius * sqrtf(Random::ZeroOne());
+            Mat4 rotZ = Mat4::rotationZ(Random::ZeroOne() * 2.0f * M_PI);
             return localToWorld(rotZ * Vec4(0.0f, r, 0.0f, 0.0f));
         }
     }

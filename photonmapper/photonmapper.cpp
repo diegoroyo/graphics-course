@@ -4,7 +4,7 @@ RGBColor PhotonMapper::directLightMedium(const Scene &scene, const RayHit &hit,
                                          const Vec4 &wo) const {
     RGBColor result(0.0f, 0.0f, 0.0f);
     // Check all lights in the scene
-    for (auto &light : scene.lights) {
+    for (const auto &light : scene.lights) {
         Vec4 wi = light.point - hit.point;
         float norm = wi.module();
         wi = wi * (1.0f / norm);
@@ -16,7 +16,9 @@ RGBColor PhotonMapper::directLightMedium(const Scene &scene, const RayHit &hit,
             dot(hit.normal, ray.direction) < 1e-5f) {
             // Add light's emission to the result
             RGBColor inEmission = light.emission * (1.0f / (norm * norm));
-            HomAmbMedium::applyLight(inEmission, ray, hit);
+            inEmission = HomAmbMedium::applyLight(inEmission, ray, hit);
+            inEmission = HomIsoMedium::rayMarch(inEmission, ray, hit, volume,
+                                                kvNeighbours);
             result = result + hit.material->evaluate(inEmission, hit, wi, wo) *
                                   dot(hit.normal, wi);
         }
@@ -57,7 +59,8 @@ RGBColor PhotonMapper::treeSearch(const PhotonKdTree &tree, const int kNN,
 RGBColor totalDirect(0.0f, 0.0f, 0.0f), totalIndirect(0.0f, 0.0f, 0.0f);
 int total = 0;
 
-RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene) const {
+RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene,
+                                const int level) const {
     RayHit hit;
     Vec4 outDirection = ray.direction * -1.0f;
     if (scene.intersection(ray, hit)) {
@@ -71,8 +74,13 @@ RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene) const {
         Ray nextRay;
         if (delta != nullptr && delta->nextRay(ray, hit, nextRay)) {
             // Delta event, emitted light doesn't matter
-            RGBColor next = traceRay(nextRay, scene) * delta->prob;
-            HomAmbMedium::applyLight(next, ray, hit);
+            if (level > MAX_LEVEL) {
+                // Don't go too far in recursion
+                return RGBColor::Black;
+            }
+            RGBColor next = traceRay(nextRay, scene, level + 1) * delta->prob;
+            next = HomAmbMedium::applyLight(next, ray, hit);
+            next = HomIsoMedium::rayMarch(next, ray, hit, volume, kvNeighbours);
             return next;
         }
         // Indirect light (normal + caustic)
@@ -90,7 +98,8 @@ RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene) const {
         totalIndirect = totalIndirect + indirectLight;
         total = total + 1;
         RGBColor res = emitLight + indirectLight + causticLight + directLight;
-        HomAmbMedium::applyLight(res, ray, hit);
+        res = HomAmbMedium::applyLight(res, ray, hit);
+        res = HomIsoMedium::rayMarch(res, ray, hit, volume, kvNeighbours);
         return res;
     }
     // Didn't hit with anything on the scene
@@ -102,8 +111,8 @@ void PhotonMapper::tracePixel(const int px, const int py, const Film &film,
     RGBColor pixelColor(0.0f, 0.0f, 0.0f);
     Vec4 pixelCenter = film.getPixelCenter(px, py);
     for (int p = 0; p < ppp; ++p) {
-        float randX = random01();
-        float randY = random01();
+        float randX = Random::ZeroOne();
+        float randY = Random::ZeroOne();
         Vec4 direction =
             pixelCenter + film.deltaX * randX + film.deltaY * randY;
         // Trace ray and store mean in result

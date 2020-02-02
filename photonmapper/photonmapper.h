@@ -8,6 +8,7 @@
 #include "photonkdtree.h"
 
 class PhotonMapper : public RayTracer {
+    static const int MAX_LEVEL = 100;
     const int shotRays;
     const int ppp, kNeighbours, kcNeighbours, kvNeighbours;
     const PhotonKdTree photons, caustics, volume;
@@ -24,7 +25,8 @@ class PhotonMapper : public RayTracer {
                         const RayHit &hit, const Vec4 &outDirection) const;
 
     // Trace the path followed by the cameraRay (multiple hits etc)
-    RGBColor traceRay(const Ray &ray, const Scene &scene) const;
+    RGBColor traceRay(const Ray &ray, const Scene &scene,
+                      const int level = 1) const;
 
    public:
     PhotonMapper(int _ppp, const Film &film, PhotonEmitter &_emitter,

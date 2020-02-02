@@ -60,8 +60,8 @@ void TexturedPlane::setUVMaterial(const UVMaterialPtr &_uvMaterial,
 }
 
 Vec4 TexturedPlane::randomPoint() const {
-    float px = random01();
-    float py = random01();
+    float px = Random::ZeroOne();
+    float py = Random::ZeroOne();
     return this->uvOrigin + this->uvX * px + this->uvY * py;
 }
 
@@ -70,10 +70,7 @@ Vec4 TexturedPlane::randomDirection(const Vec4 &point) const {
     Vec4 x = this->uvX.normalize();
     Vec4 y = this->uvY.normalize();
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4(0.0f));
-    float incl = acosf(sqrtf(random01()));
-    float azim = 2 * M_PI * random01();
-    return cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
-                      cosf(incl), 0.0f);
+    return Random::CosHemisphere(cob);
 }
 
 float TexturedPlane::getTotalArea() const {
@@ -123,13 +120,7 @@ bool Sphere::intersection(const Ray &ray, RayHit &hit) const {
     }
 }
 
-Vec4 Sphere::randomPoint() const {
-    float incl = acosf(1.0f - 2.0f * random01());
-    float azim = 2 * M_PI * random01();
-    Vec4 direction = Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
-                          cosf(incl), 0.0f);
-    return direction * this->radius;
-}
+Vec4 Sphere::randomPoint() const { return Random::Sphere() * this->radius; }
 
 Vec4 Sphere::randomDirection(const Vec4 &point) const {
     Vec4 z = (point - this->center).normalize();
@@ -141,10 +132,7 @@ Vec4 Sphere::randomDirection(const Vec4 &point) const {
     }
     Vec4 y = cross(x, z);
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4(0.0f));
-    float incl = acosf(sqrtf(random01()));
-    float azim = 2 * M_PI * random01();
-    return cob * Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
-                      cosf(incl), 0.0f);
+    return Random::CosHemisphere(cob);
 }
 
 float Sphere::getTotalArea() const {
@@ -163,7 +151,7 @@ Triangle::Triangle(const PLYModel *_model, int _v0i, int _v1i, int _v2i)
       uv2(_model->uv(_v2i)),
       edge0(v1 - v0),
       edge1(v2 - v0),
-      normal(cross(edge0, edge1).normalize()) {}
+      normal(cross(edge1, edge0).normalize()) {}
 
 // https://github.com/ssloy/tinyrenderer/wiki/Lesson-2:-Triangle-rasterization-and-back-face-culling
 Vec4 Triangle::getBarycentric(const Vec4 &p) const {
@@ -233,8 +221,8 @@ bool Triangle::intersection(const Ray &ray, RayHit &hit) const {
     tex1 = tex1 > 1.0f - 1e-5f ? 1.0f - 1e-5f : tex1;
     hit.material = this->model->material(tex0, tex1);
     // Calculate normal as it was a plane
-    hit.enters = dot(this->normal, ray.direction) > 1e-5f;
-    hit.normal = hit.enters ? this->normal * -1.0f : this->normal;
+    hit.enters = dot(this->normal, ray.direction) < -1e-5f;
+    hit.normal = hit.enters ? this->normal : this->normal * -1.0f;
     return true;
 }
 

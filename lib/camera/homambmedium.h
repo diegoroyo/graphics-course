@@ -32,12 +32,13 @@ struct HomAmbMedium : public Medium {
                                           _kScattering, _inScatter));
     }
 
-    static inline void applyLight(RGBColor &light, const Ray &ray,
-                                  const RayHit &hit) {
+    static inline RGBColor applyLight(const RGBColor &light, const Ray &ray,
+                                      const RayHit &hit) {
         HomAmbMediumPtr pmedium =
             std::dynamic_pointer_cast<HomAmbMedium>(ray.medium);
         if (pmedium != nullptr) {
-            light = pmedium->fApplyLight(light, ray, hit);
+            return pmedium->fApplyLight(light, ray, hit);
         }
+        return light;
     }
 };

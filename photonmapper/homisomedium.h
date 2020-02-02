@@ -8,6 +8,7 @@ typedef std::shared_ptr<HomIsoMedium> HomIsoMediumPtr;
 #include "camera/ray.h"
 #include "camera/rayhit.h"
 #include "filter.h"
+#include "math/random.h"
 #include "photonkdtree.h"
 
 // Homogeneous isotropic scattering
@@ -28,6 +29,17 @@ struct HomIsoMedium : public Medium {
     static inline HomIsoMediumPtr cast(const MediumPtr &medium) {
         return std::dynamic_pointer_cast<HomIsoMedium>(medium);
     }
+    RGBColor volumeSearch(const PhotonKdTree &volume, const int kNN,
+                          const Vec4 &point) const;
+
+    // true if ray is absorbed
+    bool fRayEmit(const Scene &scene, const RGBColor &light, Ray &ray,
+                  RayHit &hit, PhotonKdTreeBuilder &volume) const;
+    RGBColor fApplyTransmittance(const RGBColor &light,
+                                 const float distance) const;
+    RGBColor fRayMarchTrace(const RGBColor &lightIn, const Ray &ray,
+                            const RayHit &hit, const PhotonKdTree &volume,
+                            const int kNN) const;
 
    public:
     static MediumPtr create(float _refractiveIndex, float _kExtinction,
@@ -36,17 +48,25 @@ struct HomIsoMedium : public Medium {
                                           _kScattering, _deltaD));
     }
 
-    static inline void rayMarchEmit(const Ray &ray, const RayHit &hit,
-                                    PhotonKdTreeBuilder &volume) {
+    static inline bool rayEmit(const Scene &scene, const RGBColor &light,
+                               Ray &ray, RayHit &hit,
+                               PhotonKdTreeBuilder &volume) {
         // Participative media
         HomIsoMediumPtr pmedium = cast(ray.medium);
         if (pmedium != nullptr) {
-            pmedium->fRayMarchEmit(ray, hit, volume);
+            return pmedium->fRayEmit(scene, light, ray, hit, volume);
         }
+        return false;
     }
 
-    void fRayMarchEmit(const Ray &ray, const RayHit &hit,
-                       PhotonKdTreeBuilder &volume) const;
-    RGBColor fRayMarchTrace(const RGBColor &light, const Ray &ray,
-                            const RayHit &hit) const;
+    static inline RGBColor rayMarch(const RGBColor &lightIn, const Ray &ray,
+                                    const RayHit &hit,
+                                    const PhotonKdTree &volume, const int kNN) {
+        // Participative media
+        HomIsoMediumPtr pmedium = cast(ray.medium);
+        if (pmedium != nullptr) {
+            return pmedium->fRayMarchTrace(lightIn, ray, hit, volume, kNN);
+        }
+        return lightIn;
+    }
 };

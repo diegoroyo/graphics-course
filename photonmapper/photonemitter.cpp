@@ -19,12 +19,19 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
     if (!scene.intersection(ray, hit)) {
         return;
     }
+    flux = HomAmbMedium::applyLight(flux, ray, hit);
+    if (HomIsoMedium::rayEmit(scene, flux, ray, hit, volume)) {
+        // Absorbed, already added to volume map
+        return;
+    }
     // Absorption event
     EventPtr event = hit.material->selectEvent();
     if (event == nullptr || !event->nextRay(ray, hit, ray)) {
+        if (storeDirectLight) {
+            this->savePhoton(Photon(hit.point, ray.direction, flux), false);
+        }
         return;
     }
-    HomAmbMedium::applyLight(flux, ray, hit);
     // Arrived at destination: store & apply BSDF
     if (storeDirectLight && !event->isDelta) {
         this->savePhoton(Photon(hit.point, ray.direction, flux), false);
@@ -36,7 +43,11 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
     bool wasLastCaustic = false;
     while (scene.intersection(ray, hit) && flux.max() > initialFlux * CUT_PCT) {
         // Participative media
-        HomAmbMedium::applyLight(flux, ray, hit);
+        flux = HomAmbMedium::applyLight(flux, ray, hit);
+        if (HomIsoMedium::rayEmit(scene, flux, ray, hit, volume)) {
+            // Absorbed, already added to volume map
+            return;
+        }
         if (hit.material->emitsLight) {
             // Save INCOMING flux and ignore light
             this->savePhoton(Photon(hit.point, ray.direction, flux),
@@ -66,6 +77,7 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
 void PhotonEmitter::traceRays(
     const Scene &scene, const RGBColor &emission, const MediumPtr &medium,
     const std::function<void(Vec4 &, Vec4 &)> &fGetSample) {
+    static std::mutex mutex;
     // Spawn one core per thread and make them consume work as they finish
     volatile std::atomic<int> photonsEmitted(0), generalShots(0);
 #ifdef DEBUG_ONE_CORE
@@ -85,10 +97,12 @@ void PhotonEmitter::traceRays(
                 if (!this->photons.isFull()) {
                     generalShots++;
                 }
+                mutex.lock();
                 Vec4 origin, direction;
                 fGetSample(origin, direction);
                 // Generate photons for the point light
                 traceRay(Ray(origin, direction, medium), scene, emission);
+                mutex.unlock();
             }
         }));
     }
@@ -137,17 +151,14 @@ void PhotonEmitter::emitPointLights(const Scene &scene,
     // Origin & direction sampling
     const auto fGetSample = [&scene, &weights](Vec4 &point, Vec4 &direction) {
         // Shoot photons from point lights using importance weighting
-        float random = random01();
+        float random = Random::ZeroOne();
         for (int i = 0; i < weights.size(); i++) {
             if (random < weights[i]) {
                 point = scene.lights[i].point;
             }
         }
         // Direction uniform sampling on unit sphere
-        float incl = acosf(1.0f - 2.0f * random01());
-        float azim = 2.0f * M_PI * random01();
-        direction = Vec4(sinf(incl) * cosf(azim), sinf(incl) * sinf(azim),
-                         cosf(incl), 0.0f);
+        direction = Random::Sphere();
     };
     // Shoot random photons
     traceRays(scene, totalEmission, medium, fGetSample);

@@ -51,8 +51,8 @@ void PathTracer::tracePixel(const int px, const int py, const Film &film,
     RGBColor pixelColor(0.0f, 0.0f, 0.0f);
     Vec4 pixelCenter = film.getPixelCenter(px, py);
     for (int p = 0; p < ppp; ++p) {
-        float randX = random01();
-        float randY = random01();
+        float randX = Random::ZeroOne();
+        float randY = Random::ZeroOne();
         Vec4 dof = film.getDoFDisplacement();
         Vec4 direction =
             pixelCenter + film.deltaX * randX + film.deltaY * randY;

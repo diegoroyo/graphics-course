@@ -2,6 +2,7 @@
 #include "camera/film.h"
 #include "camera/homambmedium.h"
 #include "filter.h"
+#include "homisomedium.h"
 #include "math/geometry.h"
 #include "photonemitter.h"
 #include "photonmapper.h"
@@ -41,11 +42,11 @@ int main(int argc, char** argv) {
     int width = 600;
     int height = 600;
 
-    int photonsGlobal = 10000;
+    int photonsGlobal = 20000;
     int photonsCaustic = 10000;
-    int photonsVolume = -1;
+    int photonsVolume = 20000;
     bool storeDirectLight = false;
-    int numRays = 10000;
+    int numRays = 5000;
 
     Vec4 origin(-4.5f, 0.0f, 0.0, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
@@ -54,8 +55,9 @@ int main(int argc, char** argv) {
     // film.setDepthOfField(0.015f);
     PhotonEmitter emitter(photonsGlobal, storeDirectLight, numRays);
     emitter.setCaustic(photonsCaustic);
-    // emitter.setVolume(photonsVolume);
-    Medium::air = HomAmbMedium::create(1.0f, 0.6f, 0.3f, RGBColor::Cyan);
+    emitter.setVolume(photonsVolume);
+    // Medium::air = HomAmbMedium::create(1.0f, 0.6f, 0.3f, RGBColor::Cyan);
+    Medium::air = HomIsoMedium::create(1.0f, 0.3f, 0.1f, 0.1f);
 
 // shortcuts for getting figure pointers
 #define plane(normal, dist, material) \
@@ -77,7 +79,7 @@ int main(int argc, char** argv) {
     // MediumPtr glass = HomAmbMedium::create(1.5f, 0.4f, 0.2f, RGBColor::Cyan *
     // 100.0f);
     UVMaterialPtr transparentTexture =
-        UVMaterial::builder(1, 1).addPerfectRefraction(0.99f, glass).build();
+        UVMaterial::builder(1, 1).addPerfectRefraction(0.9f, glass).build();
     PLYModel teapotModel("ply/teapot.ply", transparentTexture);
     teapotModel.transform(
         Mat4::translation(0.0f, -0.5f, 0.0f) * Mat4::rotationX(M_PI_2 * -1.0f) *
@@ -121,13 +123,14 @@ int main(int argc, char** argv) {
         // Cornell box content
         // teapot
         sphere(mirror, Vec4(1.0f, -1.25f, -1.0f, 1.0f), 0.75f),
-        sphere(transparent, Vec4(0.0f, -1.35f, 1.0f, 1.0f), 0.6f)};
+        sphere(transparent, Vec4(-0.2f, -1.2f, 1.0f, 1.0f), 0.7f)
+    };
 
     FigurePtr rootNode = FigurePtr(new Figures::BVNode(sceneElements));
     Scene scene(rootNode, RGBColor::Black, maxLight);
 
     // Add points lights to the scene
-    scene.light(Vec4(0.0f, 0.0f, 0.0f, 0.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(0.0f, 1.7f, 0.0f, 0.0f), RGBColor::White * maxLight);
 
 #undef plane
 #undef sphere
@@ -137,17 +140,17 @@ int main(int argc, char** argv) {
 #undef perfectSpecular
 #undef perfectRefraction
 
-    // emitter.emitPointLights(scene, Medium::air);
-    emitter.emitAreaLight(scene, light, RGBColor::White * maxLight,
-                          Medium::air);
+    emitter.emitPointLights(scene, Medium::air);
+    // emitter.emitAreaLight(scene, light, RGBColor::White * maxLight,
+    //                       Medium::air);
 
     // Generate debug image
     // PPMImage debug = emitter.debugPhotonsImage(film, true, false, false);
     // debug.writeFile("out/map.ppm");
 
-    FilterPtr filter = FilterPtr(new Filter());
+    FilterPtr filter = FilterPtr(new ConeFilter());
     RayTracerPtr mapper =
-        RayTracerPtr(new PhotonMapper(1, film, emitter, 500, 100, 0, filter));
+        RayTracerPtr(new PhotonMapper(1, film, emitter, 50, 10, 35, filter));
     Camera camera(film, mapper);
     camera.tracePixels(scene);
     camera.storeResult("out/map.ppm");

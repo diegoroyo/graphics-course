@@ -20,20 +20,12 @@ inline Vec4 baseFromNormal(const Vec4 &normal, Vec4 &x, Vec4 &y, Vec4 &z) {
 /// Phong Diffuse ///
 
 bool PhongDiffuse::nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) {
-    // Random inclination & azimuth
-    float randIncl = random01();
-    float randAzim = random01();
-    // Inclination & azimuth for uniform cosine sampling
-    float incl = acosf(sqrtf(randIncl));
-    float azim = 2 * M_PI * randAzim;
-
     // Local base to hit point
     Vec4 x, y, z;
     baseFromNormal(hit.normal, x, y, z);
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
-    Vec4 outDirection = cob * Vec4(sinf(incl) * cosf(azim),
-                                   sinf(incl) * sinf(azim), cosf(incl), 0.0f);
-    outRay = Ray(hit.point, outDirection, inRay.medium);
+    Vec4 outDirection = Random::CosHemisphere(cob);
+    outRay = inRay.copy(hit.point, outDirection, hit);
     return true;
 }
 
@@ -53,8 +45,8 @@ RGBColor PhongDiffuse::applyNextEvent(const RGBColor &lightIn,
 
 bool PhongSpecular::nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) {
     // Random inclination & azimuth
-    float randIncl = random01();
-    float randAzim = random01();
+    float randIncl = Random::ZeroOne();
+    float randAzim = Random::ZeroOne();
     // Phong Specular lobe sampling
     float incl = acosf(powf(randIncl, 1.0f / (this->alpha + 1.0f)));
     float azim = 2 * M_PI * randAzim;
@@ -66,7 +58,7 @@ bool PhongSpecular::nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) {
     Mat4 cob = Mat4::changeOfBasis(x, y, z, Vec4());
     Vec4 outDirection = cob * Vec4(sinf(incl) * cosf(azim),
                                    sinf(incl) * sinf(azim), cosf(incl), 0.0f);
-    outRay = Ray(hit.point, outDirection, inRay.medium);
+    outRay = inRay.copy(hit.point, outDirection, hit);
     if (dot(outDirection, hit.normal) < 1e-6f) {
         return false;
     } else {
@@ -104,7 +96,7 @@ RGBColor PhongSpecular::applyNextEvent(const RGBColor &lightIn,
 bool PerfectSpecular::nextRay(const Ray &inRay, const RayHit &hit,
                               Ray &outRay) {
     Vec4 outDirection = reflectDirection(inRay.direction, hit.normal);
-    outRay = Ray(hit.point, outDirection, inRay.medium);
+    outRay = inRay.copy(hit.point, outDirection, hit);
     return true;
 }
 
@@ -146,7 +138,7 @@ bool PerfectRefraction::nextRay(const Ray &inRay, const RayHit &hit,
         // Out angle is greater than critical angle (see reference)
         // By fresnel laws, ray is reflected
         Vec4 outDirection = reflectDirection(inRay.direction, hit.normal);
-        outRay = Ray(hit.point, outDirection, inMedium);
+        outRay = inRay.copy(hit.point, outDirection, hit, inMedium);
         return true;
     }
 
@@ -163,10 +155,10 @@ bool PerfectRefraction::nextRay(const Ray &inRay, const RayHit &hit,
     }
     // select a random event (like roussian roulette)
     // perfect specular has probability kr, perfect refraction 1 - kr
-    if (random01() < kr) {
+    if (Random::ZeroOne() < kr) {
         // specular
         Vec4 outDirection = reflectDirection(inRay.direction, hit.normal);
-        outRay = Ray(hit.point, outDirection, inMedium);
+        outRay = inRay.copy(hit.point, outDirection, hit, inMedium);
         return true;
     } else {
         // refraction
@@ -175,7 +167,7 @@ bool PerfectRefraction::nextRay(const Ray &inRay, const RayHit &hit,
         Vec4 m = (inRay.direction + hit.normal * incCos) * (1.0f / incSin);
         Vec4 outDirection =
             hit.normal * -1.0f * cosf(theta2) + m * sinf(theta2);
-        outRay = Ray(hit.point, outDirection, outMedium);
+        outRay = inRay.copy(hit.point, outDirection, hit, outMedium);
         return true;
     }
 }
@@ -223,7 +215,7 @@ bool Portal::nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) {
     float by = dot(d, this->inPortal->uvY.normalize());
     Vec4 outPoint = cob * Vec4(bx, by, 0.0f, 1.0f);
 
-    outRay = Ray(outPoint, outDirection, inRay.medium);
+    outRay = inRay.copy(hit.point, outDirection, hit);
     return true;
 }
 
@@ -266,7 +258,7 @@ MaterialBuilder MaterialBuilder::add(const EventPtr &event) {
 }
 
 EventPtr Material::selectEvent() {
-    float event = random01();
+    float event = Random::ZeroOne();
     for (int i = 0; i < this->probs.size(); i++) {
         if (event < this->probs[i]) {
             return this->events[i];
