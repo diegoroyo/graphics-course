@@ -213,7 +213,7 @@ bool Portal::nextRay(const Ray &inRay, const RayHit &hit, Ray &outRay) {
     float by = dot(d, this->inPortal->uvY.normalize());
     Vec4 outPoint = cob * Vec4(bx, by, 0.0f, 1.0f);
 
-    outRay = inRay.copy(hit.point, outDirection, hit);
+    outRay = inRay.copy(outPoint, outDirection);
     return true;
 }
 

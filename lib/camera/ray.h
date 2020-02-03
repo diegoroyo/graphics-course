@@ -37,6 +37,9 @@ class Ray {
     inline Ray event(const float distance) const {
         return Ray(this->project(distance), this->direction, this->medium);
     }
+    inline Ray copy(const Vec4& origin, const Vec4& direction) const {
+        return Ray(origin, direction, this->medium, this->distanceWithoutEvent);
+    }
     inline Ray copy(const Vec4& origin, const Vec4& direction,
                     const RayHit& hit) const {
         return Ray(origin, direction, this->medium,
