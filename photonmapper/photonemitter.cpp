@@ -40,7 +40,7 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
 
     // Start storing photons on the second ray
     Ray nextRay;
-    bool wasLastCaustic = false;
+    bool wasLastCaustic = event->isDelta;
     while (scene.intersection(ray, hit) && flux.max() > initialFlux * CUT_PCT) {
         // Participative media
         flux = HomAmbMedium::applyLight(flux, ray, hit);

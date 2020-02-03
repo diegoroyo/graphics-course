@@ -2,7 +2,7 @@
 // Photon mapper - Informática gráfica 2019-20
 // Diego Royo (740388@unizar.es)
 //
-// There are 7 predefined scenes in the code.
+// There are 4 predefined scenes in the code.
 // Some of them may require extra files (textures, models, etc.)
 // To change scene, modify SCENE_NUMBER's value
 //
@@ -97,29 +97,29 @@ int main(int argc, char** argv) {
     //     1.0f, 0.6f, 0.4f,       // refractive index, extinction, scattering
     //     RGBColor::White * 20.0f  // in-scattering constant
     // );
-    Medium::air = HomIsoMedium::create(  // homogeneous isotropic
-        1.0f, 0.3f, 0.2f,                // refractive index,
-        0.1f                             // delta_d for ray marching
-    );
+    // Medium::air = HomIsoMedium::create(  // homogeneous isotropic
+    //     1.0f, 0.3f, 0.2f,                // refractive index,
+    //     0.1f                             // delta_d for ray marching
+    // );
     /// Participative media configuration ///
 
     /// Emitting configuration ///
     int photonsGlobal = 10000;
-    bool useCausticMap = false;
+    bool useCausticMap = true;
     int photonsCaustic = 10000;
     bool useVolumeMap = true;
     int photonsVolume = 20000;
     int numRays = 5000;
-    bool storeDirectLight = true;
+    bool storeDirectLight = false;
     /// Emiting configuration ///
 
     /// Estimating configuration ///
     bool debugGlobal = false;  // overrides photon mapping
     bool debugCaustic = false;
     bool debugVolume = false;
-    int kGlobal = 50;  // kNN search for maps
-    int kCaustic = 20;
-    int kVolume = 70;
+    int kGlobal = 70;  // kNN search for maps
+    int kCaustic = 30;
+    int kVolume = 100;
     FilterPtr filter(new Filter());
     // FilterPtr filter(new ConeFilter());
     /// Estimating configuration ///
@@ -253,7 +253,7 @@ int main(int argc, char** argv) {
 #if SCENE_NUMBER == 0 || SCENE_NUMBER == 1 || SCENE_NUMBER == 2 || \
     SCENE_NUMBER == 3
     // Add points lights to the scene
-    scene.light(Vec4(0.0f, 0.0f, 0.0f, 0.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(0.0f, 1.9f, 0.0f, 0.0f), RGBColor::White * maxLight);
     emitter.emitPointLights(scene, Medium::air);
 #endif
     // emitter.emitAreaLight(scene, light, RGBColor::White * maxLight,

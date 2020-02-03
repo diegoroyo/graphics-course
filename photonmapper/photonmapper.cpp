@@ -120,11 +120,6 @@ void PhotonMapper::tracePixel(const int px, const int py, const Film &film,
 
 PPMImage &PhotonMapper::result() {
     // Set result's max value to the render's max value
-    std::cout << "total directo: " << totalDirect * (1.0f / total)
-              << "\ntotal indirecto: " << totalIndirect * (1.0f / total)
-              << "\nratios: " << totalDirect.r / totalIndirect.r << ", "
-              << totalDirect.g / totalIndirect.g << ", "
-              << totalDirect.b / totalIndirect.b << std::endl;
     render.setMax(render.calculateMax());
     return render;
 }
