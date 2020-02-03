@@ -1,10 +1,20 @@
+//
+// Path tracer - Informática gráfica 2019-20
+// Diego Royo (740388@unizar.es)
+//
+// There are 7 predefined scenes in the code.
+// Some of them may require extra files (textures, models, etc.)
+// To change scene, modify SCENE_NUMBER's value
+//
+
 // Scene descriptions:
-// Scene 0: (final) Cornell box with basic event tests
-// Scene 1: (final) Cornell box with PLY bunnies
-// Scene 2: (final) Diamond ore wall (UVMaterial test)
-// Scene 3: (final) Portal scene 1
-// Scene 4: (final) Spaceships (UVMaterial test 2)
-// Scene 5: (final) Portal loop
+// Scene 0: Cornell box with basic event tests
+// Scene 1: Same scene as 0, but with area light
+// Scene 2: Cornell box with PLY bunnies
+// Scene 3: Diamond ore wall (UVMaterial test)
+// Scene 4: Portal scene 1
+// Scene 5: Spaceships (UVMaterial test 2)
+// Scene 6: Portal loop
 #ifndef SCENE_NUMBER
 #define SCENE_NUMBER 0
 #endif
@@ -92,30 +102,33 @@ int main(int argc, char **argv) {
 
     // Set up camera & scene
 
-#if SCENE_NUMBER == 0
-    Vec4 origin(-4.5f, -1.1f, 0.0f, 1.0f), forward(2.0f, -0.2f, 0.0f, 0.0f),
-        right(0.0f, 0.0f, 1.0f, 0.0f), up(cross(right, forward).normalize(0.4f));
-#elif SCENE_NUMBER == 1
+#if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
     Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #elif SCENE_NUMBER == 2
     Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #elif SCENE_NUMBER == 3
-    Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(1.5f, 0.0f, 0.0f, 0.0f),
+    Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.0f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #elif SCENE_NUMBER == 4
-    Vec4 origin(-6.5f, 0.0f, 0.0f, 1.0f), forward(4.0f, 0.0f, 0.0f, 0.0f),
+    Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(1.5f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #elif SCENE_NUMBER == 5
+    Vec4 origin(-6.5f, 0.0f, 0.0f, 1.0f), forward(4.0f, 0.0f, 0.0f, 0.0f),
+        up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
+#elif SCENE_NUMBER == 6
     Vec4 origin(-4.5f, 0.0f, 0.0f, 1.0f), forward(2.25f, 0.0f, 0.0f, 0.0f),
         up(0.0f, 1.0f, 0.0f, 0.0f), right(0.0f, 0.0f, 1.0f, 0.0f);
 #endif
 
     Film film(width, height, origin, forward, up);
-    // film.setDoFRadius(0.015f);
+    // film.setDoFRadius(0.015f); // depth of field effect
     RayTracerPtr pathTracer = RayTracerPtr(new PathTracer(ppp, film));
     Camera camera(film, pathTracer);
+
+    // Maximum light value (use this instead of constant numbers)
+    float maxLight = 10000.0f;
 
 // shortcuts for getting figure pointers
 #define plane(normal, dist, material) \
@@ -131,8 +144,7 @@ int main(int argc, char **argv) {
     EventPtr(new PerfectRefraction(krp, medium))
 
     // Add elements to scene
-
-#if SCENE_NUMBER == 1
+#if SCENE_NUMBER == 2
     // load & transform spaceship model, get scene kdtree node
     UVMaterialPtr cyanUvTexture =
         UVMaterial::builder(1, 1)
@@ -165,7 +177,7 @@ int main(int argc, char **argv) {
     FigurePtr cyanBunny = cyanBunnyModel.getFigure(12);
     FigurePtr magentaBunny = magentaBunnyModel.getFigure(12);
     FigurePtr yellowBunny = yellowBunnyModel.getFigure(12);
-#elif SCENE_NUMBER == 4
+#elif SCENE_NUMBER == 5
     UVMaterialPtr spaceshipTexture =
         UVMaterial::builder(512, 512)
             .addPerfectSpecular("ply/spaceship_v2_specular.ppm")
@@ -185,15 +197,24 @@ int main(int argc, char **argv) {
     FigurePtr spaceship2 = spaceshipModel2.getFigure(4);
 #endif
 
-    float maxLight = 10000.0f;
-
-#if SCENE_NUMBER == 0 || SCENE_NUMBER == 2 || SCENE_NUMBER == 3 || \
-    SCENE_NUMBER == 5
+#if SCENE_NUMBER == 0 || SCENE_NUMBER == 1 || SCENE_NUMBER == 3 || \
+    SCENE_NUMBER == 4 || SCENE_NUMBER == 6
+    // Wall materials
     MaterialPtr whiteLight =
         Material::light(RGBColor(maxLight, maxLight, maxLight));
+    UVMaterialPtr whiteAreaLight = UVMaterial::fill(1, 1, whiteLight);
+    MaterialPtr greyDiffuse =
+        Material::builder().add(phongDiffuse(RGBColor::White * 0.6f)).build();
+    MaterialPtr greenDiffuse =
+        Material::builder()
+            .add(phongDiffuse(RGBColor(0.1f, 0.8f, 0.1f)))
+            .build();
+    MaterialPtr redDiffuse = Material::builder()
+                                 .add(phongDiffuse(RGBColor(0.8f, 0.1f, 0.1f)))
+                                 .build();
     MaterialPtr whitePhong = Material::builder()
-                                 .add(phongDiffuse(RGBColor::White * 0.3f))
-                                 .add(phongSpecular(0.5f, 10.0f))
+                                 .add(phongDiffuse(RGBColor::White * 0.5f))
+                                 .add(phongSpecular(0.3f, 3.0f))
                                  .build();
     MaterialPtr greenPhong = Material::builder()
                                  .add(phongDiffuse(RGBColor(0.1f, 0.5f, 0.1f)))
@@ -203,6 +224,7 @@ int main(int argc, char **argv) {
                                .add(phongDiffuse(RGBColor(0.5f, 0.1f, 0.1f)))
                                .add(phongSpecular(0.3f, 3.0f))
                                .build();
+    // Ball materials
     MaterialPtr bluePhong = Material::builder()
                                 .add(phongSpecular(0.3f, 1.0f))
                                 .add(phongDiffuse(RGBColor(0.05f, 0.05f, 0.6f)))
@@ -221,13 +243,13 @@ int main(int argc, char **argv) {
                                 .add(phongSpecular(0.3f, 1000.0f))
                                 .add(phongDiffuse(RGBColor(0.05f, 0.6f, 0.6f)))
                                 .build();
-    MediumPtr glass = Medium::create(1.5f);
+    MediumPtr glass = Medium::create(3.0f);
     MaterialPtr transparent =
-        Material::builder().add(perfectRefraction(0.97f, glass)).build();
+        Material::builder().add(perfectRefraction(0.95f, glass)).build();
     MaterialPtr mirror =
-        Material::builder().add(perfectSpecular(0.97f)).build();
+        Material::builder().add(perfectSpecular(0.95f)).build();
     MaterialPtr pureBlack = Material::none();
-#elif SCENE_NUMBER == 1
+#elif SCENE_NUMBER == 2
     MaterialPtr whitePhong = Material::builder()
                                  .add(phongDiffuse(RGBColor::White * 0.40f))
                                  .add(phongSpecular(0.3f, 3.0f))
@@ -240,7 +262,7 @@ int main(int argc, char **argv) {
                                .add(phongDiffuse(RGBColor(0.40f, 0.1f, 0.1f)))
                                .add(phongSpecular(0.3f, 3.0f))
                                .build();
-#elif SCENE_NUMBER == 4
+#elif SCENE_NUMBER == 5
     MaterialPtr base =
         Material::builder().add(phongDiffuse(RGBColor::White * 0.9f)).build();
     MaterialPtr planet = Material::builder()
@@ -248,7 +270,7 @@ int main(int argc, char **argv) {
                              .add(phongSpecular(0.6f, 100.0f))
                              .build();
 #endif
-#if SCENE_NUMBER == 2
+#if SCENE_NUMBER == 3
     UVMaterialPtr diamondTexture =
         UVMaterial::builder(16, 16)
             .addPhongDiffuse("ply/diamondore_diffuse.ppm")
@@ -271,7 +293,7 @@ int main(int argc, char **argv) {
             .addPerfectSpecular(0.1f)  // add whatever (override lights)
             .build();
     lavaTexture->overrideLights("ply/lava_emission.ppm", maxLight);
-#elif SCENE_NUMBER == 3
+#elif SCENE_NUMBER == 4
     MaterialPtr yellowWall = Material::builder()
                                  .add(phongSpecular(0.3f, 3.0f))
                                  .add(phongDiffuse(RGBColor(0.5f, 0.5f, 0.1f)))
@@ -309,7 +331,7 @@ int main(int argc, char **argv) {
     orangePortal->setUVMaterial(
         orangePortalTexture, Vec4(-2.0f, -1.99f, -0.5f, 1.0f),
         Vec4(0.0f, 0.0f, 2.5f, 0.0f), Vec4(4.0f, 0.0f, 0.0f, 0.0f));
-#elif SCENE_NUMBER == 5
+#elif SCENE_NUMBER == 6
     FigurePortalPtr bluePortal = FigurePortalPtr(
         new Figures::TexturedPlane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 1.99f, false));
     FigurePortalPtr orangePortal = FigurePortalPtr(new Figures::TexturedPlane(
@@ -342,18 +364,25 @@ int main(int argc, char **argv) {
 
     // build scene to BVH root node
     FigurePtrVector sceneElements = {
-#if SCENE_NUMBER == 0
+#if SCENE_NUMBER == 0 || SCENE_NUMBER == 1
         // Cornell box walls
-        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whitePhong),
-        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, whitePhong),
-        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 5.0f, greenPhong),
-        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -5.0f, redPhong),
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, greyDiffuse),
+        plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, greyDiffuse),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, yellowPhong),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, greenDiffuse),
+        plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, redPhong),
+#if SCENE_NUMBER == 1
+        // Area light for ceiling
+        FigurePtr(new Figures::TexturedPlane(
+            Vec4(0.0f, 1.0f, 0.0f, 0.0f), 1.99f, whiteAreaLight,
+            Vec4(1.5f, 1.99f, 0.75f, 1.0f), Vec4(-1.5f, 0.0f, 0.0f, 0.0f),
+            Vec4(0.0f, 0.0f, -1.5f, 0.0f), false)),
+#endif
         // Cornell box content
-        sphere(bluePhong, Vec4(0.0f, -1.5f, -1.65f, 1.0f), 0.5f),
-        sphere(magentaPhong, Vec4(0.0f, -1.5f, -0.55f, 1.0f), 0.5f),
-        sphere(yellowPhong, Vec4(0.0f, -1.5f, 0.55f, 1.0f), 0.5f),
-        sphere(cyanPhong, Vec4(0.0f, -1.5f, 1.65f, 1.0f), 0.5f)
-#elif SCENE_NUMBER == 1
+        // sphere(cyanPhong, Vec4(1.0f, -1.25f, -1.0f, 1.0f), 0.75f),
+        sphere(transparent, Vec4(0.0f, -0.5f, 0.0f, 1.0f), 1.0f)
+
+#elif SCENE_NUMBER == 2
         // Cornell box walls
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whitePhong),
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whitePhong),
@@ -363,7 +392,7 @@ int main(int argc, char **argv) {
         cyanBunny,
         magentaBunny,
         yellowBunny
-#elif SCENE_NUMBER == 2
+#elif SCENE_NUMBER == 3
         FigurePtr(new Figures::TexturedPlane(
             Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, stoneTexture,
             Vec4(0.0f, 2.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, 1.0f, 0.0f),
@@ -393,7 +422,7 @@ int main(int argc, char **argv) {
         sphere(yellowPhong, Vec4(1.1f, -1.6f, 1.5f, 1.0f), 0.4f),
         sphere(mirror, Vec4(0.5f, -1.6f, -1.3f, 1.0f), 0.4f),
         sphere(cyanPhong, Vec4(-0.5f, -1.65f, 1.4f, 1.0f), 0.35f)
-#elif SCENE_NUMBER == 3
+#elif SCENE_NUMBER == 4
         // Cornell box walls
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, yellowWall),
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whitePhong),
@@ -406,13 +435,12 @@ int main(int argc, char **argv) {
         orangePortal,
         sphere(magentaPhong, Vec4(-1.0f, -1.25f, -1.0f, 1.0f), 0.5f),
         sphere(mirror, Vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.8f)
-    // TODO simular objetos entrando-saliendo de portales
-#elif SCENE_NUMBER == 4
+#elif SCENE_NUMBER == 5
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, base),
         sphere(planet, Vec4(-1.0f, 1.8f, -1.3f, 0.0f), 1.25f),
         spaceship,
         spaceship2
-#elif SCENE_NUMBER == 5
+#elif SCENE_NUMBER == 6
         // Cornell box walls
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whitePhong),
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, whitePhong),
@@ -429,38 +457,37 @@ int main(int argc, char **argv) {
 #endif
     };
 
-    // Debug a random path
+    // Debug a random path (test function above)
     // MaterialPtr debugSphere = Material::light(RGBColor::Cyan * maxLight);
     // EventPtr debugEvent = phongDiffuse(RGBColor::White);
-    // addDebugHits(sceneElements, Ray(origin, forward.normalize(),
-    // Medium::air),
+    // addDebugHits(sceneElements, // collide with scene
+    //              Ray(origin, forward.normalize(), Medium::air),
     //              debugEvent, debugSphere);
 
+    // Scene's root node is a BVNode (figure group)
     FigurePtr rootNode = FigurePtr(new Figures::BVNode(sceneElements));
 
-#if SCENE_NUMBER == 4
-    Scene scene(rootNode, RGBColor::White * 0.01f * maxLight, maxLight);
+#if SCENE_NUMBER == 5
+    Scene scene(rootNode, RGBColor::White * 0.001f * maxLight, maxLight);
 #else
     Scene scene(rootNode, RGBColor::Black, maxLight);
 #endif
 
-    // Add points lights to the scene
-
+    // Add point lights to the scene
 #if SCENE_NUMBER == 0
-    scene.light(Vec4(1.0f, 1.0f, 0.0f, 1.0f), RGBColor::White * maxLight);
-    scene.light(Vec4(0.0f, 1.0f, 1.0f, 1.0f), RGBColor::White * maxLight);
-    scene.light(Vec4(0.0f, 1.0f, -1.0f, 1.0f), RGBColor::White * maxLight);
-#elif SCENE_NUMBER == 1
-    scene.light(Vec4(0.0f, 1.7f, 0.0f, 1.0f), RGBColor::White * maxLight);
+    // Figure 1 doesn't have a point light
+    scene.light(Vec4(0.0f, 1.5f, 0.0f, 1.0f), RGBColor::White * maxLight);
 #elif SCENE_NUMBER == 2
+    scene.light(Vec4(0.0f, 1.5f, 0.0f, 1.0f), RGBColor::White * maxLight);
+#elif SCENE_NUMBER == 3
     scene.light(Vec4(0.0f, 1.4f, -1.0f, 1.0f), RGBColor::White * maxLight);
     scene.light(Vec4(0.0f, 1.4f, 1.0f, 1.0f), RGBColor::White * maxLight);
-#elif SCENE_NUMBER == 3
-    scene.light(Vec4(0.0f, 1.7f, 0.0f, 1.0f), RGBColor::White * maxLight);
 #elif SCENE_NUMBER == 4
-    scene.light(Vec4(1.0f, 4.0f, 0.0f, 1.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(0.0f, 1.5f, 0.0f, 1.0f), RGBColor::White * maxLight);
 #elif SCENE_NUMBER == 5
-    scene.light(Vec4(0.0f, 1.7f, 0.0f, 1.0f), RGBColor::White * maxLight);
+    scene.light(Vec4(1.0f, 4.0f, 0.0f, 1.0f), RGBColor::White * maxLight);
+#elif SCENE_NUMBER == 6
+    scene.light(Vec4(0.0f, 1.5f, 0.0f, 1.0f), RGBColor::White * maxLight);
 #endif
 
 #undef plane

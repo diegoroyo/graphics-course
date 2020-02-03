@@ -120,7 +120,9 @@ bool Sphere::intersection(const Ray &ray, RayHit &hit) const {
     }
 }
 
-Vec4 Sphere::randomPoint() const { return Random::Sphere() * this->radius; }
+Vec4 Sphere::randomPoint() const {
+    return this->center + Random::Sphere() * this->radius;
+}
 
 Vec4 Sphere::randomDirection(const Vec4 &point) const {
     Vec4 z = (point - this->center).normalize();

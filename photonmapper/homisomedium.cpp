@@ -51,7 +51,7 @@ RGBColor HomIsoMedium::volumeSearch(const PhotonKdTree &volume, const int kNN,
     }
     float sphereVolume = 4.0f * M_PI * r * r * r / 3.0f;
     float phaseTerm = 1.0f / (4.0f * M_PI);  // isotropic
-    return sum * (phaseTerm / (sphereVolume * this->kScattering));
+    return sum * (phaseTerm / sphereVolume);
 }
 
 RGBColor HomIsoMedium::fRayMarchTrace(const RGBColor &lightIn, const Ray &ray,
@@ -63,11 +63,13 @@ RGBColor HomIsoMedium::fRayMarchTrace(const RGBColor &lightIn, const Ray &ray,
     for (int s = 1; s <= steps; s++) {
         lightOut = fApplyTransmittance(lightOut, deltaD);
         Vec4 point = ray.project(deltaD * s);
+        // don't need to multiply by kScattering as volumeSearch divides by it
         lightOut = lightOut + volumeSearch(volume, kNN, point) * this->deltaD;
     }
     float rest = hit.distance - (this->deltaD * steps);
     if (rest > 1e-5f) {
         lightOut = fApplyTransmittance(lightOut, rest);
+        // don't need to multiply by kScattering as volumeSearch divides by it
         lightOut = lightOut + volumeSearch(volume, kNN, hit.point) * rest;
     }
     return lightOut;

@@ -27,7 +27,7 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
     // Absorption event
     EventPtr event = hit.material->selectEvent();
     if (event == nullptr || !event->nextRay(ray, hit, ray)) {
-        if (storeDirectLight) {
+        if (storeDirectLight && hit.material->getFirstDelta() == nullptr) {
             this->savePhoton(Photon(hit.point, ray.direction, flux), false);
         }
         return;
@@ -58,8 +58,10 @@ void PhotonEmitter::traceRay(Ray ray, const Scene &scene, RGBColor flux) {
         event = hit.material->selectEvent();
         // Save INCOMING flux to the point
         if (event == nullptr || !event->nextRay(ray, hit, nextRay)) {
-            this->savePhoton(Photon(hit.point, ray.direction, flux),
-                             wasLastCaustic);
+            if (hit.material->getFirstDelta() == nullptr) {
+                this->savePhoton(Photon(hit.point, ray.direction, flux),
+                                 wasLastCaustic);
+            }
             return;
         }
         if (!event->isDelta) {

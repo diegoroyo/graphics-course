@@ -64,10 +64,12 @@ class UVMaterial {
     Texture data;
 
    private:
-    UVMaterial(int _width, int _height);
+    UVMaterial(int _width, int _height, const MaterialPtr &fill);
 
    public:
     static UVMaterialBuilder builder(int width, int height);
+    static UVMaterialPtr fill(int width, int height,
+                                  const MaterialPtr &fill);
 
     inline MaterialPtr get(const float uvx, const float uvy) const {
         int x = std::min(width - 1, (int)(uvx * this->width));

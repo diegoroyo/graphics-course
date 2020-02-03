@@ -1,10 +1,11 @@
 #include "uvmaterial.h"
 
-UVMaterial::UVMaterial(int _width, int _height)
+UVMaterial::UVMaterial(int _width, int _height,
+                       const MaterialPtr &fill = Material::none())
     : width(_width), height(_height) {
     data.resize(height);
     for (int y = 0; y < height; y++) {
-        data[y].resize(width, Material::none());
+        data[y].resize(width, fill);
     }
 }
 
@@ -21,6 +22,10 @@ UVMaterialBuilder UVMaterial::builder(int width, int height) {
         }
     }
     return UVMaterialBuilder(width, height, texturePtr, builderPtr);
+}
+
+UVMaterialPtr UVMaterial::fill(int width, int height, const MaterialPtr &fill) {
+    return UVMaterialPtr(new UVMaterial(1, 1, fill));
 }
 
 void UVMaterialBuilder::addEvent(const EventPtr &event) {
@@ -85,12 +90,9 @@ UVMaterialBuilder UVMaterialBuilder::addPhongSpecular(
     return *this;
 }
 
+// Note: This is hardcoded for the diamond texture (diamondore_emission.ppm)
 UVMaterialBuilder UVMaterialBuilder::addPerfectSpecular(
     const char *specularFilename) {
-    // TODO this is hardcoded for the diamond texture
-    // find a way to merge phongspec, perfspec & perfrefraction onto a file
-    // (RGB wont be enough as you need more channel for spec alpha & refraction
-    // index)
     PPMImage specular;
     specular.readFile(specularFilename);
     specular.flipVertically();

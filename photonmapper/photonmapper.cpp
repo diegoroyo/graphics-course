@@ -5,22 +5,22 @@ RGBColor PhotonMapper::directLightMedium(const Scene &scene, const RayHit &hit,
     RGBColor result(0.0f, 0.0f, 0.0f);
     // Check all lights in the scene
     for (const auto &light : scene.lights) {
-        Vec4 wi = light.point - hit.point;
+        Vec4 wi = hit.point - light.point;
         float norm = wi.module();
-        wi = wi * (1.0f / norm);
+        wi = wi.normalize();
         RayHit hit;
-        Ray ray(light.point, wi * -1.0f, scene.air);
+        Ray ray(light.point, wi, scene.air);
         // Check if theres direct view from light to point
         if (scene.intersection(ray, hit) &&
-            std::abs(hit.distance - norm) < 1e-5f &&
+            std::abs(hit.distance - norm) < 1e-3f &&
             dot(hit.normal, ray.direction) < 1e-5f) {
             // Add light's emission to the result
-            RGBColor inEmission = light.emission * (1.0f / (norm * norm));
+            RGBColor inEmission = light.emission * (1.0f / (norm * norm)) *
+                                  dot(hit.normal, wi) * -1.0f;
             inEmission = HomAmbMedium::applyLight(inEmission, ray, hit);
             inEmission = HomIsoMedium::rayMarch(inEmission, ray, hit, volume,
                                                 kvNeighbours);
-            result = result + hit.material->evaluate(inEmission, hit, wi, wo) *
-                                  dot(hit.normal, wi);
+            result = result + hit.material->evaluate(inEmission, hit, wi, wo);
         }
     }
     return result * (1.0f / (4.0f * M_PI));
@@ -54,10 +54,6 @@ RGBColor PhotonMapper::treeSearch(const PhotonKdTree &tree, const int kNN,
     float denominator = kTerm * M_PI * r * r;
     return sum * (1.0f / denominator);
 }
-
-// TODO quitar cuando este seguro de que se calcula bien la energia
-RGBColor totalDirect(0.0f, 0.0f, 0.0f), totalIndirect(0.0f, 0.0f, 0.0f);
-int total = 0;
 
 RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene,
                                 const int level) const {
@@ -93,10 +89,6 @@ RGBColor PhotonMapper::traceRay(const Ray &ray, const Scene &scene,
         if (directShadowRays) {
             directLight = directLightMedium(scene, hit, outDirection);
         }
-        // TODO quitar cuando este seguro de que se calcula bien
-        totalDirect = totalDirect + directLight;
-        totalIndirect = totalIndirect + indirectLight;
-        total = total + 1;
         RGBColor res = emitLight + indirectLight + causticLight + directLight;
         res = HomAmbMedium::applyLight(res, ray, hit);
         res = HomIsoMedium::rayMarch(res, ray, hit, volume, kvNeighbours);

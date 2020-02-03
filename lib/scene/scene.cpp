@@ -16,7 +16,7 @@ RGBColor Scene::directLight(const RayHit& hit, const Vec4& wo) const {
         Ray ray(light.point, wi, this->air);
         // Check if theres direct view from light to point
         if (this->intersection(ray, hit) &&
-            std::abs(hit.distance - norm) < 1e-5f &&
+            std::abs(hit.distance - norm) < 1e-3f &&
             dot(hit.normal, ray.direction) < 1e-5f) {
             // Add light's emission to the result
             RGBColor inEmission = light.emission * (1.0f / (norm * norm)) *
