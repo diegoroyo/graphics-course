@@ -368,7 +368,7 @@ int main(int argc, char **argv) {
         // Cornell box walls
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, greyDiffuse),
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), 2.0f, greyDiffuse),
-        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, yellowPhong),
+        plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), 2.0f, greyDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), 2.0f, greenDiffuse),
         plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -2.0f, redPhong),
 #if SCENE_NUMBER == 1
@@ -379,9 +379,8 @@ int main(int argc, char **argv) {
             Vec4(0.0f, 0.0f, -1.5f, 0.0f), false)),
 #endif
         // Cornell box content
-        // sphere(cyanPhong, Vec4(1.0f, -1.25f, -1.0f, 1.0f), 0.75f),
-        sphere(transparent, Vec4(0.0f, -0.5f, 0.0f, 1.0f), 1.0f)
-
+        sphere(cyanPhong, Vec4(1.0f, -1.25f, -1.0f, 1.0f), 0.75f),
+        sphere(transparent, Vec4(0.0f, -1.25f, 1.0f, 1.0f), 0.6f)
 #elif SCENE_NUMBER == 2
         // Cornell box walls
         plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), -2.0f, whitePhong),
