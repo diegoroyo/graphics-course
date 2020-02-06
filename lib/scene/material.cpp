@@ -132,7 +132,7 @@ bool PerfectRefraction::nextRay(const Ray &inRay, const RayHit &hit,
     float factor = n1 / n2;
     // Angle of outgoing ray
     float outSin = incSin * factor;
-    if (outSin > 1.0f && !disableFresnel) {
+    if (outSin > 1.0f) {
         // Out angle is greater than critical angle (see reference)
         // By fresnel laws, ray is reflected
         Vec4 outDirection = reflectDirection(inRay.direction, hit.normal);
