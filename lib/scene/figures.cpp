@@ -60,9 +60,13 @@ void TexturedPlane::setUVMaterial(const UVMaterialPtr &_uvMaterial,
 }
 
 Vec4 TexturedPlane::randomPoint() const {
-    float px = Random::ZeroOne();
-    float py = Random::ZeroOne();
-    return this->uvOrigin + this->uvX * px + this->uvY * py;
+    float rx, ry;
+    do {
+        rx = Random::ZeroOne();
+        ry = Random::ZeroOne();
+    } while (this->uvMaterial->get(rx, ry) == nullptr ||
+             !this->uvMaterial->get(rx, ry)->emitsLight);
+    return this->uvOrigin + this->uvX * rx + this->uvY * ry;
 }
 
 Vec4 TexturedPlane::randomDirection(const Vec4 &point) const {
