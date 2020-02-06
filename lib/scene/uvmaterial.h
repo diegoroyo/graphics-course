@@ -45,12 +45,14 @@ class UVMaterialBuilder {
     UVMaterialBuilder addPhongSpecular(const float ks, const float alpha);
     UVMaterialBuilder addPerfectSpecular(const float ksp);
     UVMaterialBuilder addPerfectRefraction(const float krp,
-                                           const MediumPtr medium);
+                                           const MediumPtr &medium);
     // UV mapped for the model
     UVMaterialBuilder addPhongDiffuse(const char *diffuseFilename);
     UVMaterialBuilder addPhongSpecular(const char *specularFilename,
                                        const float alpha);
     UVMaterialBuilder addPerfectSpecular(const char *specularFilename);
+    UVMaterialBuilder addPerfectRefraction(const char *refractionFilename,
+                                           const MediumPtr &medium);
     UVMaterialBuilder addPortal(const char *portalFilename,
                                 const FigurePortalPtr &inPortal,
                                 const FigurePortalPtr &outPortal);

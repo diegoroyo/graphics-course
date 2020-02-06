@@ -55,7 +55,7 @@ UVMaterialBuilder UVMaterialBuilder::addPerfectSpecular(const float ksp) {
 }
 
 UVMaterialBuilder UVMaterialBuilder::addPerfectRefraction(
-    const float krp, const MediumPtr medium) {
+    const float krp, const MediumPtr &medium) {
     addEvent(EventPtr(new PerfectRefraction(krp, medium)));
     return *this;
 }
@@ -90,7 +90,6 @@ UVMaterialBuilder UVMaterialBuilder::addPhongSpecular(
     return *this;
 }
 
-// Note: This is hardcoded for the diamond texture (diamondore_emission.ppm)
 UVMaterialBuilder UVMaterialBuilder::addPerfectSpecular(
     const char *specularFilename) {
     PPMImage specular;
@@ -98,9 +97,23 @@ UVMaterialBuilder UVMaterialBuilder::addPerfectSpecular(
     specular.flipVertically();
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            RGBColor color = specular.getPixel(x, y) * 0.99f;
-            float meanProb = (color.r + color.g + color.b) / 3.0f;
-            (*builderPtr)[y][x].add(EventPtr(new PerfectSpecular(meanProb)));
+            float ksp = specular.getPixel(x, y).max() * 0.99f;
+            (*builderPtr)[y][x].add(EventPtr(new PerfectSpecular(ksp)));
+        }
+    }
+    return *this;
+}
+
+UVMaterialBuilder UVMaterialBuilder::addPerfectRefraction(
+    const char *refractionFilename, const MediumPtr &medium) {
+    PPMImage refraction;
+    refraction.readFile(refractionFilename);
+    refraction.flipVertically();
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            float krp = refraction.getPixel(x, y).max() * 0.99f;
+            (*builderPtr)[y][x].add(
+                EventPtr(new PerfectRefraction(krp, medium)));
         }
     }
     return *this;
