@@ -157,6 +157,7 @@ void PhotonEmitter::emitPointLights(const Scene &scene,
         for (int i = 0; i < weights.size(); i++) {
             if (random < weights[i]) {
                 point = scene.lights[i].point;
+                break;
             }
         }
         // Direction uniform sampling on unit sphere
