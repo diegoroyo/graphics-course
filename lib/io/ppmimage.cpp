@@ -209,6 +209,16 @@ void PPMImage::flipVertically() {
     }
 }
 
+void PPMImage::addImage(const PPMImage &image) {
+    for (int x = 0; x < this->width; x++) {
+        for (int y = 0; y < this->height; y++) {
+            RGBColor color1 = this->getPixel(x, y);
+            RGBColor color2 = image.getPixel(x, y);
+            this->setPixel(x, y, color1 + color2);
+        }
+    }
+}
+
 PNGImage PPMImage::convertToPNG() {
     PNGImage png(width, height);
     for (int y = 0; y < height; y++) {

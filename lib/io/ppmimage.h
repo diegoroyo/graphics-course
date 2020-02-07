@@ -67,6 +67,8 @@ class PPMImage {
     void setPixel(const int x, const int y, const RGBColor& color);
     RGBColor getPixel(const int x, const int y) const;
 
+    void addImage(const PPMImage &image);
+
     // Convert PPM file with [0..1] RGB data to 24bpp RGB PNG
     PNGImage convertToPNG();
 
