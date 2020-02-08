@@ -1,4 +1,0 @@
-bin/*
-.vscode
-cmake-build-debug
-.clang-format

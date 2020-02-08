@@ -1,1 +1,14 @@
 .vscode
+*/.vscode
+
+# ignored directories (rendered images, textures, models, etc.)
+*/bin
+*/out
+*/ply
+
+# ignored filetypes
+*.txt
+*.ppm
+*.png
+*.ply
+*.sh
